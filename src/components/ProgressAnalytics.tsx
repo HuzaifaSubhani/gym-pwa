@@ -1,13 +1,15 @@
 "use client";
 
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { TrendingUp, TrendingDown, Minus, Activity, Copy, Download, Upload } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Activity, Cloud, Link as LinkIcon, Check } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export default function ProgressAnalytics() {
-  const { state } = useProtocol();
-  const [syncInput, setSyncInput] = useState("");
+  const { state, setSyncId } = useProtocol();
+  const [linkInput, setLinkInput] = useState("");
   const [syncStatus, setSyncStatus] = useState("");
+  const [isLinking, setIsLinking] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   const analyticsData = useMemo(() => {
     const primaryLifts = [
@@ -53,27 +55,26 @@ export default function ProgressAnalytics() {
     });
   }, [state.workoutLogs]);
 
-  const handleCopyData = () => {
-    const data = localStorage.getItem("recomp_tracker_v1");
-    if (data) {
-      navigator.clipboard.writeText(data);
-      setSyncStatus("Data copied to clipboard!");
-      setTimeout(() => setSyncStatus(""), 3000);
+  const handleCopyId = () => {
+    if (state.syncId) {
+      navigator.clipboard.writeText(state.syncId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const handleImportData = () => {
+  const handleLinkDevice = async () => {
+    if (!linkInput) return;
+    setIsLinking(true);
+    setSyncStatus("");
     try {
-      const parsed = JSON.parse(syncInput);
-      if (parsed && parsed.state && parsed.state.workoutLogs) {
-        localStorage.setItem("recomp_tracker_v1", syncInput);
-        setSyncStatus("Import successful! Reloading...");
-        setTimeout(() => window.location.reload(), 1000);
-      } else {
-        setSyncStatus("Invalid save data format.");
-      }
+      await setSyncId(linkInput.trim());
+      setSyncStatus("Successfully linked! Reloading...");
+      setTimeout(() => window.location.reload(), 1000);
     } catch (e) {
-      setSyncStatus("Failed to parse data.");
+      setSyncStatus("Invalid Sync ID or network error.");
+    } finally {
+      setIsLinking(false);
     }
   };
 
@@ -122,36 +123,50 @@ export default function ProgressAnalytics() {
         ))}
       </div>
 
-      {/* Sync Utility */}
+      {/* Cloud Sync Utility */}
       <div className="bg-noir-surface rounded-xl border border-noir-border p-5 shadow-lg mt-8">
-        <h3 className="font-bold text-lg mb-2">Device Sync (Offline)</h3>
-        <p className="text-sm text-noir-text-muted mb-4">Because this app runs entirely offline without a database, your data is saved securely to this specific device. To sync with your PC, copy your mobile data and paste it here.</p>
+        <div className="flex items-center gap-2 mb-2">
+          <Cloud className="text-noir-accent" size={20} />
+          <h3 className="font-bold text-lg">Cloud Sync</h3>
+        </div>
+        <p className="text-sm text-noir-text-muted mb-6">Your data is automatically backing up to the cloud. To access your data on another device, paste this Sync ID into the other device.</p>
         
-        <div className="space-y-4">
-          <button 
-            onClick={handleCopyData}
-            className="w-full bg-noir-bg border border-noir-border hover:border-noir-accent text-noir-text font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors min-h-[44px]"
-          >
-            <Copy size={18} /> Copy My Data
-          </button>
-          
-          <div className="flex gap-2">
-            <input 
-              type="text" 
-              placeholder="Paste data code here..." 
-              value={syncInput}
-              onChange={(e) => setSyncInput(e.target.value)}
-              className="flex-1 bg-noir-bg border border-noir-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-noir-accent min-h-[44px]"
-            />
+        <div className="space-y-6">
+          <div>
+            <span className="text-xs uppercase text-noir-text-muted font-bold tracking-widest mb-2 block">Your Sync ID</span>
             <button 
-              onClick={handleImportData}
-              disabled={!syncInput}
-              className="bg-noir-accent text-noir-bg font-bold px-6 py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 min-h-[44px]"
+              onClick={handleCopyId}
+              className="w-full bg-noir-bg border border-noir-border hover:border-noir-accent text-noir-accent font-mono font-bold py-3 px-4 rounded-lg flex items-center justify-between transition-colors min-h-[44px]"
             >
-              <Upload size={18} /> Import
+              <span className="tracking-widest">{state.syncId || "GENERATING..."}</span>
+              {copied ? <Check size={18} /> : <Copy size={18} className="opacity-50" />}
             </button>
           </div>
-          {syncStatus && <p className="text-xs text-noir-accent font-bold mt-2 text-center">{syncStatus}</p>}
+          
+          <div className="pt-4 border-t border-noir-border border-dashed">
+            <span className="text-xs uppercase text-noir-text-muted font-bold tracking-widest mb-2 block">Link Existing Device</span>
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Paste Sync ID here..." 
+                value={linkInput}
+                onChange={(e) => setLinkInput(e.target.value)}
+                className="flex-1 bg-noir-bg border border-noir-border rounded-lg px-4 py-3 text-sm font-mono focus:outline-none focus:border-noir-accent min-h-[44px]"
+              />
+              <button 
+                onClick={handleLinkDevice}
+                disabled={!linkInput || isLinking}
+                className="bg-noir-accent text-noir-bg font-bold px-6 py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 min-h-[44px]"
+              >
+                <LinkIcon size={18} /> {isLinking ? "..." : "Link"}
+              </button>
+            </div>
+            {syncStatus && (
+              <p className={`text-xs font-bold mt-3 text-center ${syncStatus.includes("Error") || syncStatus.includes("Invalid") ? "text-red-500" : "text-noir-accent"}`}>
+                {syncStatus}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
