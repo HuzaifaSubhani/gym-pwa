@@ -109,7 +109,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
     });
     setLocalLogs(synced);
     setCompareLogs(null); // Reset compare view on date change
-  }, [globalExLogs, exercise.sets, dateStr]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(globalExLogs), exercise.sets, dateStr]);
 
   const { note, restMod } = getIntensityDirectives(
     activeWeek, activeDayOfWeek, 
