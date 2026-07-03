@@ -91,7 +91,6 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   // Local state for inputs so we don't save until "Save" is clicked
   const [localLogs, setLocalLogs] = useState<SetLog[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [compareLogs, setCompareLogs] = useState<SetLog[] | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Sync local state when global state or date changes
@@ -106,10 +105,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
           drops: globalExLogs[i].drops ? [...globalExLogs[i].drops] : []
         };
       }
-      return { weight: "", reps: "", drops: [] };
     });
     setLocalLogs(synced);
-    setCompareLogs(null); // Reset compare view on date change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(globalExLogs), exercise.sets, dateStr]);
 
@@ -155,20 +152,27 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   };
 
   const handleCompare = () => {
-    if (compareLogs !== null) {
-      setCompareLogs(null); // Toggle off
-      return;
-    }
-    
-    if (activeWeek <= 1) {
-      setCompareLogs([]); // Nothing to compare
-      return;
-    }
+    if (activeWeek <= 1) return;
 
     // Fetch previous week's date for this exact day
     const prevDateStr = getProtocolDateString(activeWeek - 1, activeDayOfWeek);
     const prevLogs = state.workoutLogs[prevDateStr]?.[exercise.id] || [];
-    setCompareLogs(prevLogs);
+    
+    if (prevLogs.length === 0) return; // Nothing to pull
+
+    // Autofill local inputs with previous week's data, preserving user edits if any
+    const mergedLogs = localLogs.map((log, i) => {
+      if (prevLogs[i]) {
+        return { 
+          weight: prevLogs[i].weight || log.weight, 
+          reps: prevLogs[i].reps || log.reps,
+          drops: prevLogs[i].drops ? [...prevLogs[i].drops] : (log.drops ? [...log.drops] : [])
+        };
+      }
+      return log;
+    });
+    
+    setLocalLogs(mergedLogs);
   };
 
   return (
@@ -229,10 +233,12 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
 
               {/* Render 2 additional drop inputs for the final drop set */}
               {showDropSets && (
-                <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-noir-border border-dashed">
-                  <span className="text-[10px] uppercase text-noir-text-muted ml-8 font-bold tracking-widest text-noir-accent">Drop 1</span>
+                <div className="mt-2 ml-4 pl-3 border-l-2 border-noir-accent/30 space-y-2 relative">
+                  {/* Subtle connection line */}
+                  <div className="absolute -left-[14px] top-[-10px] w-3 h-4 border-b-2 border-l-2 border-noir-accent/30 rounded-bl-md"></div>
+                  
                   <div className="flex gap-2 items-center">
-                    <span className="w-6 text-center"></span>
+                    <span className="w-12 text-[10px] uppercase font-bold text-noir-accent tracking-widest text-right">Drop 1</span>
                     <input
                       type="number"
                       placeholder="kg"
@@ -250,9 +256,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                     />
                   </div>
 
-                  <span className="text-[10px] uppercase text-noir-text-muted ml-8 font-bold tracking-widest text-noir-accent">Drop 2</span>
                   <div className="flex gap-2 items-center">
-                    <span className="w-6 text-center"></span>
+                    <span className="w-12 text-[10px] uppercase font-bold text-noir-accent tracking-widest text-right">Drop 2</span>
                     <input
                       type="number"
                       placeholder="kg"
@@ -276,29 +281,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
         })}
       </div>
 
-      {/* Compare View */}
-      {compareLogs !== null && (
-        <div className="bg-noir-bg rounded-lg p-3 mb-4 border border-noir-border animate-in fade-in zoom-in-95 duration-200">
-          <h4 className="text-xs font-bold uppercase text-noir-text-muted mb-2 tracking-widest">Previous Week (W{activeWeek - 1})</h4>
-          {compareLogs.length === 0 ? (
-            <p className="text-sm text-noir-text-muted">No data recorded.</p>
-          ) : (
-            <div className="space-y-1">
-              {compareLogs.map((log, i) => (
-                <div key={i} className="text-sm">
-                  <span className="w-6 inline-block text-xs text-noir-text-muted">S{i+1}</span>
-                  <span className="font-mono font-bold text-noir-accent">{log.weight}</span>kg × <span className="font-mono font-bold text-noir-accent">{log.reps}</span>
-                  {log.drops?.map((drop, di) => (
-                    <div key={di} className="ml-6 text-xs text-noir-text-muted">
-                      Drop {di+1}: {drop.weight}kg × {drop.reps}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+
 
       {/* Actions */}
       <div className="flex gap-2 items-center pt-3 border-t border-noir-border">
@@ -309,7 +292,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
         >
           <Save size={18} /> {isSaving ? "Saving..." : "Save"}
         </button>
-        <button onClick={handleCompare} className={`px-3 py-2 rounded-lg border flex items-center justify-center min-h-[44px] ${compareLogs !== null ? 'bg-noir-accent/10 border-noir-accent text-noir-accent' : 'bg-noir-bg border-noir-border text-noir-text-muted hover:text-noir-text'}`}>
+        <button onClick={handleCompare} className="px-3 py-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text-muted hover:text-noir-accent hover:border-noir-accent transition-colors min-h-[44px]">
           <History size={18} />
         </button>
         <button onClick={() => setShowClearConfirm(true)} className="px-3 py-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text-muted hover:text-red-500 hover:border-red-500 transition-colors min-h-[44px]">
