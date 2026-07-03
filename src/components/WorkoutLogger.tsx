@@ -92,6 +92,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   const [localLogs, setLocalLogs] = useState<SetLog[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [compareLogs, setCompareLogs] = useState<SetLog[] | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Sync local state when global state or date changes
   useEffect(() => {
@@ -119,7 +120,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   );
   
   const effectiveRest = exercise.rest + (restMod || 0);
-  const isDropSetNote = note.toLowerCase().includes("drop set");
+  const fullNote = ((note || "") + " " + (exercise.notes || "")).toLowerCase();
+  const isDropSetNote = fullNote.includes("drop set");
 
   const handleUpdateLocalLog = (setIndex: number, field: "weight" | "reps", value: string) => {
     const newLogs = [...localLogs];
@@ -142,7 +144,9 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   };
 
   const handleSave = () => {
+    setIsSaving(true);
     setFullExerciseLogs(dateStr, exercise.id, localLogs);
+    setTimeout(() => setIsSaving(false), 600);
   };
 
   const handleClear = () => {
@@ -298,8 +302,12 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
 
       {/* Actions */}
       <div className="flex gap-2 items-center pt-3 border-t border-noir-border">
-        <button onClick={handleSave} className="flex-1 bg-noir-accent text-noir-bg font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 min-h-[44px]">
-          <Save size={18} /> Save
+        <button 
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex-1 bg-noir-accent hover:bg-[#2cff05] text-noir-bg font-bold py-3 px-4 rounded-lg shadow-[0_0_15px_rgba(57,255,20,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed min-h-[44px]"
+        >
+          <Save size={18} /> {isSaving ? "Saving..." : "Save"}
         </button>
         <button onClick={handleCompare} className={`px-3 py-2 rounded-lg border flex items-center justify-center min-h-[44px] ${compareLogs !== null ? 'bg-noir-accent/10 border-noir-accent text-noir-accent' : 'bg-noir-bg border-noir-border text-noir-text-muted hover:text-noir-text'}`}>
           <History size={18} />

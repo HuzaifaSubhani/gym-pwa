@@ -1,15 +1,11 @@
 "use client";
 
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { TrendingUp, TrendingDown, Minus, Activity, Cloud, Link as LinkIcon, Check, Copy } from "lucide-react";
-import { useMemo, useState } from "react";
+import { TrendingUp, TrendingDown, Minus, Activity, CheckCircle2, Dumbbell, CalendarCheck } from "lucide-react";
+import { useMemo } from "react";
 
 export default function ProgressAnalytics() {
-  const { state, setSyncId } = useProtocol();
-  const [linkInput, setLinkInput] = useState("");
-  const [syncStatus, setSyncStatus] = useState("");
-  const [isLinking, setIsLinking] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { state } = useProtocol();
   
   const analyticsData = useMemo(() => {
     const primaryLifts = [
@@ -55,31 +51,45 @@ export default function ProgressAnalytics() {
     });
   }, [state.workoutLogs]);
 
-  const handleCopyId = () => {
-    if (state.syncId) {
-      navigator.clipboard.writeText(state.syncId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  // Compute overall stats
+  const stats = useMemo(() => {
+    const sortedDates = Object.keys(state.workoutLogs);
+    let totalWorkouts = 0;
+    let totalSetsLogged = 0;
+    
+    sortedDates.forEach(date => {
+      const dayData = state.workoutLogs[date];
+      let hasLoggedSomething = false;
+      Object.keys(dayData).forEach(exId => {
+        const exLogs = dayData[exId];
+        const validSets = exLogs.filter(s => s.weight && s.reps).length;
+        if (validSets > 0) {
+          hasLoggedSomething = true;
+          totalSetsLogged += validSets;
+        }
+      });
+      if (hasLoggedSomething) totalWorkouts++;
+    });
 
-  const handleLinkDevice = async () => {
-    if (!linkInput) return;
-    setIsLinking(true);
-    setSyncStatus("");
-    try {
-      await setSyncId(linkInput.trim());
-      setSyncStatus("Successfully linked! Reloading...");
-      setTimeout(() => window.location.reload(), 1000);
-    } catch (e) {
-      setSyncStatus("Invalid Sync ID or network error.");
-    } finally {
-      setIsLinking(false);
-    }
-  };
+    return { totalWorkouts, totalSetsLogged };
+  }, [state.workoutLogs]);
 
   return (
     <div className="space-y-8">
+      {/* Cumulative Stats */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-noir-surface rounded-xl border border-noir-border p-4 shadow-lg flex flex-col justify-center items-center text-center">
+          <CalendarCheck className="text-noir-accent mb-2" size={24} />
+          <span className="text-3xl font-black">{stats.totalWorkouts}</span>
+          <span className="text-[10px] uppercase tracking-widest text-noir-text-muted mt-1 font-bold">Workouts</span>
+        </div>
+        <div className="bg-noir-surface rounded-xl border border-noir-border p-4 shadow-lg flex flex-col justify-center items-center text-center">
+          <Dumbbell className="text-noir-accent mb-2" size={24} />
+          <span className="text-3xl font-black">{stats.totalSetsLogged}</span>
+          <span className="text-[10px] uppercase tracking-widest text-noir-text-muted mt-1 font-bold">Sets Logged</span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {analyticsData.map(data => (
           <div key={data.id} className="bg-noir-surface rounded-xl border border-noir-border p-5 shadow-lg relative overflow-hidden group hover:border-noir-accent transition-colors">
@@ -121,53 +131,6 @@ export default function ProgressAnalytics() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Cloud Sync Utility */}
-      <div className="bg-noir-surface rounded-xl border border-noir-border p-5 shadow-lg mt-8">
-        <div className="flex items-center gap-2 mb-2">
-          <Cloud className="text-noir-accent" size={20} />
-          <h3 className="font-bold text-lg">Cloud Sync</h3>
-        </div>
-        <p className="text-sm text-noir-text-muted mb-6">Your data is automatically backing up to the cloud. To access your data on another device, paste this Sync ID into the other device.</p>
-        
-        <div className="space-y-6">
-          <div>
-            <span className="text-xs uppercase text-noir-text-muted font-bold tracking-widest mb-2 block">Your Sync ID</span>
-            <button 
-              onClick={handleCopyId}
-              className="w-full bg-noir-bg border border-noir-border hover:border-noir-accent text-noir-accent font-mono font-bold py-3 px-4 rounded-lg flex items-center justify-between transition-colors min-h-[44px]"
-            >
-              <span className="tracking-widest">{state.syncId || "GENERATING..."}</span>
-              {copied ? <Check size={18} /> : <Copy size={18} className="opacity-50" />}
-            </button>
-          </div>
-          
-          <div className="pt-4 border-t border-noir-border border-dashed">
-            <span className="text-xs uppercase text-noir-text-muted font-bold tracking-widest mb-2 block">Link Existing Device</span>
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                placeholder="Paste Sync ID here..." 
-                value={linkInput}
-                onChange={(e) => setLinkInput(e.target.value)}
-                className="flex-1 bg-noir-bg border border-noir-border rounded-lg px-4 py-3 text-sm font-mono focus:outline-none focus:border-noir-accent min-h-[44px]"
-              />
-              <button 
-                onClick={handleLinkDevice}
-                disabled={!linkInput || isLinking}
-                className="bg-noir-accent text-noir-bg font-bold px-6 py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 min-h-[44px]"
-              >
-                <LinkIcon size={18} /> {isLinking ? "..." : "Link"}
-              </button>
-            </div>
-            {syncStatus && (
-              <p className={`text-xs font-bold mt-3 text-center ${syncStatus.includes("Error") || syncStatus.includes("Invalid") ? "text-red-500" : "text-noir-accent"}`}>
-                {syncStatus}
-              </p>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );
