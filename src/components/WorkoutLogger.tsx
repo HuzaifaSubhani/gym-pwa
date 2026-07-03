@@ -2,7 +2,7 @@
 
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { ROUTINE_SCHEMA, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTOCOL_START_DATE } from "@/data/protocol";
-import { Check, ChevronLeft, ChevronRight, Save, Trash2, History } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Save, Trash2, History, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 function getProtocolDateString(week: number, dayNum: number) {
@@ -25,7 +25,7 @@ function DaySelector() {
   return (
     <div className="bg-noir-surface rounded-xl border border-noir-border p-4 shadow-lg mb-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <button 
+        <button
           onClick={() => setActiveWeekDay(Math.max(1, state.activeWeek - 1), state.activeDayOfWeek)}
           className="p-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text hover:text-noir-accent transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50"
           disabled={state.activeWeek === 1}
@@ -33,7 +33,7 @@ function DaySelector() {
           <ChevronLeft size={20} />
         </button>
         <span className="font-bold">Week {state.activeWeek}</span>
-        <button 
+        <button
           onClick={() => setActiveWeekDay(Math.min(PROTOCOL_WEEKS, state.activeWeek + 1), state.activeDayOfWeek)}
           className="p-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text hover:text-noir-accent transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50"
           disabled={state.activeWeek === PROTOCOL_WEEKS}
@@ -41,7 +41,7 @@ function DaySelector() {
           <ChevronRight size={20} />
         </button>
       </div>
-      
+
       <div className="flex justify-between gap-2 overflow-x-auto pb-2 scrollbar-hide">
         {days.map((day) => {
           const isActive = state.activeDayOfWeek === day.num;
@@ -62,9 +62,8 @@ function DaySelector() {
             <button
               key={day.num}
               onClick={() => setActiveWeekDay(state.activeWeek, day.num)}
-              className={`flex-1 min-w-[56px] min-h-[64px] flex flex-col items-center justify-center rounded-lg border transition-colors relative ${
-                isActive ? "bg-noir-accent/10 border-noir-accent text-noir-accent font-bold" : "bg-noir-bg border-noir-border text-noir-text-muted hover:border-noir-text"
-              }`}
+              className={`flex-1 min-w-[56px] min-h-[64px] flex flex-col items-center justify-center rounded-lg border transition-colors relative ${isActive ? "bg-noir-accent/10 border-noir-accent text-noir-accent font-bold" : "bg-noir-bg border-noir-border text-noir-text-muted hover:border-noir-text"
+                }`}
             >
               <span className="text-xs uppercase">{day.label}</span>
               <span className="text-[10px] opacity-80 mt-1">{dateLabel}</span>
@@ -81,13 +80,13 @@ function DaySelector() {
   );
 }
 
-function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr }: { 
+function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr }: {
   exercise: Exercise; activeWeek: number; activeDayOfWeek: number; isFinal: boolean; dateStr: string;
 }) {
   const { state, setFullExerciseLogs } = useProtocol();
   const dayLogs = state.workoutLogs[dateStr] || {};
   const globalExLogs = dayLogs[exercise.id] || [];
-  
+
   // Local state for inputs so we don't save until "Save" is clicked
   const [localLogs, setLocalLogs] = useState<SetLog[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -99,8 +98,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
     const synced = Array.from({ length: exercise.sets }).map((_, i) => {
       if (globalExLogs[i]) {
         // Deep copy to prevent mutating global state directly
-        return { 
-          weight: globalExLogs[i].weight, 
+        return {
+          weight: globalExLogs[i].weight,
           reps: globalExLogs[i].reps,
           drops: globalExLogs[i].drops ? [...globalExLogs[i].drops] : []
         };
@@ -112,11 +111,11 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   }, [JSON.stringify(globalExLogs), exercise.sets, dateStr]);
 
   const { note, restMod } = getIntensityDirectives(
-    activeWeek, activeDayOfWeek, 
+    activeWeek, activeDayOfWeek,
     !!exercise.isSpecialization || exercise.name.includes("Lateral") || exercise.name.includes("Curls") || exercise.name.includes("Pushdowns") || exercise.name.includes("Extensions") || exercise.name.includes("Raises"),
     isFinal
   );
-  
+
   const effectiveRest = exercise.rest + (restMod || 0);
   const fullNote = ((note || "") + " " + (exercise.notes || "")).toLowerCase();
   const isDropSetNote = fullNote.includes("drop set");
@@ -130,12 +129,12 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   const handleUpdateDropLog = (setIndex: number, dropIndex: number, field: "weight" | "reps", value: string) => {
     const newLogs = [...localLogs];
     const drops = [...(newLogs[setIndex].drops || [])];
-    
+
     // Ensure array is large enough
     while (drops.length <= dropIndex) {
       drops.push({ weight: "", reps: "" });
     }
-    
+
     drops[dropIndex] = { ...drops[dropIndex], [field]: value };
     newLogs[setIndex] = { ...newLogs[setIndex], drops };
     setLocalLogs(newLogs);
@@ -158,21 +157,21 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
     // Fetch previous week's date for this exact day
     const prevDateStr = getProtocolDateString(activeWeek - 1, activeDayOfWeek);
     const prevLogs = state.workoutLogs[prevDateStr]?.[exercise.id] || [];
-    
+
     if (prevLogs.length === 0) return; // Nothing to pull
 
     // Autofill local inputs with previous week's data, preserving user edits if any
     const mergedLogs = localLogs.map((log, i) => {
       if (prevLogs[i]) {
-        return { 
-          weight: prevLogs[i].weight || log.weight, 
+        return {
+          weight: prevLogs[i].weight || log.weight,
           reps: prevLogs[i].reps || log.reps,
           drops: prevLogs[i].drops ? [...prevLogs[i].drops] : (log.drops ? [...log.drops] : [])
         };
       }
       return log;
     });
-    
+
     setLocalLogs(mergedLogs);
   };
 
@@ -196,12 +195,12 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
           {note || exercise.notes}
         </div>
       )}
-      
+
       <div className="mb-4 pr-12 mt-2">
         <h3 className="text-lg md:text-xl font-bold leading-tight">{exercise.name}</h3>
         <p className="text-xs md:text-sm text-noir-text-muted mt-1 flex items-center gap-2">
-          {exercise.sets} Sets × {exercise.reps} 
-          <span className="inline-block w-1 h-1 rounded-full bg-noir-border"></span> 
+          {exercise.sets} Sets × {exercise.reps}
+          <span className="inline-block w-1 h-1 rounded-full bg-noir-border"></span>
           {effectiveRest}s Rest
         </p>
       </div>
@@ -210,7 +209,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
         {localLogs.map((log, i) => {
           const isFinalSet = i === exercise.sets - 1;
           const showDropSets = isFinalSet && isDropSetNote;
-          
+
           return (
             <div key={i} className="flex flex-col gap-2 p-2 rounded-lg bg-noir-bg border border-transparent focus-within:border-noir-border transition-colors">
               <div className="flex gap-2 items-center">
@@ -237,7 +236,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                 <div className="mt-2 ml-4 pl-3 border-l-2 border-noir-accent/30 space-y-2 relative">
                   {/* Subtle connection line */}
                   <div className="absolute -left-[14px] top-[-10px] w-3 h-4 border-b-2 border-l-2 border-noir-accent/30 rounded-bl-md"></div>
-                  
+
                   <div className="flex gap-2 items-center">
                     <span className="w-12 text-[10px] uppercase font-bold text-noir-accent tracking-widest text-right">Drop 1</span>
                     <input
@@ -286,12 +285,12 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
 
       {/* Actions */}
       <div className="flex gap-2 items-center pt-3 border-t border-noir-border">
-        <button 
+        <button
           onClick={handleSave}
           disabled={isSaving}
           className="flex-1 bg-noir-accent hover:bg-[#2cff05] text-noir-bg font-bold py-3 px-4 rounded-lg shadow-[0_0_15px_rgba(57,255,20,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed min-h-[44px]"
         >
-          <Save size={18} /> {isSaving ? "Saving..." : "Save"}
+          {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} Save
         </button>
         <button onClick={handleCompare} className="px-3 py-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text-muted hover:text-noir-accent hover:border-noir-accent transition-colors min-h-[44px]">
           <History size={18} />
@@ -308,7 +307,7 @@ export default function WorkoutLogger() {
   const { state } = useProtocol();
   const dayRoutine = ROUTINE_SCHEMA[state.activeDayOfWeek];
   const dateStr = getProtocolDateString(state.activeWeek, state.activeDayOfWeek);
-  
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
       <DaySelector />
@@ -329,7 +328,7 @@ export default function WorkoutLogger() {
               {getShortDateLabel(dateStr)}
             </div>
           </header>
-          
+
           <div className="space-y-4">
             {dayRoutine.exercises.map((ex, index) => (
               <ExerciseCard
