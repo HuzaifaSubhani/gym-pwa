@@ -1,7 +1,7 @@
 "use client";
 
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { TrendingUp, TrendingDown, Minus, Activity, Cloud, Link as LinkIcon, Check } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Activity, Cloud, Link as LinkIcon, Check, Copy } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export default function ProgressAnalytics() {
