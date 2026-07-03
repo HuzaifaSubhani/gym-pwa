@@ -105,6 +105,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
           drops: globalExLogs[i].drops ? [...globalExLogs[i].drops] : []
         };
       }
+      return { weight: "", reps: "", drops: [] };
     });
     setLocalLogs(synced);
     // eslint-disable-next-line react-hooks/exhaustive-deps
