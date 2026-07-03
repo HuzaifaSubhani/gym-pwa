@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
-export type SetLog = { weight: string; reps: string };
+export type SetLog = { weight: string; reps: string; drops?: { weight: string; reps: string }[] };
 
 export type ProtocolState = {
   activeWeek: number;
@@ -16,6 +16,7 @@ type ProtocolContextType = {
   state: ProtocolState;
   setHabit: (dateStr: string, type: "morning" | "evening", value: boolean) => void;
   setWorkoutLog: (dateStr: string, exerciseId: string, setIndex: number, log: SetLog) => void;
+  setFullExerciseLogs: (dateStr: string, exerciseId: string, logs: SetLog[]) => void;
   setWeightLog: (week: number, weight: string) => void;
   setActiveWeekDay: (week: number, day: number) => void;
 };
@@ -89,6 +90,22 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const setFullExerciseLogs = (dateStr: string, exerciseId: string, logs: SetLog[]) => {
+    setState((prev) => {
+      const dayLogs = prev.workoutLogs[dateStr] || {};
+      return {
+        ...prev,
+        workoutLogs: {
+          ...prev.workoutLogs,
+          [dateStr]: {
+            ...dayLogs,
+            [exerciseId]: logs,
+          },
+        },
+      };
+    });
+  };
+
   const setWeightLog = (week: number, weight: string) => {
     setState((prev) => ({
       ...prev,
@@ -106,7 +123,7 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
   if (!isLoaded) return null; // Avoid hydration mismatch
 
   return (
-    <ProtocolContext.Provider value={{ state, setHabit, setWorkoutLog, setWeightLog, setActiveWeekDay }}>
+    <ProtocolContext.Provider value={{ state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay }}>
       {children}
     </ProtocolContext.Provider>
   );

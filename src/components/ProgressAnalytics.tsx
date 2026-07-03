@@ -1,11 +1,13 @@
 "use client";
 
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
-import { useMemo } from "react";
+import { TrendingUp, TrendingDown, Minus, Activity, Copy, Download, Upload } from "lucide-react";
+import { useMemo, useState } from "react";
 
 export default function ProgressAnalytics() {
   const { state } = useProtocol();
+  const [syncInput, setSyncInput] = useState("");
+  const [syncStatus, setSyncStatus] = useState("");
   
   const analyticsData = useMemo(() => {
     const primaryLifts = [
@@ -51,13 +53,36 @@ export default function ProgressAnalytics() {
     });
   }, [state.workoutLogs]);
 
+  const handleCopyData = () => {
+    const data = localStorage.getItem("recomp_tracker_v1");
+    if (data) {
+      navigator.clipboard.writeText(data);
+      setSyncStatus("Data copied to clipboard!");
+      setTimeout(() => setSyncStatus(""), 3000);
+    }
+  };
+
+  const handleImportData = () => {
+    try {
+      const parsed = JSON.parse(syncInput);
+      if (parsed && parsed.state && parsed.state.workoutLogs) {
+        localStorage.setItem("recomp_tracker_v1", syncInput);
+        setSyncStatus("Import successful! Reloading...");
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        setSyncStatus("Invalid save data format.");
+      }
+    } catch (e) {
+      setSyncStatus("Failed to parse data.");
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {analyticsData.map(data => (
           <div key={data.id} className="bg-noir-surface rounded-xl border border-noir-border p-5 shadow-lg relative overflow-hidden group hover:border-noir-accent transition-colors">
             
-            {/* Background Accent Gradient */}
             <div className="absolute -right-10 -top-10 w-32 h-32 bg-noir-accent/5 rounded-full blur-2xl group-hover:bg-noir-accent/10 transition-colors"></div>
 
             <div className="flex justify-between items-start mb-4">
@@ -95,6 +120,39 @@ export default function ProgressAnalytics() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Sync Utility */}
+      <div className="bg-noir-surface rounded-xl border border-noir-border p-5 shadow-lg mt-8">
+        <h3 className="font-bold text-lg mb-2">Device Sync (Offline)</h3>
+        <p className="text-sm text-noir-text-muted mb-4">Because this app runs entirely offline without a database, your data is saved securely to this specific device. To sync with your PC, copy your mobile data and paste it here.</p>
+        
+        <div className="space-y-4">
+          <button 
+            onClick={handleCopyData}
+            className="w-full bg-noir-bg border border-noir-border hover:border-noir-accent text-noir-text font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors min-h-[44px]"
+          >
+            <Copy size={18} /> Copy My Data
+          </button>
+          
+          <div className="flex gap-2">
+            <input 
+              type="text" 
+              placeholder="Paste data code here..." 
+              value={syncInput}
+              onChange={(e) => setSyncInput(e.target.value)}
+              className="flex-1 bg-noir-bg border border-noir-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-noir-accent min-h-[44px]"
+            />
+            <button 
+              onClick={handleImportData}
+              disabled={!syncInput}
+              className="bg-noir-accent text-noir-bg font-bold px-6 py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 min-h-[44px]"
+            >
+              <Upload size={18} /> Import
+            </button>
+          </div>
+          {syncStatus && <p className="text-xs text-noir-accent font-bold mt-2 text-center">{syncStatus}</p>}
+        </div>
       </div>
     </div>
   );
