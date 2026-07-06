@@ -243,9 +243,21 @@ export default function Leaderboard() {
                 />
               </div>
               
-              <div className="flex gap-3 pt-4 border-t border-noir-border">
-                <button type="button" onClick={() => setIsEditingProfile(false)} className="flex-1 px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-surface-light font-bold">Cancel</button>
-                <button type="submit" disabled={loading} className="flex-1 px-4 py-3 rounded-lg bg-noir-accent text-noir-bg hover:bg-[#2cff05] font-bold disabled:opacity-50">Save</button>
+              <div className="flex flex-col gap-3 pt-4 border-t border-noir-border">
+                <button 
+                  type="button" 
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = '/login';
+                  }}
+                  className="w-full px-4 py-3 rounded-lg bg-red-900/20 text-red-500 border border-red-900/50 hover:bg-red-900/40 font-bold flex items-center justify-center gap-2"
+                >
+                  Log Out
+                </button>
+                <div className="flex gap-3 mt-1">
+                  <button type="button" onClick={() => setIsEditingProfile(false)} className="flex-1 px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-surface-light font-bold">Cancel</button>
+                  <button type="submit" disabled={loading} className="flex-1 px-4 py-3 rounded-lg bg-noir-accent text-noir-bg hover:bg-[#2cff05] font-bold disabled:opacity-50">Save</button>
+                </div>
               </div>
             </form>
           </div>
