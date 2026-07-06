@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ProtocolProvider } from "@/hooks/useProtocolStore";
+import RestTimer from "@/components/RestTimer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -35,7 +36,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-noir-bg text-noir-text overscroll-none pb-safe">
-        <ProtocolProvider>{children}</ProtocolProvider>
+        <ProtocolProvider>
+          {children}
+          <RestTimer />
+        </ProtocolProvider>
       </body>
     </html>
   );

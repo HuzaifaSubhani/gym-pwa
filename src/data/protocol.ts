@@ -14,7 +14,7 @@ export type DayRoutine = {
   exercises: Exercise[];
 };
 
-export const PROTOCOL_START_DATE = new Date("2026-07-06T00:00:00");
+export const PROTOCOL_START_DATE = new Date(2026, 6, 6); // Year, Month (0-indexed, 6=July), Day
 export const PROTOCOL_WEEKS = 7;
 
 export const ROUTINE_SCHEMA: Record<number, DayRoutine> = {

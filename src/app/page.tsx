@@ -3,13 +3,32 @@
 import { useState, useEffect } from "react";
 import WorkoutLogger from "@/components/WorkoutLogger";
 import ProgressAnalytics from "@/components/ProgressAnalytics";
-import { Dumbbell, LayoutDashboard } from "lucide-react";
+import Leaderboard from "@/components/Leaderboard";
+import { Dumbbell, LayoutDashboard, Trophy, Loader2 } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { getCurrentProtocolDateInfo } from "@/data/protocol";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "workout">("dashboard");
-  const { state, setActiveWeekDay } = useProtocol();
+  const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "leaderboard">("dashboard");
+  const { state, setActiveWeekDay, syncWithUser } = useProtocol();
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+      } else {
+        // Now that they are logged in, initialize their specific local store
+        syncWithUser(session.user.id);
+        setIsLoadingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [router, syncWithUser]);
 
   useEffect(() => {
     // Sync current actual date on load to ensure active week/day are accurate based on the timeline
@@ -20,6 +39,15 @@ export default function Home() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (isLoadingAuth) {
+    return (
+      <main className="flex-1 flex flex-col h-[100dvh] items-center justify-center bg-noir-bg">
+        <Loader2 className="animate-spin text-noir-accent mb-4" size={32} />
+        <p className="text-noir-text-muted font-bold tracking-widest uppercase text-xs">Authenticating...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 flex flex-col h-[100dvh] overflow-hidden bg-noir-bg">
@@ -34,6 +62,7 @@ export default function Home() {
           </div>
         )}
         {activeTab === "workout" && <WorkoutLogger />}
+        {activeTab === "leaderboard" && <Leaderboard />}
       </div>
 
       {/* Bottom Navigation for mobile-first usage */}
@@ -57,6 +86,16 @@ export default function Home() {
           >
             <Dumbbell size={24} />
             <span className="text-[10px] uppercase font-bold tracking-wider">Log</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab("leaderboard")}
+            className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
+              activeTab === "leaderboard" ? "text-noir-accent" : "text-noir-text-muted"
+            }`}
+          >
+            <Trophy size={24} />
+            <span className="text-[10px] uppercase font-bold tracking-wider">Squad</span>
           </button>
         </div>
       </nav>
