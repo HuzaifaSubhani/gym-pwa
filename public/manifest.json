@@ -1,7 +1,7 @@
 {
-  "name": "Noir Tracker",
-  "short_name": "Noir",
-  "description": "7-Week Protocol Gym Tracker PWA",
+  "name": "IronCore",
+  "short_name": "IronCore",
+  "description": "IronCore 7-Week Protocol Tracker",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

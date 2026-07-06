@@ -9,6 +9,7 @@ type Profile = {
   id: string;
   username: string;
   avatar_url: string | null;
+  avatar_position?: number;
 };
 
 type WorkoutLog = {
@@ -22,6 +23,7 @@ type LeaderboardEntry = {
   id: string;
   username: string;
   avatar_url: string | null;
+  avatar_position?: number;
   score: number;
   workouts: number;
   totalVolume: number;
@@ -90,6 +92,7 @@ export default function Leaderboard() {
             id: p.id,
             username: p.username || "Gym Bro",
             avatar_url: p.avatar_url,
+            avatar_position: p.avatar_position ?? 50,
             score,
             workouts: workoutsCount,
             totalVolume: Math.round(stats.volume)
@@ -168,7 +171,12 @@ export default function Leaderboard() {
                 
                 <div className="flex-1 ml-4 flex items-center gap-3">
                   {entry.avatar_url ? (
-                    <img src={entry.avatar_url} alt="DP" className="w-10 h-10 rounded-full border border-noir-border object-cover" />
+                    <img 
+                      src={entry.avatar_url} 
+                      alt="DP" 
+                      style={{ objectPosition: `50% ${entry.avatar_position}%` }}
+                      className="w-10 h-10 rounded-full border border-noir-border object-cover" 
+                    />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-noir-bg border border-noir-border flex items-center justify-center text-xs font-bold text-noir-text-muted">
                       {entry.username.substring(0, 2).toUpperCase()}

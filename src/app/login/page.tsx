@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft, Dumbbell } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type AuthMode = "login" | "signup" | "forgot" | "reset";
@@ -95,6 +95,7 @@ export default function LoginPage() {
         
         if (resetError) throw resetError;
         
+        setAuthMode("login");
         setSuccessMsg("Password reset email sent! Check your inbox.");
       } else if (authMode === "reset") {
         if (password !== confirmPassword) {
@@ -124,23 +125,32 @@ export default function LoginPage() {
 
 
   return (
-    <main className="flex-1 flex flex-col h-[100dvh] items-center justify-center bg-noir-bg p-4 overflow-y-auto">
-      <div className="w-full max-w-md bg-noir-surface border border-noir-border rounded-xl p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-500 my-8">
-        <header className="mb-8 text-center relative">
+    <main className="flex-1 flex flex-col h-[100dvh] items-center justify-center bg-noir-bg p-4 overflow-y-auto relative">
+      {/* Background decoration */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-noir-accent/10 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-noir-accent/5 blur-[120px] rounded-full pointer-events-none"></div>
+      
+      <div className="w-full max-w-md bg-noir-surface/80 backdrop-blur-md border border-noir-border rounded-2xl p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-500 my-8 z-10">
+        <header className="mb-8 text-center relative flex flex-col items-center">
           {(authMode === "forgot" || authMode === "signup") && (
             <button 
               onClick={() => { setAuthMode("login"); setError(null); setSuccessMsg(null); }}
-              className="absolute left-0 top-1/2 -translate-y-1/2 text-noir-text-muted hover:text-noir-accent transition-colors"
+              className="absolute left-0 top-1 text-noir-text-muted hover:text-noir-accent transition-colors"
             >
               <ArrowLeft size={20} />
             </button>
           )}
-          <h1 className="text-3xl font-black text-noir-accent">Gym PWA</h1>
-          <p className="text-sm text-noir-text-muted mt-2">
-            {authMode === "login" && "Welcome back to the leaderboard"}
-            {authMode === "signup" && "Create your account"}
-            {authMode === "forgot" && "Reset your password"}
-            {authMode === "reset" && "Create a new password"}
+          
+          <div className="w-16 h-16 bg-noir-bg rounded-2xl border border-noir-border shadow-[0_0_20px_rgba(57,255,20,0.15)] flex items-center justify-center mb-4">
+            <Dumbbell className="text-noir-accent" size={32} />
+          </div>
+          
+          <h1 className="text-3xl font-black text-white tracking-tight">IRON<span className="text-noir-accent">CORE</span></h1>
+          <p className="text-sm text-noir-text-muted mt-2 font-medium">
+            {authMode === "login" && "Enter the forge."}
+            {authMode === "signup" && "Forge your legacy."}
+            {authMode === "forgot" && "Recover your access."}
+            {authMode === "reset" && "Secure your account."}
           </p>
         </header>
 

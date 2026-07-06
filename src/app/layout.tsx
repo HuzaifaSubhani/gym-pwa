@@ -3,20 +3,19 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ProtocolProvider } from "@/hooks/useProtocolStore";
 import RestTimer from "@/components/RestTimer";
-
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
-  title: "Noir Tracker",
-  description: "7-Week Protocol Gym Tracker PWA",
+  title: "IronCore",
+  description: "IronCore 7-Week Protocol Tracker",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Noir Tracker",
+    title: "IronCore",
   },
 };
 
