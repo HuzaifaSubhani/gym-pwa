@@ -5,15 +5,18 @@ import { supabase } from "@/lib/supabaseClient";
 
 export type SetLog = { weight: string; reps: string; drops?: { weight: string; reps: string }[] };
 
+export type TrackedLift = { id: string; name: string; muscle: string; color: string };
+
 export type ProtocolState = {
   activeWeek: number;
   activeDayOfWeek: number;
   workoutLogs: Record<string, Record<string, SetLog[]>>; // { dateStr: { exerciseId: [SetLog] } }
   weightLogs: Record<number, string>; // { weekNumber: weightStr }
   habits: Record<string, { morning: boolean; evening: boolean }>; // { dateStr: { ... } }
-  customRoutine?: Record<number, any>; // { dayNum: DayRoutine } (We will type this properly using DayRoutine from protocol.ts later if imported)
+  customRoutine?: Record<number, any>; // { dayNum: DayRoutine }
   customDailyExercises?: Record<string, any[]>; // { dateStr: Exercise[] }
   timer: { isActive: boolean; endTime: number; isPaused: boolean; duration: number };
+  trackedLifts: TrackedLift[];
 };
 
 type ProtocolContextType = {
@@ -28,6 +31,8 @@ type ProtocolContextType = {
   syncWithUser: (userId: string) => void;
   updateTimer: (updates: Partial<ProtocolState["timer"]>) => void;
   startTimer: (seconds: number) => void;
+  addTrackedLift: (lift: TrackedLift) => void;
+  removeTrackedLift: (id: string) => void;
 };
 
 const initialState: ProtocolState = {
@@ -37,6 +42,13 @@ const initialState: ProtocolState = {
   weightLogs: {},
   habits: {},
   timer: { isActive: false, endTime: 0, isPaused: false, duration: 60 },
+  trackedLifts: [
+    { id: "m1", name: "Incline DB Press", muscle: "Upper Chest", color: "#39ff14" },
+    { id: "t1", name: "Pull-ups / Pulldown", muscle: "Lats", color: "#00ffff" },
+    { id: "w1", name: "Hack Squat", muscle: "Quads", color: "#ff00ff" },
+    { id: "th1", name: "Smith Machine Press", muscle: "Shoulders", color: "#ffff00" },
+    { id: "f1", name: "Split Squats", muscle: "Legs", color: "#ff3333" },
+  ],
 };
 
 const ProtocolContext = createContext<ProtocolContextType | undefined>(undefined);
@@ -248,8 +260,26 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const addTrackedLift = (lift: TrackedLift) => {
+    setState(prev => {
+      // Ensure no duplicates
+      if (prev.trackedLifts?.find(l => l.id === lift.id)) return prev;
+      return {
+        ...prev,
+        trackedLifts: [...(prev.trackedLifts || []), lift]
+      };
+    });
+  };
+
+  const removeTrackedLift = (id: string) => {
+    setState(prev => ({
+      ...prev,
+      trackedLifts: (prev.trackedLifts || []).filter(l => l.id !== id)
+    }));
+  };
+
   return (
-    <ProtocolContext.Provider value={{ state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, syncWithUser, updateTimer, startTimer }}>
+    <ProtocolContext.Provider value={{ state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift }}>
       {children}
     </ProtocolContext.Provider>
   );

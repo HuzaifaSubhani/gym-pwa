@@ -7,6 +7,29 @@ import { useRouter } from "next/navigation";
 
 type AuthMode = "login" | "signup" | "forgot" | "reset";
 
+const PasswordInput = ({ value, setter, label, placeholder, showPassword, setShowPassword }: any) => (
+  <div>
+    <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">{label}</label>
+    <div className="relative">
+      <input
+        required
+        type={showPassword ? "text" : "password"}
+        value={value}
+        onChange={(e) => setter(e.target.value)}
+        className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 pr-10 text-noir-text focus:outline-none focus:border-noir-accent transition-colors"
+        placeholder={placeholder}
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword(!showPassword)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-noir-text-muted hover:text-noir-accent transition-colors"
+      >
+        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    </div>
+  </div>
+);
+
 export default function LoginPage() {
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -98,28 +121,7 @@ export default function LoginPage() {
     }
   };
 
-  const PasswordInput = ({ value, setter, label, placeholder }: any) => (
-    <div>
-      <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">{label}</label>
-      <div className="relative">
-        <input
-          required
-          type={showPassword ? "text" : "password"}
-          value={value}
-          onChange={(e) => setter(e.target.value)}
-          className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 pr-10 text-noir-text focus:outline-none focus:border-noir-accent transition-colors"
-          placeholder={placeholder}
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-noir-text-muted hover:text-noir-accent transition-colors"
-        >
-          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
-      </div>
-    </div>
-  );
+
 
   return (
     <main className="flex-1 flex flex-col h-[100dvh] items-center justify-center bg-noir-bg p-4 overflow-y-auto">
@@ -189,6 +191,8 @@ export default function LoginPage() {
               setter={setPassword} 
               label={authMode === "reset" ? "New Password" : "Password"} 
               placeholder="••••••••" 
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
             />
           )}
 
@@ -198,6 +202,8 @@ export default function LoginPage() {
               setter={setConfirmPassword} 
               label="Confirm Password" 
               placeholder="••••••••" 
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
             />
           )}
 

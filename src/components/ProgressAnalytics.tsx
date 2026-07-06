@@ -1,21 +1,50 @@
 "use client";
 
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { Dumbbell, CalendarCheck } from "lucide-react";
+import { ROUTINE_SCHEMA } from "@/data/protocol";
+import { Dumbbell, CalendarCheck, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function ProgressAnalytics() {
-  const { state } = useProtocol();
+  const { state, addTrackedLift, removeTrackedLift } = useProtocol();
   const [activeTab, setActiveTab] = useState<"summary" | "charts">("charts");
+  const [isAddTrackerOpen, setIsAddTrackerOpen] = useState(false);
   
-  const primaryLifts = useMemo(() => [
+  // Fallback to default if trackedLifts somehow isn't initialized yet
+  const trackedLifts = state.trackedLifts || [
     { id: "m1", name: "Incline DB Press", muscle: "Upper Chest", color: "#39ff14" },
     { id: "t1", name: "Pull-ups / Pulldown", muscle: "Lats", color: "#00ffff" },
     { id: "w1", name: "Hack Squat", muscle: "Quads", color: "#ff00ff" },
     { id: "th1", name: "Smith Machine Press", muscle: "Shoulders", color: "#ffff00" },
     { id: "f1", name: "Split Squats", muscle: "Legs", color: "#ff3333" },
-  ], []);
+  ];
+
+  const availableExercisesToTrack = useMemo(() => {
+    const exMap = new Map<string, { id: string, name: string }>();
+    
+    // Map all known exercises from ROUTINE_SCHEMA
+    Object.values(ROUTINE_SCHEMA).forEach(day => {
+      day.exercises.forEach(ex => exMap.set(ex.id, { id: ex.id, name: ex.name }));
+    });
+    
+    // Map custom routines
+    if (state.customRoutine) {
+      Object.values(state.customRoutine).forEach((day: any) => {
+        day.exercises?.forEach((ex: any) => exMap.set(ex.id, { id: ex.id, name: ex.name }));
+      });
+    }
+    
+    // Map custom daily exercises
+    if (state.customDailyExercises) {
+      Object.values(state.customDailyExercises).forEach((dayExs: any[]) => {
+        dayExs.forEach(ex => exMap.set(ex.id, { id: ex.id, name: ex.name }));
+      });
+    }
+  
+    // Filter out already tracked
+    return Array.from(exMap.values()).filter(ex => !trackedLifts.find(l => l.id === ex.id));
+  }, [state.customRoutine, state.customDailyExercises, trackedLifts]);
 
   // Compute overall stats
   const stats = useMemo(() => {
@@ -48,7 +77,7 @@ export default function ProgressAnalytics() {
     // For simplicity, we will just use dateStr as the X-axis for each lift, 
     // or group by Week X Day Y. Since they perform the lift once a week, each log is a data point.
     
-    const seriesData = primaryLifts.map(lift => {
+    const seriesData = trackedLifts.map(lift => {
       const dataPoints: any[] = [];
       
       sortedDates.forEach((dateStr, index) => {
@@ -77,7 +106,7 @@ export default function ProgressAnalytics() {
     });
 
     return seriesData;
-  }, [state.workoutLogs, primaryLifts]);
+  }, [state.workoutLogs, trackedLifts]);
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in duration-500">
@@ -102,17 +131,31 @@ export default function ProgressAnalytics() {
       </div>
 
       <div className="space-y-6 mt-8">
-        <h3 className="text-xl font-bold border-b border-noir-border pb-2 px-2">Primary Lifts (Max Weight)</h3>
+        <div className="flex justify-between items-end border-b border-noir-border pb-2 px-2">
+          <h3 className="text-xl font-bold">Tracked Lifts (Max Weight)</h3>
+          <button 
+            onClick={() => setIsAddTrackerOpen(true)}
+            className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-noir-accent hover:text-[#2cff05] transition-colors"
+          >
+            <Plus size={16} /> Add 
+          </button>
+        </div>
         
         {chartData.map(series => {
           if (series.data.length === 0) {
             return (
               <div key={series.id} className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-bold text-lg leading-tight">{series.name}</h3>
                     <p className="text-xs text-noir-text-muted mt-1 uppercase tracking-widest">{series.muscle}</p>
                   </div>
+                  <button 
+                    onClick={() => removeTrackedLift(series.id)}
+                    className="text-noir-text-muted hover:text-red-500 transition-colors p-1"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
                 <div className="h-32 flex items-center justify-center border border-dashed border-noir-border rounded-lg bg-noir-bg">
                   <p className="text-sm text-noir-text-muted">Awaiting first log...</p>
@@ -131,7 +174,15 @@ export default function ProgressAnalytics() {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h3 className="font-bold text-lg leading-tight">{series.name}</h3>
-                  <p className="text-xs text-noir-text-muted mt-1 uppercase tracking-widest">{series.muscle}</p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-xs text-noir-text-muted mt-1 uppercase tracking-widest">{series.muscle}</p>
+                    <button 
+                      onClick={() => removeTrackedLift(series.id)}
+                      className="text-noir-text-muted hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-black">{currentMax} kg</div>
@@ -183,6 +234,47 @@ export default function ProgressAnalytics() {
           );
         })}
       </div>
+
+      {/* Add Tracker Modal */}
+      {isAddTrackerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-noir-bg/90 backdrop-blur-sm">
+          <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-2xl w-full max-w-sm animate-in zoom-in-95">
+            <h2 className="text-xl font-bold mb-4">Track Custom Lift</h2>
+            <p className="text-sm text-noir-text-muted mb-4">Select any exercise you have logged to pin it to your analytics dashboard.</p>
+            
+            <div className="max-h-60 overflow-y-auto space-y-2 mb-6 pr-2">
+              {availableExercisesToTrack.length === 0 ? (
+                <p className="text-xs text-noir-text-muted italic">All your exercises are already being tracked.</p>
+              ) : (
+                availableExercisesToTrack.map(ex => (
+                  <button
+                    key={ex.id}
+                    onClick={() => {
+                      addTrackedLift({
+                        id: ex.id,
+                        name: ex.name,
+                        muscle: "Custom",
+                        color: `#${Math.floor(Math.random()*16777215).toString(16)}`
+                      });
+                      setIsAddTrackerOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-bg hover:border-noir-accent transition-colors"
+                  >
+                    <p className="font-bold text-sm">{ex.name}</p>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <button 
+              onClick={() => setIsAddTrackerOpen(false)} 
+              className="w-full px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-surface-light font-bold"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

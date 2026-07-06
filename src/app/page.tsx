@@ -4,14 +4,15 @@ import { useState, useEffect } from "react";
 import WorkoutLogger from "@/components/WorkoutLogger";
 import ProgressAnalytics from "@/components/ProgressAnalytics";
 import Leaderboard from "@/components/Leaderboard";
-import { Dumbbell, LayoutDashboard, Trophy, Loader2 } from "lucide-react";
+import Profile from "@/components/Profile";
+import { Dumbbell, LayoutDashboard, Trophy, User, Loader2 } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { getCurrentProtocolDateInfo } from "@/data/protocol";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "leaderboard">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "leaderboard" | "profile">("dashboard");
   const { state, setActiveWeekDay, syncWithUser } = useProtocol();
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const router = useRouter();
@@ -63,6 +64,7 @@ export default function Home() {
         )}
         {activeTab === "workout" && <WorkoutLogger />}
         {activeTab === "leaderboard" && <Leaderboard />}
+        {activeTab === "profile" && <Profile />}
       </div>
 
       {/* Bottom Navigation for mobile-first usage */}
@@ -96,6 +98,16 @@ export default function Home() {
           >
             <Trophy size={24} />
             <span className="text-[10px] uppercase font-bold tracking-wider">Squad</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab("profile")}
+            className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
+              activeTab === "profile" ? "text-noir-accent" : "text-noir-text-muted"
+            }`}
+          >
+            <User size={24} />
+            <span className="text-[10px] uppercase font-bold tracking-wider">Profile</span>
           </button>
         </div>
       </nav>

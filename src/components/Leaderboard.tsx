@@ -32,9 +32,6 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [myProfile, setMyProfile] = useState<Profile | null>(null);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editUsername, setEditUsername] = useState("");
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -50,7 +47,6 @@ export default function Leaderboard() {
         const currentUserProfile = profiles.find(p => p.id === user?.id);
         if (currentUserProfile) {
           setMyProfile(currentUserProfile);
-          setEditUsername(currentUserProfile.username);
         }
 
         const userStats: Record<string, { workouts: Set<string>, volume: number }> = {};
@@ -132,50 +128,7 @@ export default function Leaderboard() {
     );
   }
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !myProfile) return;
-    
-    setLoading(true);
-    const { error } = await supabase.from("profiles").update({ username: editUsername }).eq("id", user.id);
-    if (!error) {
-      setMyProfile({ ...myProfile, username: editUsername });
-      setIsEditingProfile(false);
-      // Reload leaderboard
-      window.location.reload();
-    }
-    setLoading(false);
-  };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0 || !user) return;
-    const file = e.target.files[0];
-    
-    setUploadingAvatar(true);
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${user.id}-${Math.random()}.${fileExt}`;
-
-    // Upload image
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
-    
-    if (uploadError) {
-      console.error(uploadError);
-      setUploadingAvatar(false);
-      return;
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-
-    // Update profile
-    await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", user.id);
-    
-    if (myProfile) {
-      setMyProfile({ ...myProfile, avatar_url: publicUrl });
-    }
-    setUploadingAvatar(false);
-    window.location.reload();
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
@@ -186,83 +139,7 @@ export default function Leaderboard() {
             Squad <Trophy className="text-amber-400" size={28} />
           </h1>
         </div>
-        {myProfile && (
-          <button 
-            onClick={() => setIsEditingProfile(true)}
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-noir-text-muted hover:text-noir-accent transition-colors"
-          >
-            {myProfile.avatar_url ? (
-              <img src={myProfile.avatar_url} alt="DP" className="w-8 h-8 rounded-full border border-noir-border object-cover" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-noir-surface border border-noir-border flex items-center justify-center text-xs">
-                {myProfile.username.substring(0, 2).toUpperCase()}
-              </div>
-            )}
-            Edit
-          </button>
-        )}
       </header>
-
-      {isEditingProfile && myProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-noir-bg/90 backdrop-blur-sm">
-          <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-2xl w-full max-w-sm animate-in zoom-in-95">
-            <h2 className="text-xl font-bold mb-6">Edit Profile</h2>
-            
-            <div className="mb-6 flex flex-col items-center">
-              <div className="relative group cursor-pointer mb-2">
-                {myProfile.avatar_url ? (
-                  <img src={myProfile.avatar_url} alt="DP" className="w-24 h-24 rounded-full border-2 border-noir-accent object-cover" />
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-noir-bg border-2 border-dashed border-noir-border flex items-center justify-center text-xl font-bold">
-                    {myProfile.username.substring(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-xs font-bold text-white uppercase tracking-wider">Change</span>
-                </div>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleAvatarUpload} 
-                  disabled={uploadingAvatar}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" 
-                />
-              </div>
-              {uploadingAvatar && <p className="text-xs text-noir-accent animate-pulse">Uploading...</p>}
-            </div>
-
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Username</label>
-                <input 
-                  required 
-                  type="text" 
-                  value={editUsername} 
-                  onChange={e => setEditUsername(e.target.value)} 
-                  className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-noir-text focus:outline-none focus:border-noir-accent" 
-                />
-              </div>
-              
-              <div className="flex flex-col gap-3 pt-4 border-t border-noir-border">
-                <button 
-                  type="button" 
-                  onClick={async () => {
-                    await supabase.auth.signOut();
-                    window.location.href = '/login';
-                  }}
-                  className="w-full px-4 py-3 rounded-lg bg-red-900/20 text-red-500 border border-red-900/50 hover:bg-red-900/40 font-bold flex items-center justify-center gap-2"
-                >
-                  Log Out
-                </button>
-                <div className="flex gap-3 mt-1">
-                  <button type="button" onClick={() => setIsEditingProfile(false)} className="flex-1 px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-surface-light font-bold">Cancel</button>
-                  <button type="submit" disabled={loading} className="flex-1 px-4 py-3 rounded-lg bg-noir-accent text-noir-bg hover:bg-[#2cff05] font-bold disabled:opacity-50">Save</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       <div className="space-y-4">
         {entries.length === 0 ? (
