@@ -5,7 +5,7 @@ import { Play, Pause, X, Plus, Minus, BellRing } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
 export default function RestTimer() {
-  const { timer, updateTimer } = useProtocol();
+  const { state: { timer }, updateTimer } = useProtocol();
   const [timeLeft, setTimeLeft] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
