@@ -9,6 +9,12 @@ type ProfileData = {
   username: string;
   avatar_url: string | null;
   avatar_position: number;
+  age?: number;
+  gender?: string;
+  height_cm?: number;
+  weight_kg?: number;
+  activity_level?: string;
+  nutrition_goal?: string;
 };
 
 export default function Profile() {
@@ -18,6 +24,12 @@ export default function Profile() {
   
   const [editUsername, setEditUsername] = useState("");
   const [avatarPosition, setAvatarPosition] = useState(50);
+  const [age, setAge] = useState<number | "">("");
+  const [gender, setGender] = useState("male");
+  const [heightCm, setHeightCm] = useState<number | "">("");
+  const [weightKg, setWeightKg] = useState<number | "">("");
+  const [activityLevel, setActivityLevel] = useState("1.55");
+  const [nutritionGoal, setNutritionGoal] = useState("maintain");
   
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -37,6 +49,12 @@ export default function Profile() {
           setMyProfile({ ...data, avatar_position: data.avatar_position ?? 50 });
           setEditUsername(data.username || "");
           setAvatarPosition(data.avatar_position ?? 50);
+          if (data.age) setAge(data.age);
+          if (data.gender) setGender(data.gender);
+          if (data.height_cm) setHeightCm(data.height_cm);
+          if (data.weight_kg) setWeightKg(data.weight_kg);
+          if (data.activity_level) setActivityLevel(data.activity_level);
+          if (data.nutrition_goal) setNutritionGoal(data.nutrition_goal);
         }
       }
       setLoading(false);
@@ -55,13 +73,20 @@ export default function Profile() {
     if (!user || !myProfile) return;
     
     setSaveStatus("saving");
-    const { error } = await supabase.from("profiles").update({ 
+    const updates = { 
       username: editUsername,
-      avatar_position: avatarPosition 
-    }).eq("id", user.id);
+      avatar_position: avatarPosition,
+      age: age || null,
+      gender,
+      height_cm: heightCm || null,
+      weight_kg: weightKg || null,
+      activity_level: activityLevel,
+      nutrition_goal: nutritionGoal
+    };
+    const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
     
     if (!error) {
-      setMyProfile({ ...myProfile, username: editUsername, avatar_position: avatarPosition });
+      setMyProfile({ ...myProfile, ...updates } as ProfileData);
       setSaveStatus("saved");
       showToast("Profile updated successfully!");
       setTimeout(() => setSaveStatus("idle"), 2000);
@@ -202,6 +227,72 @@ export default function Profile() {
               <p className="text-[10px] text-noir-text-muted text-center mt-2 italic">Slide to adjust head/body framing</p>
             </div>
           )}
+
+          <div className="pt-6 border-t border-noir-border">
+            <h2 className="text-xl font-bold mb-4 tracking-tight">Body Stats & Goals</h2>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">Age</label>
+                <input type="number" value={age} onChange={e => setAge(e.target.value ? Number(e.target.value) : "")} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">Gender</label>
+                <select value={gender} onChange={e => setGender(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent">
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">Height (cm)</label>
+                <input type="number" value={heightCm} onChange={e => setHeightCm(e.target.value ? Number(e.target.value) : "")} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">Weight (kg)</label>
+                <input type="number" value={weightKg} onChange={e => setWeightKg(e.target.value ? Number(e.target.value) : "")} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">Activity Level</label>
+                <select value={activityLevel} onChange={e => setActivityLevel(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent">
+                  <option value="1.2">Sedentary (Little/No Exercise)</option>
+                  <option value="1.375">Lightly Active (1-3 days/week)</option>
+                  <option value="1.55">Moderately Active (3-5 days/week)</option>
+                  <option value="1.725">Very Active (6-7 days/week)</option>
+                  <option value="1.9">Extra Active (Physical Job/Training 2x)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">Nutrition Goal</label>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setNutritionGoal("cut")} className={`flex-1 p-2 rounded-lg text-xs font-bold border transition-colors ${nutritionGoal === "cut" ? "bg-noir-accent text-noir-bg border-noir-accent" : "bg-noir-bg border-noir-border text-noir-text-muted"}`}>Cut</button>
+                  <button type="button" onClick={() => setNutritionGoal("maintain")} className={`flex-1 p-2 rounded-lg text-xs font-bold border transition-colors ${nutritionGoal === "maintain" ? "bg-noir-accent text-noir-bg border-noir-accent" : "bg-noir-bg border-noir-border text-noir-text-muted"}`}>Maintain</button>
+                  <button type="button" onClick={() => setNutritionGoal("bulk")} className={`flex-1 p-2 rounded-lg text-xs font-bold border transition-colors ${nutritionGoal === "bulk" ? "bg-noir-accent text-noir-bg border-noir-accent" : "bg-noir-bg border-noir-border text-noir-text-muted"}`}>Bulk</button>
+                </div>
+              </div>
+            </div>
+
+            {/* Calories Calculator display */}
+            {age && heightCm && weightKg ? (
+              (() => {
+                let bmr = 10 * Number(weightKg) + 6.25 * Number(heightCm) - 5 * Number(age);
+                bmr += gender === "male" ? 5 : -161;
+                const tdee = Math.round(bmr * Number(activityLevel));
+                const target = nutritionGoal === "cut" ? tdee - 500 : nutritionGoal === "bulk" ? tdee + 500 : tdee;
+
+                return (
+                  <div className="mt-6 bg-noir-bg border border-noir-border rounded-xl p-4 flex flex-col items-center">
+                    <p className="text-xs text-noir-text-muted uppercase tracking-wider font-bold mb-1">Target Daily Calories</p>
+                    <p className="text-4xl font-black text-noir-accent">{target}</p>
+                    <p className="text-[10px] text-noir-text-muted mt-2">Maintenance (TDEE): {tdee} kcal</p>
+                  </div>
+                );
+              })()
+            ) : (
+              <p className="mt-4 text-xs text-center text-noir-text-muted">Fill out Age, Height, and Weight to calculate your target calories.</p>
+            )}
+          </div>
           
           <button 
             type="submit" 

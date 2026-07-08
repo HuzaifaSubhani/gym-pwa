@@ -2,8 +2,10 @@
 
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { ROUTINE_SCHEMA, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTOCOL_START_DATE } from "@/data/protocol";
-import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import TourGuide from "./TourGuide";
+import ExerciseVideoModal from "./ExerciseVideoModal";
 
 function getProtocolDateString(week: number, dayNum: number) {
   const date = new Date(PROTOCOL_START_DATE);
@@ -27,7 +29,7 @@ function DaySelector() {
   ];
 
   return (
-    <div className="bg-noir-surface rounded-xl border border-noir-border p-4 shadow-lg mb-6 flex flex-col gap-4">
+    <div id="tour-day-selector" className="bg-noir-surface rounded-xl border border-noir-border p-4 shadow-lg mb-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <button
           onClick={() => setActiveWeekDay(Math.max(1, state.activeWeek - 1), state.activeDayOfWeek)}
@@ -114,6 +116,10 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   // To track if changes were made by user (to avoid saving on mount)
   const [isDirty, setIsDirty] = useState(false);
+
+  const isExerciseComplete = localLogs.length > 0 && localLogs.length === exercise.sets && localLogs.every(log => log.weight !== "" && log.reps !== "");
+
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   // Sync local state when global state or date changes
   useEffect(() => {
@@ -217,7 +223,11 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   };
 
   return (
-    <div className={`bg-noir-surface rounded-xl border p-4 shadow-lg overflow-hidden relative transition-all duration-300 ${saveStatus === "saved" ? "border-noir-accent/50 shadow-[0_0_15px_rgba(57,255,20,0.1)]" : "border-noir-border"}`}>
+    <div id="tour-exercise-card" className={`bg-noir-surface rounded-xl border p-4 shadow-lg overflow-hidden relative transition-all duration-300 ${
+      isExerciseComplete ? "border-[#39ff14]/70 shadow-[0_0_15px_rgba(57,255,20,0.15)] bg-noir-surface/90" 
+      : saveStatus === "saved" ? "border-noir-accent/50 shadow-[0_0_15px_rgba(57,255,20,0.1)]" 
+      : "border-noir-border"
+    }`}>
       {showClearConfirm && (
         <div className="absolute inset-0 bg-noir-bg/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="text-center">
@@ -243,11 +253,25 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div>
-          <h3 className="text-lg md:text-xl font-bold leading-tight group-hover:text-noir-accent transition-colors">{exercise.name}</h3>
+          <h3 className="text-lg md:text-xl font-bold leading-tight group-hover:text-noir-accent transition-colors flex items-center gap-2">
+            {exercise.name}
+            {isExerciseComplete && <Check size={18} className="text-[#39ff14] stroke-[3px]" />}
+          </h3>
           <p className="text-xs md:text-sm text-noir-text-muted mt-1 flex items-center gap-2">
             {exercise.sets} Sets × {exercise.reps}
             <span className="inline-block w-1 h-1 rounded-full bg-noir-border"></span>
             {effectiveRest}s Rest
+            {exercise.gif_url && (
+              <>
+                <span className="inline-block w-1 h-1 rounded-full bg-noir-border"></span>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setIsVideoModalOpen(true); }}
+                  className="flex items-center gap-1 text-noir-accent hover:text-[#2cff05] transition-colors bg-noir-accent/10 px-2 py-0.5 rounded border border-noir-accent/30"
+                >
+                  <Play size={12} className="fill-current" /> <span className="uppercase font-bold tracking-wider text-[9px]">Demo</span>
+                </button>
+              </>
+            )}
           </p>
         </div>
         <div className="text-noir-text-muted group-hover:text-noir-accent transition-colors self-center p-2">
@@ -357,6 +381,15 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
           </div>
         </div>
       </div>
+
+      {exercise.gif_url && (
+        <ExerciseVideoModal
+          isOpen={isVideoModalOpen}
+          onClose={() => setIsVideoModalOpen(false)}
+          videoUrl={exercise.gif_url}
+          exerciseName={exercise.name}
+        />
+      )}
     </div>
   );
 }
@@ -367,6 +400,41 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
   const [reps, setReps] = useState("8-10");
   const [rest, setRest] = useState("60");
   const [scope, setScope] = useState<"today" | "every_week">("today");
+  
+  const [dbExercises, setDbExercises] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [selectedGifUrl, setSelectedGifUrl] = useState<string | undefined>();
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && dbExercises.length === 0) {
+      fetch('/data/exercises.json')
+        .then(res => res.json())
+        .then(data => setDbExercises(data))
+        .catch(err => console.error("Failed to load exercise db:", err));
+    }
+  }, [isOpen, dbExercises.length]);
+
+  useEffect(() => {
+    if (!name || name.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const term = name.toLowerCase();
+    const results = dbExercises.filter(ex => ex.name.toLowerCase().includes(term)).slice(0, 10);
+    setSearchResults(results);
+  }, [name, dbExercises]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchResults([]);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -380,21 +448,67 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
       sets: parseInt(sets, 10) || 3,
       reps,
       rest: parseInt(rest, 10) || 60,
+      gif_url: selectedGifUrl
     }, scope);
     
     // Reset and close
     setName("");
+    setSelectedGifUrl(undefined);
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg/80 backdrop-blur-sm">
-      <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+      <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-visible">
         <h2 className="text-xl font-bold mb-4">Add Custom Exercise</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+        <form onSubmit={handleSubmit} className="space-y-4 relative">
+          <div className="relative" ref={searchRef}>
             <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Exercise Name</label>
-            <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-noir-text focus:outline-none focus:border-noir-accent" placeholder="e.g. Preacher Curls" />
+            <div className="relative">
+              <input 
+                required 
+                type="text" 
+                value={name} 
+                onChange={e => {
+                  setName(e.target.value);
+                  setSelectedGifUrl(undefined);
+                  setIsSearching(true);
+                }} 
+                onFocus={() => setIsSearching(true)}
+                className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 pl-10 text-noir-text focus:outline-none focus:border-noir-accent" 
+                placeholder="Search or type custom name..." 
+              />
+              <Search className="absolute left-3 top-3.5 text-noir-text-muted" size={18} />
+            </div>
+
+            {isSearching && searchResults.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-noir-surface border border-noir-border rounded-lg shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+                {searchResults.map(res => (
+                  <div 
+                    key={res.id} 
+                    className="p-3 hover:bg-noir-bg cursor-pointer border-b border-noir-border/50 last:border-0 flex items-center justify-between"
+                    onClick={() => {
+                      setName(res.name);
+                      setSelectedGifUrl(res.g);
+                      setSearchResults([]);
+                      setIsSearching(false);
+                    }}
+                  >
+                    <div>
+                      <div className="font-bold text-sm">{res.name}</div>
+                      <div className="text-[10px] text-noir-text-muted uppercase">{res.b} • {res.t}</div>
+                    </div>
+                    {res.g && <Play size={14} className="text-noir-accent" />}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {selectedGifUrl && (
+              <div className="mt-2 text-[10px] text-noir-accent flex items-center gap-1 font-bold uppercase tracking-wider">
+                <Check size={12} /> Animation Attached
+              </div>
+            )}
           </div>
           <div className="flex gap-4">
             <div className="flex-1">
@@ -479,7 +593,7 @@ export default function WorkoutLogger() {
               <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">{mergedRoutine?.dayName || "Custom Day"}</h2>
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-black">{mergedRoutine?.focus || "Custom Workout"}</h1>
-                <button onClick={() => {
+                <button id="tour-edit-routine" onClick={() => {
                   setRoutineNameEdit(mergedRoutine?.dayName || "Custom Day");
                   setRoutineFocusEdit(mergedRoutine?.focus || "Custom Workout");
                   setIsEditRoutineModalOpen(true);
@@ -518,6 +632,8 @@ export default function WorkoutLogger() {
         onClose={() => setIsAddModalOpen(false)} 
         onAdd={(ex, scope) => addCustomExercise(ex, scope, state.activeDayOfWeek, dateStr)} 
       />
+
+      <TourGuide />
 
       {/* Edit Routine Modal */}
       {isEditRoutineModalOpen && (
