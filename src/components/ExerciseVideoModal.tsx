@@ -42,14 +42,23 @@ export default function ExerciseVideoModal({
           <h2 className="text-xl font-black">{exerciseName}</h2>
         </div>
         
-        <div className="aspect-square w-full bg-black relative flex items-center justify-center overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={videoUrl} 
-            alt={exerciseName}
-            className="w-full h-full object-contain"
-            loading="lazy"
-          />
+        <div className="w-full bg-noir-bg relative flex flex-col items-center justify-center overflow-hidden py-8 px-4">
+          <div className="relative rounded-xl overflow-hidden border-2 border-noir-border shadow-[0_0_30px_rgba(57,255,20,0.15)] bg-black">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={videoUrl} 
+              alt={exerciseName}
+              className="w-[360px] max-w-full h-auto object-contain mix-blend-screen opacity-90 contrast-125 grayscale"
+              loading="lazy"
+              style={{ imageRendering: 'crisp-edges' }}
+            />
+            {/* Scanline overlay for aesthetic */}
+            <div className="absolute inset-0 pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-50 mix-blend-overlay"></div>
+          </div>
+          <p className="text-[10px] text-noir-text-muted mt-4 uppercase tracking-widest font-bold flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-noir-accent animate-pulse"></span>
+            Lo-Fi Dataset Render
+          </p>
         </div>
       </div>
     </div>
