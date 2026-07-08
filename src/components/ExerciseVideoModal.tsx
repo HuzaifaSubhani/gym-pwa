@@ -42,12 +42,13 @@ export default function ExerciseVideoModal({
           <h2 className="text-xl font-black">{exerciseName}</h2>
         </div>
         
-        <div className="w-full bg-black relative flex items-center justify-center overflow-hidden aspect-square">
+        <div className="w-full bg-white relative flex items-center justify-center overflow-hidden p-4 min-h-[360px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={videoUrl} 
             alt={exerciseName}
-            className="w-full h-full object-contain bg-white"
+            className="max-w-full max-h-[360px] object-contain"
+            style={{ imageRendering: 'high-quality' }}
             loading="lazy"
           />
         </div>

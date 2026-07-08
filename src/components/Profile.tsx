@@ -31,6 +31,10 @@ export default function Profile() {
   const [activityLevel, setActivityLevel] = useState("1.55");
   const [nutritionGoal, setNutritionGoal] = useState("maintain");
   
+  const [heightUnit, setHeightUnit] = useState<"cm" | "ft">("cm");
+  const [heightFt, setHeightFt] = useState<number | "">("");
+  const [heightIn, setHeightIn] = useState<number | "">("");
+  
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -51,7 +55,12 @@ export default function Profile() {
           setAvatarPosition(data.avatar_position ?? 50);
           if (data.age) setAge(data.age);
           if (data.gender) setGender(data.gender);
-          if (data.height_cm) setHeightCm(data.height_cm);
+          if (data.height_cm) {
+            setHeightCm(data.height_cm);
+            const totalInches = data.height_cm / 2.54;
+            setHeightFt(Math.floor(totalInches / 12));
+            setHeightIn(Math.round(totalInches % 12));
+          }
           if (data.weight_kg) setWeightKg(data.weight_kg);
           if (data.activity_level) setActivityLevel(data.activity_level);
           if (data.nutrition_goal) setNutritionGoal(data.nutrition_goal);
@@ -62,6 +71,29 @@ export default function Profile() {
 
     fetchProfile();
   }, []);
+
+  const handleImperialHeightChange = (f: number | "", i: number | "") => {
+    setHeightFt(f);
+    setHeightIn(i);
+    if (f !== "" || i !== "") {
+      const totalInches = (Number(f) * 12) + Number(i);
+      setHeightCm(Math.round(totalInches * 2.54));
+    } else {
+      setHeightCm("");
+    }
+  };
+
+  const handleCmHeightChange = (cm: number | "") => {
+    setHeightCm(cm);
+    if (cm !== "") {
+      const totalInches = cm / 2.54;
+      setHeightFt(Math.floor(totalInches / 12));
+      setHeightIn(Math.round(totalInches % 12));
+    } else {
+      setHeightFt("");
+      setHeightIn("");
+    }
+  };
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -243,12 +275,25 @@ export default function Profile() {
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">Height (cm)</label>
-                <input type="number" value={heightCm} onChange={e => setHeightCm(e.target.value ? Number(e.target.value) : "")} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" />
+                <label className="flex items-center justify-between text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">
+                  Height
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => setHeightUnit("cm")} className={`px-1 rounded ${heightUnit === "cm" ? "bg-noir-accent text-black" : ""}`}>CM</button>
+                    <button type="button" onClick={() => setHeightUnit("ft")} className={`px-1 rounded ${heightUnit === "ft" ? "bg-noir-accent text-black" : ""}`}>FT</button>
+                  </div>
+                </label>
+                {heightUnit === "cm" ? (
+                  <input type="number" value={heightCm} onChange={e => handleCmHeightChange(e.target.value ? Number(e.target.value) : "")} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" placeholder="cm" />
+                ) : (
+                  <div className="flex gap-2">
+                    <input type="number" value={heightFt} onChange={e => handleImperialHeightChange(e.target.value ? Number(e.target.value) : "", heightIn)} className="w-1/2 bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" placeholder="ft" />
+                    <input type="number" value={heightIn} onChange={e => handleImperialHeightChange(heightFt, e.target.value ? Number(e.target.value) : "")} className="w-1/2 bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" placeholder="in" />
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">Weight (kg)</label>
-                <input type="number" value={weightKg} onChange={e => setWeightKg(e.target.value ? Number(e.target.value) : "")} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" />
+                <input type="number" value={weightKg} onChange={e => setWeightKg(e.target.value ? Number(e.target.value) : "")} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" placeholder="kg" />
               </div>
             </div>
 
@@ -296,7 +341,19 @@ export default function Profile() {
           
           <button 
             type="submit" 
-            disabled={saveStatus === "saving" || (editUsername === myProfile.username && avatarPosition === myProfile.avatar_position)} 
+            disabled={
+              saveStatus === "saving" || 
+              (
+                editUsername === myProfile.username && 
+                avatarPosition === myProfile.avatar_position &&
+                age === (myProfile.age || "") &&
+                gender === (myProfile.gender || "male") &&
+                heightCm === (myProfile.height_cm || "") &&
+                weightKg === (myProfile.weight_kg || "") &&
+                activityLevel === (myProfile.activity_level || "1.55") &&
+                nutritionGoal === (myProfile.nutrition_goal || "maintain")
+              )
+            } 
             className="w-full px-4 py-4 rounded-lg bg-noir-accent text-noir-bg hover:bg-[#2cff05] font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(57,255,20,0.2)] flex justify-center items-center gap-2"
           >
             {saveStatus === "saving" ? <Loader2 className="animate-spin" size={20} /> : saveStatus === "saved" ? "Saved!" : "Save Changes"}
