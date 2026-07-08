@@ -111,7 +111,8 @@ export function getCurrentProtocolDateInfo() {
   if (currentWeek < 1) currentWeek = 1;
   if (currentWeek > 7) currentWeek = 7;
   
-  const currentDayOfWeek = now.getDay(); // 0 is Sunday, 1 is Monday, 5 is Friday
+  const jsDay = now.getDay(); // 0 is Sunday, 1 is Monday
+  const currentDayOfWeek = jsDay === 0 ? 7 : jsDay; // 1 to 7
   
   return { currentWeek, currentDayOfWeek };
 }

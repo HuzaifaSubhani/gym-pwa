@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { getCurrentProtocolDateInfo } from "@/data/protocol";
 
 export type SetLog = { weight: string; reps: string; drops?: { weight: string; reps: string }[] };
 
@@ -28,6 +29,7 @@ type ProtocolContextType = {
   setActiveWeekDay: (week: number, day: number) => void;
   addCustomExercise: (exercise: any, scope: "today" | "every_week", dayNum: number, dateStr: string) => void;
   removeExercise: (dayNum: number, dateStr: string, exerciseId: string) => void;
+  setCustomDayRoutine: (dayNum: number, name: string, focus: string) => void;
   syncWithUser: (userId: string) => void;
   updateTimer: (updates: Partial<ProtocolState["timer"]>) => void;
   startTimer: (seconds: number) => void;
@@ -35,9 +37,11 @@ type ProtocolContextType = {
   removeTrackedLift: (id: string) => void;
 };
 
+const { currentWeek, currentDayOfWeek } = getCurrentProtocolDateInfo();
+
 const initialState: ProtocolState = {
-  activeWeek: 1,
-  activeDayOfWeek: 1,
+  activeWeek: currentWeek,
+  activeDayOfWeek: currentDayOfWeek,
   workoutLogs: {},
   weightLogs: {},
   habits: {},
@@ -63,7 +67,15 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
       const saved = localStorage.getItem(`gym_pwa_${userId}`);
       if (saved) {
         try {
-          setState(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          // Always ensure the app starts on today's date when they open it, 
+          // overriding whatever week/day was saved previously.
+          const { currentWeek, currentDayOfWeek } = getCurrentProtocolDateInfo();
+          setState({
+            ...parsed,
+            activeWeek: currentWeek,
+            activeDayOfWeek: currentDayOfWeek,
+          });
         } catch (e) {
           console.error("Failed to parse save", e);
         }
@@ -241,6 +253,21 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const setCustomDayRoutine = (dayNum: number, name: string, focus: string) => {
+    setState((prev) => ({
+      ...prev,
+      customRoutine: {
+        ...prev.customRoutine,
+        [dayNum]: {
+          dayName: name,
+          focus: focus,
+          exercises: [],
+          isPartial: false // completely overrides base schema
+        }
+      }
+    }));
+  };
+
   const updateTimer = (updates: Partial<ProtocolState["timer"]>) => {
     setState(prev => ({
       ...prev,
@@ -279,7 +306,7 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <ProtocolContext.Provider value={{ state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift }}>
+    <ProtocolContext.Provider value={{ state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift }}>
       {children}
     </ProtocolContext.Provider>
   );

@@ -24,10 +24,26 @@ type LeaderboardEntry = {
   username: string;
   avatar_url: string | null;
   avatar_position?: number;
-  score: number;
+  xp: number;
+  level: number;
+  progress: number;
   workouts: number;
   totalVolume: number;
 };
+
+function getLevelInfo(volume: number) {
+  const xp = Math.round(volume / 10);
+  const level = Math.floor(Math.sqrt(xp / 100)) + 1;
+  const currentLevelXP = 100 * Math.pow(level - 1, 2);
+  const nextLevelXP = 100 * Math.pow(level, 2);
+  
+  let progress = 0;
+  if (nextLevelXP > currentLevelXP) {
+    progress = ((xp - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100;
+  }
+  
+  return { xp, level, progress: Math.min(100, Math.max(0, progress)) };
+}
 
 export default function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -83,24 +99,26 @@ export default function Leaderboard() {
         });
 
         const calculatedEntries: LeaderboardEntry[] = profiles.map(p => {
-          const stats = userStats[p.id];
+          const stats = userStats[p.id] || { workouts: new Set(), volume: 0 };
           const workoutsCount = stats.workouts.size;
-          // Simple scoring algorithm: volume / 100 + (workouts * 50)
-          const score = Math.round((stats.volume / 100) + (workoutsCount * 50));
+          
+          const { xp, level, progress } = getLevelInfo(stats.volume);
           
           return {
             id: p.id,
             username: p.username || "Gym Bro",
             avatar_url: p.avatar_url,
             avatar_position: p.avatar_position ?? 50,
-            score,
+            xp,
+            level,
+            progress,
             workouts: workoutsCount,
             totalVolume: Math.round(stats.volume)
           };
         });
 
-        // Sort by score descending
-        calculatedEntries.sort((a, b) => b.score - a.score);
+        // Sort by XP descending
+        calculatedEntries.sort((a, b) => b.xp - a.xp);
         setEntries(calculatedEntries);
       }
       setLoading(false);
@@ -169,33 +187,44 @@ export default function Leaderboard() {
                    <span className="text-noir-text-muted">#{index + 1}</span>}
                 </div>
                 
-                <div className="flex-1 ml-4 flex items-center gap-3">
+                <div className="flex-1 ml-4 flex items-center gap-3 w-full">
                   {entry.avatar_url ? (
                     <img 
                       src={entry.avatar_url} 
                       alt="DP" 
                       style={{ objectPosition: `50% ${entry.avatar_position}%` }}
-                      className="w-10 h-10 rounded-full border border-noir-border object-cover" 
+                      className="w-12 h-12 rounded-full border-2 border-noir-border object-cover flex-shrink-0" 
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-noir-bg border border-noir-border flex items-center justify-center text-xs font-bold text-noir-text-muted">
+                    <div className="w-12 h-12 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center text-sm font-bold text-noir-text-muted flex-shrink-0">
                       {entry.username.substring(0, 2).toUpperCase()}
                     </div>
                   )}
-                  <div>
-                    <h3 className={`font-bold text-lg leading-tight ${isCurrentUser ? "text-noir-accent" : ""}`}>
-                      {entry.username} {isCurrentUser && "(You)"}
-                    </h3>
-                    <div className="flex items-center gap-3 text-[10px] uppercase text-noir-text-muted mt-1 font-bold tracking-wider">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-1">
+                      <h3 className={`font-bold text-base md:text-lg leading-tight truncate pr-2 ${isCurrentUser ? "text-noir-accent" : ""}`}>
+                        {entry.username} {isCurrentUser && "(You)"}
+                      </h3>
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-lg md:text-xl font-black text-noir-accent">Lvl {entry.level}</div>
+                      </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full h-1.5 bg-noir-bg rounded-full overflow-hidden border border-noir-border/50 mb-1">
+                      <div 
+                        className="h-full bg-noir-accent transition-all duration-1000 ease-out relative" 
+                        style={{ width: `${entry.progress}%` }}
+                      >
+                        <div className="absolute top-0 right-0 bottom-0 left-0 bg-gradient-to-r from-transparent to-white/30"></div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center text-[9px] md:text-[10px] uppercase font-bold text-noir-text-muted tracking-wider">
                       <span className="flex items-center gap-1"><Dumbbell size={10} /> {entry.workouts} WOs</span>
-                      <span>{entry.totalVolume.toLocaleString()} kg vol</span>
+                      <span>{entry.xp.toLocaleString()} XP</span>
                     </div>
                   </div>
-                </div>
-                
-                <div className="text-right">
-                  <div className="text-2xl font-black">{entry.score.toLocaleString()}</div>
-                  <div className="text-[10px] uppercase font-bold text-noir-text-muted tracking-widest">Score</div>
                 </div>
               </div>
             );

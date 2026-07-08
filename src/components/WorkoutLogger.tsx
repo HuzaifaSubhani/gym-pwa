@@ -22,7 +22,8 @@ function getShortDateLabel(dateStr: string) {
 function DaySelector() {
   const { state, setActiveWeekDay } = useProtocol();
   const days = [
-    { num: 1, label: "Mon" }, { num: 2, label: "Tue" }, { num: 3, label: "Wed" }, { num: 4, label: "Thu" }, { num: 5, label: "Fri" }
+    { num: 1, label: "Mon" }, { num: 2, label: "Tue" }, { num: 3, label: "Wed" }, 
+    { num: 4, label: "Thu" }, { num: 5, label: "Fri" }, { num: 6, label: "Sat" }, { num: 7, label: "Sun" }
   ];
 
   return (
@@ -433,8 +434,11 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
 }
 
 export default function WorkoutLogger() {
-  const { state, addCustomExercise } = useProtocol();
+  const { state, addCustomExercise, setCustomDayRoutine } = useProtocol();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditRoutineModalOpen, setIsEditRoutineModalOpen] = useState(false);
+  const [routineNameEdit, setRoutineNameEdit] = useState("");
+  const [routineFocusEdit, setRoutineFocusEdit] = useState("");
   
   const baseRoutine = ROUTINE_SCHEMA[state.activeDayOfWeek];
   const dateStr = getProtocolDateString(state.activeWeek, state.activeDayOfWeek);
@@ -473,7 +477,14 @@ export default function WorkoutLogger() {
           <header className="mb-4 px-2 flex justify-between items-end">
             <div>
               <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">{mergedRoutine?.dayName || "Custom Day"}</h2>
-              <h1 className="text-3xl font-black">{mergedRoutine?.focus || "Custom Workout"}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-black">{mergedRoutine?.focus || "Custom Workout"}</h1>
+                <button onClick={() => {
+                  setRoutineNameEdit(mergedRoutine?.dayName || "Custom Day");
+                  setRoutineFocusEdit(mergedRoutine?.focus || "Custom Workout");
+                  setIsEditRoutineModalOpen(true);
+                }} className="text-noir-text-muted hover:text-noir-accent transition-colors text-xs border border-noir-border px-2 py-1 rounded-lg uppercase tracking-wider font-bold">Edit</button>
+              </div>
             </div>
             <div className="text-right text-xs text-noir-text-muted">
               {getShortDateLabel(dateStr)}
@@ -507,6 +518,37 @@ export default function WorkoutLogger() {
         onClose={() => setIsAddModalOpen(false)} 
         onAdd={(ex, scope) => addCustomExercise(ex, scope, state.activeDayOfWeek, dateStr)} 
       />
+
+      {/* Edit Routine Modal */}
+      {isEditRoutineModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg/80 backdrop-blur-sm">
+          <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold mb-4 text-noir-accent">Build Custom Routine</h2>
+            <p className="text-sm text-noir-text-muted mb-4">This will clear the current day's protocol exercises and let you build a completely custom day.</p>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!routineNameEdit || !routineFocusEdit) return;
+              setCustomDayRoutine(state.activeDayOfWeek, routineNameEdit, routineFocusEdit);
+              setIsEditRoutineModalOpen(false);
+            }} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Day Name</label>
+                <input required type="text" value={routineNameEdit} onChange={e => setRoutineNameEdit(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-noir-text focus:outline-none focus:border-noir-accent" placeholder="e.g. Arms Day" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Focus</label>
+                <input required type="text" value={routineFocusEdit} onChange={e => setRoutineFocusEdit(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-noir-text focus:outline-none focus:border-noir-accent" placeholder="e.g. Biceps & Triceps" />
+              </div>
+              <div className="flex gap-3 pt-4 border-t border-noir-border">
+                <button type="button" onClick={() => setIsEditRoutineModalOpen(false)} className="flex-1 px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-surface-light font-bold">Cancel</button>
+                <button type="submit" className="flex-1 px-4 py-3 rounded-lg bg-red-600/20 text-red-500 border border-red-900 hover:bg-red-600/30 font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2">
+                  <Trash2 size={16} /> Wipe & Build Custom
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
