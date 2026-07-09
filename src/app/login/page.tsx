@@ -272,35 +272,20 @@ export default function LoginPage() {
           {authMode === "login" && (
             <button
               type="button"
-              onClick={async () => {
-                if (window.PasswordCredential && navigator.credentials) {
-                  try {
-                    const cred = await navigator.credentials.get({ password: true }) as any;
-                    if (cred && cred.id && cred.password) {
-                      setIsLoading(true);
-                      const { error } = await supabase.auth.signInWithPassword({
-                        email: cred.id,
-                        password: cred.password,
-                      });
-                      if (error) {
-                        setError(error.message);
-                        setIsLoading(false);
-                      } else {
-                        router.push("/");
-                      }
-                      return;
-                    }
-                  } catch (e) {
-                    console.error("Biometric prompt failed", e);
-                  }
-                }
-                // Fallback to manual focus
+              onClick={() => {
+                // Instantly focus to trigger native OS autofill keyboard without API delays
                 const el = document.getElementById('password');
                 if (el) el.focus();
               }}
-              className="w-full bg-transparent border border-noir-border hover:border-noir-accent text-white font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 mt-3"
+              disabled={isLoading}
+              className="w-full bg-transparent border border-noir-border hover:border-noir-accent text-white font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 mt-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ScanFace size={20} className="text-noir-accent" /> Use Biometrics / Autofill
+              {isLoading ? (
+                <Loader2 className="animate-spin text-noir-text-muted" size={20} />
+              ) : (
+                <ScanFace size={20} className="text-noir-accent" />
+              )}
+              {isLoading ? "Scanning..." : "Face ID"}
             </button>
           )}
         </form>
