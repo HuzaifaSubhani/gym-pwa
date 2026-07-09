@@ -71,6 +71,7 @@ export default function Leaderboard() {
   const [user, setUser] = useState<any>(null);
   const [myProfile, setMyProfile] = useState<Profile | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<LeaderboardEntry | null>(null);
 
   useEffect(() => {
     fetchLeaderboardData();
@@ -409,10 +410,11 @@ export default function Leaderboard() {
             return (
               <div 
                 key={entry.id} 
-                className={`relative flex items-center p-4 rounded-xl border transition-all ${
+                onClick={() => setSelectedUser(entry)}
+                className={`relative flex items-center p-4 rounded-xl border transition-all cursor-pointer hover:bg-noir-surface-light ${
                   isCurrentUser 
                     ? "bg-noir-accent/10 border-noir-accent shadow-[0_0_15px_rgba(167,139,250,0.1)]" 
-                    : "bg-noir-surface border-noir-border hover:border-noir-border/80"
+                    : "bg-noir-surface border-noir-border"
                 }`}
               >
                 <div className="flex-shrink-0 w-10 text-center font-black text-xl">
@@ -486,6 +488,51 @@ export default function Leaderboard() {
           })
         )}
       </div>
+
+      {/* User Profile Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in" onClick={() => setSelectedUser(null)}>
+          <div className="bg-noir-surface border border-noir-border rounded-2xl p-6 shadow-2xl w-full max-w-sm relative" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedUser(null)}
+              className="absolute top-4 right-4 p-2 bg-noir-bg rounded-full border border-noir-border hover:text-noir-accent"
+            >
+              <X size={16} />
+            </button>
+            <div className="flex flex-col items-center mt-2">
+              {selectedUser.avatar_url ? (
+                <img 
+                  src={selectedUser.avatar_url} 
+                  alt="Avatar" 
+                  className="w-24 h-24 rounded-full border-2 border-noir-accent object-cover shadow-[0_0_20px_rgba(167,139,250,0.3)] mb-4"
+                  style={{ objectPosition: `50% ${selectedUser.avatar_position}%` }}
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center text-3xl font-black text-noir-text-muted mb-4 shadow-lg">
+                  {selectedUser.username.substring(0, 2).toUpperCase()}
+                </div>
+              )}
+              <h2 className="text-2xl font-black mb-1 text-white">{selectedUser.username}</h2>
+              <div className="text-sm font-bold text-noir-accent uppercase tracking-widest mb-6">Level {selectedUser.level}</div>
+              
+              <div className="grid grid-cols-2 gap-3 w-full">
+                <div className="bg-noir-bg rounded-xl p-3 border border-noir-border/50 text-center">
+                  <div className="text-[10px] text-noir-text-muted uppercase font-bold tracking-wider mb-1">XP</div>
+                  <div className="text-xl font-black text-white">{selectedUser.xp}</div>
+                </div>
+                <div className="bg-noir-bg rounded-xl p-3 border border-noir-border/50 text-center">
+                  <div className="text-[10px] text-noir-text-muted uppercase font-bold tracking-wider mb-1">Workouts</div>
+                  <div className="text-xl font-black text-white">{selectedUser.workouts}</div>
+                </div>
+                <div className="bg-noir-bg rounded-xl p-3 border border-noir-border/50 text-center col-span-2">
+                  <div className="text-[10px] text-noir-text-muted uppercase font-bold tracking-wider mb-1">Total Volume Logged</div>
+                  <div className="text-xl font-black text-noir-accent">{selectedUser.totalVolume.toLocaleString()} kg</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

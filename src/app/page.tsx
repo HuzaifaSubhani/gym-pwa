@@ -17,6 +17,7 @@ export default function Home() {
   const { state, setActiveWeekDay, syncWithUser } = useProtocol();
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [username, setUsername] = useState("Athlete");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,11 +27,16 @@ export default function Home() {
         router.push("/login");
       } else {
         // Fetch from profile to ensure we get it even if user_metadata is stale
-        const { data: profile } = await supabase.from('profiles').select('username').eq('id', session.user.id).single();
+        const { data: profile } = await supabase.from('profiles').select('username, avatar_url').eq('id', session.user.id).single();
+        
         if (profile?.username) {
           setUsername(profile.username);
         } else if (session.user.user_metadata?.username) {
           setUsername(session.user.user_metadata.username);
+        }
+
+        if (profile?.avatar_url) {
+          setAvatarUrl(profile.avatar_url);
         }
 
         // Now that they are logged in, initialize their specific local store
@@ -74,7 +80,7 @@ export default function Home() {
 
         {activeTab === "dashboard" && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-            <Dashboard />
+            <Dashboard avatarUrl={avatarUrl} />
             <ProgressAnalytics />
           </div>
         )}
@@ -123,7 +129,11 @@ export default function Home() {
               activeTab === "profile" ? "text-noir-accent" : "text-noir-text-muted"
             }`}
           >
-            <User size={24} />
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="You" className={`w-6 h-6 rounded-full border border-noir-border object-cover ${activeTab === "profile" ? "border-noir-accent shadow-[0_0_10px_rgba(167,139,250,0.5)]" : ""}`} />
+            ) : (
+              <User size={24} />
+            )}
             <span className="text-[10px] uppercase font-bold tracking-wider">You</span>
           </button>
         </div>

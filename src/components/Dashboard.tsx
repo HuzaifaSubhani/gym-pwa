@@ -15,7 +15,7 @@ function getProtocolDateString(week: number, dayNum: number) {
   return `${y}-${m}-${d}`;
 }
 
-export default function Dashboard() {
+export default function Dashboard({ avatarUrl }: { avatarUrl?: string | null }) {
   const { state, setWeightLog } = useProtocol();
   const [weightInput, setWeightInput] = useState(state.weightLogs[state.activeWeek] || "");
 
@@ -54,9 +54,13 @@ export default function Dashboard() {
               </h2>
               <h1 className="text-3xl font-black text-white">Week {state.activeWeek}</h1>
             </div>
-            <div className="w-12 h-12 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center shadow-[0_0_15px_rgba(167,139,250,0.3)] animate-float">
-              <Flame className="text-[#A78BFA]" size={24} />
-            </div>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full border-2 border-noir-accent object-cover shadow-[0_0_15px_rgba(167,139,250,0.3)] animate-float" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center shadow-[0_0_15px_rgba(167,139,250,0.3)] animate-float">
+                <Flame className="text-[#A78BFA]" size={24} />
+              </div>
+            )}
           </div>
           
           <div className="bg-noir-bg/60 backdrop-blur-md rounded-2xl p-5 border border-noir-border/50">
