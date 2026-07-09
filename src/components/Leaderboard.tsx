@@ -144,8 +144,8 @@ export default function Leaderboard() {
         <Trophy className="mx-auto mb-4 text-noir-accent opacity-50" size={48} />
         <h2 className="text-2xl font-black mb-2">Join the Squad</h2>
         <p className="text-noir-text-muted mb-6 text-sm">Log in to track your progress against your buddies and climb the leaderboard.</p>
-        <Link href="/login" className="inline-flex items-center gap-2 bg-noir-accent hover:bg-[#2cff05] text-noir-bg font-bold py-3 px-6 rounded-lg shadow-[0_0_15px_rgba(57,255,20,0.3)] transition-all">
-          Login / Sign Up <ArrowRight size={18} />
+        <Link href="/login" className="inline-flex items-center gap-2 bg-noir-accent hover:opacity-90 text-noir-bg font-bold py-3 px-6 rounded-lg shadow-[0_0_15px_rgba(208,56,243,0.3)] transition-all">
+          Join the Forge <ArrowRight size={18} />
         </Link>
       </div>
     );

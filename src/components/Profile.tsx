@@ -207,10 +207,7 @@ export default function Profile() {
               <img 
                 src={myProfile.avatar_url} 
                 alt="DP" 
-                style={{ objectPosition: `50% ${avatarPosition}%` }}
-                className="w-28 h-28 rounded-full border-2 border-noir-accent object-cover shadow-[0_0_15px_rgba(57,255,20,0.2)]" 
-              />
-            ) : (
+                className="w-28 h-28 rounded-full border-2 border-noir-accent object-cover shadow-[0_0_15px_rgba(208,56,243,0.2)]" 
               <div className="w-28 h-28 rounded-full bg-noir-bg border-2 border-dashed border-noir-border flex items-center justify-center text-3xl font-bold">
                 {myProfile.username.substring(0, 2).toUpperCase()}
               </div>
@@ -353,10 +350,7 @@ export default function Profile() {
                 activityLevel === (myProfile.activity_level || "1.55") &&
                 nutritionGoal === (myProfile.nutrition_goal || "maintain")
               )
-            } 
-            className="w-full px-4 py-4 rounded-lg bg-noir-accent text-noir-bg hover:bg-[#2cff05] font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(57,255,20,0.2)] flex justify-center items-center gap-2"
-          >
-            {saveStatus === "saving" ? <Loader2 className="animate-spin" size={20} /> : saveStatus === "saved" ? "Saved!" : "Save Changes"}
+            className="w-full px-4 py-4 rounded-lg bg-noir-accent text-noir-bg hover:opacity-90 font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(208,56,243,0.2)] flex justify-center items-center gap-2"
           </button>
         </form>
 

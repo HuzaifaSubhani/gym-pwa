@@ -9,15 +9,6 @@ import { supabase } from "@/lib/supabaseClient";
 export default function Dashboard() {
   const { state, setWeightLog } = useProtocol();
   const [weightInput, setWeightInput] = useState(state.weightLogs[state.activeWeek] || "");
-  const [username, setUsername] = useState("Athlete");
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user?.user_metadata?.username) {
-        setUsername(data.session.user.user_metadata.username);
-      }
-    });
-  }, []);
 
   const handleWeightSubmit = () => {
     if (weightInput) {
@@ -30,7 +21,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Premium Hero Section */}
+      {/* Premium Hub Controls */}
       <section className="relative p-6 rounded-3xl overflow-hidden border border-noir-border shadow-2xl bg-noir-surface">
         {/* Dynamic Background Glows */}
         <div className="absolute top-[-20%] left-[-10%] w-64 h-64 bg-noir-accent/20 blur-[100px] rounded-full pointer-events-none"></div>
@@ -41,11 +32,11 @@ export default function Dashboard() {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-xs text-noir-accent font-bold uppercase tracking-widest mb-1 flex items-center gap-1">
-                <Activity size={14} /> IronCore Protocol
+                <Activity size={14} /> Active Training Phase
               </h2>
-              <h1 className="text-3xl font-black text-white">Welcome back, <br/><span className="text-[#D038F3]">{username}</span></h1>
+              <h1 className="text-3xl font-black text-white">Week {state.activeWeek}</h1>
             </div>
-            <div className="w-12 h-12 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center shadow-[0_0_15px_rgba(208,56,243,0.3)]">
+            <div className="w-12 h-12 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center shadow-[0_0_15px_rgba(208,56,243,0.3)] animate-float">
               <Flame className="text-[#D038F3]" size={24} />
             </div>
           </div>
@@ -53,10 +44,6 @@ export default function Dashboard() {
           <div className="bg-noir-bg/60 backdrop-blur-md rounded-2xl p-5 border border-noir-border/50">
             <div className="flex justify-between items-end mb-3">
               <div>
-                <p className="text-[10px] text-noir-text-muted uppercase tracking-widest font-bold mb-1">Active Phase</p>
-                <h3 className="text-xl font-black text-white">Week {state.activeWeek}</h3>
-              </div>
-              <div className="text-right">
                 <p className="text-[10px] text-noir-text-muted uppercase tracking-widest font-bold mb-1">Completion</p>
                 <p className="text-xl font-bold text-noir-accent">{progressPercentage}%</p>
               </div>
@@ -97,7 +84,7 @@ export default function Dashboard() {
             />
             <button
               onClick={handleWeightSubmit}
-              className="bg-gradient-to-r from-noir-accent to-[#D038F3] text-noir-bg px-5 py-3 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(208,56,243,0.3)]"
+              className="bg-gradient-to-r from-noir-accent to-[#D038F3] text-noir-bg px-5 py-3 rounded-xl font-bold hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(208,56,243,0.3)]"
             >
               Log <ChevronRight size={18} />
             </button>

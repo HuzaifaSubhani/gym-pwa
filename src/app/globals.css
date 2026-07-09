@@ -5,11 +5,24 @@
   --color-noir-surface: #121212;
   --color-noir-surface-light: #1E1E1E;
   --color-noir-border: #2A2A2A;
-  --color-noir-accent: #FFFFFF;
+  --color-noir-accent: #D038F3;
   --color-noir-text: #FFFFFF;
   --color-noir-text-muted: #A0A0A0;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --animate-glow-pulse: glow-pulse 6s ease-in-out infinite alternate;
+  --animate-float: float 5s ease-in-out infinite;
+
+  @keyframes glow-pulse {
+    0% { opacity: 0.3; transform: scale(1); filter: blur(100px); }
+    100% { opacity: 0.8; transform: scale(1.1); filter: blur(140px); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
 }
 
 @layer base {

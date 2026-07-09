@@ -173,12 +173,12 @@ export default function ProgressAnalytics() {
 
       {/* Cumulative Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-noir-surface rounded-xl border border-noir-border p-4 shadow-lg flex flex-col justify-center items-center text-center">
+        <div className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg flex flex-col justify-center items-center text-center hover:scale-[1.02] transition-transform">
           <CalendarCheck className="text-noir-accent mb-2" size={24} />
           <span className="text-3xl font-black">{stats.totalWorkouts}</span>
           <span className="text-[10px] uppercase tracking-widest text-noir-text-muted mt-1 font-bold">Workouts</span>
         </div>
-        <div className="bg-noir-surface rounded-xl border border-noir-border p-4 shadow-lg flex flex-col justify-center items-center text-center">
+        <div className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg flex flex-col justify-center items-center text-center hover:scale-[1.02] transition-transform">
           <Dumbbell className="text-noir-accent mb-2" size={24} />
           <span className="text-3xl font-black">{stats.totalSetsLogged}</span>
           <span className="text-[10px] uppercase tracking-widest text-noir-text-muted mt-1 font-bold">Sets Logged</span>
@@ -199,7 +199,7 @@ export default function ProgressAnalytics() {
         {chartData.map(series => {
           if (series.data.length === 0) {
             return (
-              <div key={series.id} className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg">
+              <div key={series.id} className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg hover:scale-[1.01] transition-transform">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-bold text-lg leading-tight">{series.name}</h3>
@@ -225,7 +225,7 @@ export default function ProgressAnalytics() {
           const progressColor = diff > 0 ? "text-[#D038F3]" : diff < 0 ? "text-red-500" : "text-noir-text-muted";
 
           return (
-            <div key={series.id} className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg">
+            <div key={series.id} className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg hover:scale-[1.01] transition-transform">
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <h3 className="font-bold text-lg leading-tight">{series.name}</h3>

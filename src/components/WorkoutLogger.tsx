@@ -226,7 +226,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
 
   return (
     <div id="tour-exercise-card" className={`bg-noir-surface rounded-xl border p-4 shadow-lg overflow-hidden relative transition-all duration-300 ${
-      isExerciseComplete ? "border-[#39ff14]/70 shadow-[0_0_15px_rgba(57,255,20,0.15)] bg-noir-surface/90" 
+      isExerciseComplete ? "border-noir-accent/70 shadow-[0_0_15px_rgba(208,56,243,0.15)] bg-noir-surface/90"
       : saveStatus === "saved" ? "border-noir-accent/50 shadow-[0_0_15px_rgba(57,255,20,0.1)]" 
       : "border-noir-border"
     }`}>
@@ -257,7 +257,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
         <div>
           <h3 className="text-lg md:text-xl font-bold leading-tight group-hover:text-noir-accent transition-colors flex items-center gap-2">
             {exercise.name}
-            {isExerciseComplete && <Check size={18} className="text-[#39ff14] stroke-[3px]" />}
+            {isExerciseComplete && <Check size={18} className="text-noir-accent stroke-[3px]" />}
           </h3>
           <p className="text-xs md:text-sm text-noir-text-muted mt-1 flex items-center gap-2">
             {exercise.sets} Sets × {exercise.reps}
@@ -268,7 +268,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                 <span className="inline-block w-1 h-1 rounded-full bg-noir-border"></span>
                 <button 
                   onClick={(e) => { e.stopPropagation(); setIsVideoModalOpen(true); }}
-                  className="flex items-center gap-1 text-noir-accent hover:text-[#2cff05] transition-colors bg-noir-accent/10 px-2 py-0.5 rounded border border-noir-accent/30"
+                  className="flex items-center gap-1 text-noir-accent hover:opacity-80 transition-colors bg-noir-accent/10 px-2 py-0.5 rounded border border-noir-accent/30"
                 >
                   <Play size={12} className="fill-current" /> <span className="uppercase font-bold tracking-wider text-[9px]">Demo</span>
                 </button>
@@ -385,7 +385,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
           <div className="flex items-center gap-2 px-2 text-sm">
             <button 
               onClick={(e) => { e.stopPropagation(); startTimer(effectiveRest); }} 
-              className="flex items-center gap-1 text-xs font-bold text-noir-accent uppercase tracking-wider hover:text-[#2cff05] transition-colors bg-noir-accent/10 px-3 py-1.5 rounded-lg border border-noir-accent/30"
+              className="flex items-center gap-1 text-xs font-bold text-noir-accent uppercase tracking-wider hover:opacity-80 transition-colors bg-noir-accent/10 px-3 py-1.5 rounded-lg border border-noir-accent/30"
             >
               Start {effectiveRest}s Rest
             </button>
@@ -561,7 +561,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
           </div>
           <div className="flex gap-3 pt-4 border-t border-noir-border">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-surface-light font-bold">Cancel</button>
-            <button type="submit" className="flex-1 px-4 py-3 rounded-lg bg-noir-accent text-noir-bg hover:bg-[#2cff05] font-bold shadow-[0_0_15px_rgba(57,255,20,0.3)]">Add Exercise</button>
+            <button type="submit" className="flex-1 px-4 py-3 rounded-lg bg-noir-accent text-noir-bg hover:opacity-90 active:scale-95 transition-transform font-bold shadow-[0_0_15px_rgba(208,56,243,0.3)]">Add Exercise</button>
           </div>
         </form>
       </div>
@@ -679,7 +679,7 @@ export default function WorkoutLogger() {
               </div>
               <div className="flex gap-3 pt-4 border-t border-noir-border">
                 <button type="button" onClick={() => setIsEditRoutineModalOpen(false)} className="flex-1 px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-surface-light font-bold">Cancel</button>
-                <button type="submit" className={`flex-1 px-4 py-3 rounded-lg font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 ${mergedRoutine?.isPartial === false ? "bg-noir-accent text-noir-bg hover:bg-[#2cff05]" : "bg-red-600/20 text-red-500 border border-red-900 hover:bg-red-600/30"}`}>
+                <button type="submit" className={`flex-1 px-4 py-3 rounded-lg font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform ${mergedRoutine?.isPartial === false ? "bg-noir-accent text-noir-bg hover:opacity-90" : "bg-red-600/20 text-red-500 border border-red-900 hover:bg-red-600/30"}`}>
                   {mergedRoutine?.isPartial === false ? "Update Custom Day" : <><Trash2 size={16} /> Wipe & Build Custom</>}
                 </button>
               </div>

@@ -187,7 +187,7 @@ export default function LoginPage() {
             </button>
           )}
           
-          <div className="w-16 h-16 bg-noir-bg rounded-2xl border border-noir-border shadow-[0_0_20px_rgba(57,255,20,0.15)] flex items-center justify-center mb-4">
+          <div className="w-16 h-16 bg-noir-bg rounded-2xl border border-noir-border shadow-[0_0_20px_rgba(208,56,243,0.15)] flex items-center justify-center mb-4">
             <Dumbbell className="text-noir-accent" size={32} />
           </div>
           
@@ -272,7 +272,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-noir-accent hover:bg-[#2cff05] text-noir-bg font-bold py-3 px-4 rounded-lg shadow-[0_0_15px_rgba(57,255,20,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-6"
+            className="w-full bg-noir-accent hover:opacity-90 text-noir-bg font-bold py-3 px-4 rounded-lg shadow-[0_0_15px_rgba(208,56,243,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-6"
           >
             {isLoading ? <Loader2 className="animate-spin" size={20} /> : (
               authMode === "login" ? "Log In" :

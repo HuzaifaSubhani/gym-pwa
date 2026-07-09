@@ -16,6 +16,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "leaderboard" | "profile">("dashboard");
   const { state, setActiveWeekDay, syncWithUser } = useProtocol();
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [username, setUsername] = useState("Athlete");
   const router = useRouter();
 
   useEffect(() => {
@@ -24,6 +25,14 @@ export default function Home() {
       if (!session) {
         router.push("/login");
       } else {
+        // Fetch from profile to ensure we get it even if user_metadata is stale
+        const { data: profile } = await supabase.from('profiles').select('username').eq('id', session.user.id).single();
+        if (profile?.username) {
+          setUsername(profile.username);
+        } else if (session.user.user_metadata?.username) {
+          setUsername(session.user.user_metadata.username);
+        }
+
         // Now that they are logged in, initialize their specific local store
         syncWithUser(session.user.id);
         setIsLoadingAuth(false);
@@ -52,17 +61,33 @@ export default function Home() {
   }
 
   return (
-    <main className="flex-1 flex flex-col h-[100dvh] overflow-hidden bg-noir-bg">
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-28 md:px-8 max-w-3xl mx-auto w-full">
+    <main className="flex-1 flex flex-col h-[100dvh] overflow-hidden bg-noir-bg relative">
+      {/* Global Background Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#D038F3]/20 rounded-full pointer-events-none fixed animate-glow-pulse"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#D038F3]/10 rounded-full pointer-events-none fixed animate-glow-pulse" style={{ animationDelay: '3s' }}></div>
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none fixed"></div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-28 md:px-8 max-w-3xl mx-auto w-full relative z-10">
+        
+        {/* Global Header */}
+        <header className="mb-6 flex justify-between items-center bg-noir-surface/60 backdrop-blur-md p-4 rounded-2xl border border-noir-border shadow-lg">
+          <div>
+            <h2 className="text-[10px] text-noir-accent font-bold uppercase tracking-widest mb-1 flex items-center gap-1">
+              IRONCORE PROTOCOL
+            </h2>
+            <h1 className="text-xl font-black text-white">Welcome back, <span className="text-noir-accent">{username}</span></h1>
+          </div>
+        </header>
+
         {activeTab === "dashboard" && (
-          <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
             <Dashboard />
             <ProgressAnalytics />
           </div>
         )}
-        {activeTab === "workout" && <WorkoutLogger />}
-        {activeTab === "leaderboard" && <Leaderboard />}
-        {activeTab === "profile" && <Profile />}
+        {activeTab === "workout" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><WorkoutLogger /></div>}
+        {activeTab === "leaderboard" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><Leaderboard /></div>}
+        {activeTab === "profile" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><Profile /></div>}
       </div>
 
       {/* Bottom Navigation for mobile-first usage */}
