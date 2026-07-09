@@ -5,7 +5,7 @@
   --color-noir-surface: #121212;
   --color-noir-surface-light: #1E1E1E;
   --color-noir-border: #2A2A2A;
-  --color-noir-accent: #D038F3;
+  --color-noir-accent: #A78BFA;
   --color-noir-text: #FFFFFF;
   --color-noir-text-muted: #A0A0A0;
 
@@ -15,8 +15,8 @@
   --animate-float: float 5s ease-in-out infinite;
 
   @keyframes glow-pulse {
-    0% { opacity: 0.3; transform: scale(1); filter: blur(100px); }
-    100% { opacity: 0.8; transform: scale(1.1); filter: blur(140px); }
+    0% { opacity: 0.2; transform: scale(1); filter: blur(120px); }
+    100% { opacity: 0.5; transform: scale(1.05); filter: blur(150px); }
   }
 
   @keyframes float {

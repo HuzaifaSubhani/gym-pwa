@@ -13,11 +13,11 @@ export default function ProgressAnalytics() {
   
   // Fallback to default if trackedLifts somehow isn't initialized yet
   const trackedLifts = state.trackedLifts || [
-    { id: "m1", name: "Incline DB Press", muscle: "Upper Chest", color: "#D038F3" },
-    { id: "t1", name: "Pull-ups / Pulldown", muscle: "Lats", color: "#D038F3" },
-    { id: "w1", name: "Hack Squat", muscle: "Quads", color: "#D038F3" },
-    { id: "th1", name: "Smith Machine Press", muscle: "Shoulders", color: "#D038F3" },
-    { id: "f1", name: "Split Squats", muscle: "Legs", color: "#D038F3" },
+    { id: "m1", name: "Incline DB Press", muscle: "Upper Chest", color: "#A78BFA" },
+    { id: "t1", name: "Pull-ups / Pulldown", muscle: "Lats", color: "#A78BFA" },
+    { id: "w1", name: "Hack Squat", muscle: "Quads", color: "#A78BFA" },
+    { id: "th1", name: "Smith Machine Press", muscle: "Shoulders", color: "#A78BFA" },
+    { id: "f1", name: "Split Squats", muscle: "Legs", color: "#A78BFA" },
   ];
 
   const availableExercisesToTrack = useMemo(() => {
@@ -145,12 +145,12 @@ export default function ProgressAnalytics() {
 
       {/* Personal Records Section */}
       {personalRecords.length > 0 && (
-        <div className="mb-8 relative p-6 bg-noir-surface border border-[#D038F3]/40 rounded-2xl shadow-[0_0_25px_rgba(208,56,243,0.15)] overflow-hidden">
-          <div className="absolute top-[-50%] right-[-10%] w-64 h-64 bg-[#D038F3]/10 blur-[80px] rounded-full pointer-events-none"></div>
-          <div className="absolute bottom-[-50%] left-[-10%] w-64 h-64 bg-[#D038F3]/10 blur-[80px] rounded-full pointer-events-none"></div>
+        <div className="mb-8 relative p-6 bg-noir-surface border border-[#A78BFA]/40 rounded-2xl shadow-[0_0_25px_rgba(208,56,243,0.15)] overflow-hidden">
+          <div className="absolute top-[-50%] right-[-10%] w-64 h-64 bg-[#A78BFA]/10 blur-[80px] rounded-full pointer-events-none"></div>
+          <div className="absolute bottom-[-50%] left-[-10%] w-64 h-64 bg-[#A78BFA]/10 blur-[80px] rounded-full pointer-events-none"></div>
           
           <div className="flex items-center gap-2 mb-6 relative z-10">
-            <Trophy className="text-[#D038F3]" size={24} />
+            <Trophy className="text-[#A78BFA]" size={24} />
             <h3 className="text-xl font-black uppercase tracking-wider text-white">All-Time PRs</h3>
           </div>
           
@@ -159,8 +159,8 @@ export default function ProgressAnalytics() {
               const d = new Date(pr.date);
               const shortDate = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
               return (
-                <div key={idx} className="bg-noir-bg/60 backdrop-blur-sm border border-[#D038F3]/20 rounded-xl p-4 flex flex-col items-center text-center shadow-inner">
-                  <span className="text-[#D038F3] font-bold text-[10px] uppercase tracking-widest mb-2 line-clamp-1">{pr.name}</span>
+                <div key={idx} className="bg-noir-bg/60 backdrop-blur-sm border border-[#A78BFA]/20 rounded-xl p-4 flex flex-col items-center text-center shadow-inner">
+                  <span className="text-[#A78BFA] font-bold text-[10px] uppercase tracking-widest mb-2 line-clamp-1">{pr.name}</span>
                   <span className="text-4xl font-black text-white leading-none">{pr.weight}<span className="text-sm font-bold text-noir-text-muted ml-1">kg</span></span>
                   <span className="text-xs font-bold text-noir-text-muted mt-2 tracking-wider">× {pr.reps} REPS</span>
                   <span className="text-[9px] text-noir-text-muted mt-3 opacity-60 uppercase tracking-widest">{shortDate}</span>
@@ -222,7 +222,7 @@ export default function ProgressAnalytics() {
           const currentMax = series.data[series.data.length - 1].weight;
           const initialMax = series.data[0].weight;
           const diff = currentMax - initialMax;
-          const progressColor = diff > 0 ? "text-[#D038F3]" : diff < 0 ? "text-red-500" : "text-noir-text-muted";
+          const progressColor = diff > 0 ? "text-[#A78BFA]" : diff < 0 ? "text-red-500" : "text-noir-text-muted";
 
           return (
             <div key={series.id} className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg hover:scale-[1.01] transition-transform">
@@ -270,17 +270,17 @@ export default function ProgressAnalytics() {
                     />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#121212', border: '1px solid #333', borderRadius: '8px' }}
-                      itemStyle={{ color: '#D038F3', fontWeight: 'bold' }}
+                      itemStyle={{ color: '#A78BFA', fontWeight: 'bold' }}
                       formatter={(value: any) => [`${value} kg`, 'Max Weight']}
                       labelStyle={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="weight" 
-                      stroke="#D038F3" 
+                      stroke="#A78BFA" 
                       strokeWidth={3} 
-                      dot={{ r: 4, strokeWidth: 2, fill: '#121212', stroke: '#D038F3' }} 
-                      activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2, fill: '#D038F3' }}
+                      dot={{ r: 4, strokeWidth: 2, fill: '#121212', stroke: '#A78BFA' }} 
+                      activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2, fill: '#A78BFA' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -309,7 +309,7 @@ export default function ProgressAnalytics() {
                         id: ex.id,
                         name: ex.name,
                         muscle: "Custom",
-                        color: "#D038F3"
+                        color: "#A78BFA"
                       });
                       setIsAddTrackerOpen(false);
                     }}

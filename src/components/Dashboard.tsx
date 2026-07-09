@@ -25,7 +25,7 @@ export default function Dashboard() {
       <section className="relative p-6 rounded-3xl overflow-hidden border border-noir-border shadow-2xl bg-noir-surface">
         {/* Dynamic Background Glows */}
         <div className="absolute top-[-20%] left-[-10%] w-64 h-64 bg-noir-accent/20 blur-[100px] rounded-full pointer-events-none"></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-64 h-64 bg-[#D038F3]/20 blur-[100px] rounded-full pointer-events-none"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-64 h-64 bg-[#A78BFA]/20 blur-[100px] rounded-full pointer-events-none"></div>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
         
         <div className="relative z-10">
@@ -36,8 +36,8 @@ export default function Dashboard() {
               </h2>
               <h1 className="text-3xl font-black text-white">Week {state.activeWeek}</h1>
             </div>
-            <div className="w-12 h-12 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center shadow-[0_0_15px_rgba(208,56,243,0.3)] animate-float">
-              <Flame className="text-[#D038F3]" size={24} />
+            <div className="w-12 h-12 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center shadow-[0_0_15px_rgba(167,139,250,0.3)] animate-float">
+              <Flame className="text-[#A78BFA]" size={24} />
             </div>
           </div>
           
@@ -51,7 +51,7 @@ export default function Dashboard() {
             
             <div className="w-full bg-noir-surface rounded-full h-2 overflow-hidden shadow-inner relative">
               <div 
-                className="absolute top-0 left-0 h-full bg-gradient-to-r from-noir-accent to-[#D038F3] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(208,56,243,0.5)]" 
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-noir-accent to-[#A78BFA] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(167,139,250,0.5)]" 
                 style={{ width: `${Math.max(2, progressPercentage)}%` }}
               ></div>
             </div>
@@ -62,7 +62,7 @@ export default function Dashboard() {
       {/* Weekly Weight Check-in */}
       {isWeekend && (
         <section className="relative p-6 bg-noir-surface/80 backdrop-blur-sm rounded-2xl border border-noir-border shadow-lg overflow-hidden group">
-          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-noir-accent to-[#D038F3]"></div>
+          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-noir-accent to-[#A78BFA]"></div>
           
           <div className="flex items-center gap-3 mb-5">
             <div className="p-2 bg-noir-bg rounded-lg border border-noir-border group-hover:border-noir-accent transition-colors">
@@ -80,11 +80,11 @@ export default function Dashboard() {
               placeholder="e.g. 85.5 kg"
               value={weightInput}
               onChange={(e) => setWeightInput(e.target.value)}
-              className="flex-1 bg-noir-bg border border-noir-border rounded-xl px-4 py-3 text-lg font-mono focus:outline-none focus:border-[#D038F3] transition-colors shadow-inner"
+              className="flex-1 bg-noir-bg border border-noir-border rounded-xl px-4 py-3 text-lg font-mono focus:outline-none focus:border-[#A78BFA] transition-colors shadow-inner"
             />
             <button
               onClick={handleWeightSubmit}
-              className="bg-gradient-to-r from-noir-accent to-[#D038F3] text-noir-bg px-5 py-3 rounded-xl font-bold hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(208,56,243,0.3)]"
+              className="bg-gradient-to-r from-noir-accent to-[#A78BFA] text-noir-bg px-5 py-3 rounded-xl font-bold hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(167,139,250,0.3)]"
             >
               Log <ChevronRight size={18} />
             </button>
