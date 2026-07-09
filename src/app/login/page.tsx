@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Loader2, Eye, EyeOff, ArrowLeft, Dumbbell } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft, Dumbbell, ScanFace } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type AuthMode = "login" | "signup" | "forgot" | "reset";
@@ -13,9 +13,12 @@ const PasswordInput = ({ value, setter, label, placeholder, showPassword, setSho
     <div className="relative">
       <input
         required
+        id={label.toLowerCase().replace(/\s/g, '')}
+        name={label.toLowerCase().replace(/\s/g, '')}
         type={showPassword ? "text" : "password"}
         value={value}
         onChange={(e) => setter(e.target.value)}
+        autoComplete={label === "Password" ? "current-password" : label === "New Password" ? "new-password" : "off"}
         className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 pr-10 text-noir-text focus:outline-none focus:border-noir-accent transition-colors"
         placeholder={placeholder}
       />
@@ -125,12 +128,12 @@ export default function LoginPage() {
 
 
   return (
-    <main className="flex-1 flex flex-col min-h-[100dvh] items-center justify-center bg-noir-bg p-4 overflow-y-auto relative">
+    <main className="flex-1 flex flex-col min-h-[100dvh] items-center bg-noir-bg p-4 md:p-8 overflow-y-auto relative">
       {/* Background decoration */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-noir-accent/10 blur-[120px] rounded-full pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-noir-accent/5 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-noir-accent/10 blur-[120px] rounded-full pointer-events-none fixed"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-noir-accent/5 blur-[120px] rounded-full pointer-events-none fixed"></div>
       
-      <div className="w-full max-w-md bg-noir-surface/80 backdrop-blur-md border border-noir-border rounded-2xl p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-500 my-8 z-10">
+      <div className="w-full max-w-md bg-noir-surface/80 backdrop-blur-md border border-noir-border rounded-2xl p-6 md:p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-500 my-auto z-10 flex-shrink-0">
         <header className="mb-8 text-center relative flex flex-col items-center">
           {(authMode === "forgot" || authMode === "signup") && (
             <button 
@@ -172,9 +175,12 @@ export default function LoginPage() {
               <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Email</label>
               <input
                 required
+                id="email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
                 className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-noir-text focus:outline-none focus:border-noir-accent transition-colors"
                 placeholder="gymbro@example.com"
               />
@@ -186,9 +192,12 @@ export default function LoginPage() {
               <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Username</label>
               <input
                 required
+                id="username"
+                name="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
                 className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-noir-text focus:outline-none focus:border-noir-accent transition-colors"
                 placeholder="Ronnie"
               />
@@ -228,6 +237,19 @@ export default function LoginPage() {
               authMode === "forgot" ? "Send Reset Link" : "Update Password"
             )}
           </button>
+
+          {authMode === "login" && (
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('password');
+                if (el) el.focus();
+              }}
+              className="w-full bg-transparent border border-noir-border hover:border-noir-accent text-white font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 mt-3"
+            >
+              <ScanFace size={20} className="text-noir-accent" /> Use Biometrics / Autofill
+            </button>
+          )}
         </form>
 
         {authMode === "login" && (
