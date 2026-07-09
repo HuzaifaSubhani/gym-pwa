@@ -70,25 +70,21 @@ export default function Home() {
 
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-28 md:px-8 max-w-3xl mx-auto w-full relative z-10">
         
-        {/* Global Header */}
-        <header className="mb-6 flex justify-between items-center bg-noir-surface/60 backdrop-blur-md p-4 rounded-2xl border border-noir-border shadow-lg">
-          <div>
-            <h2 className="text-[10px] text-noir-accent font-bold uppercase tracking-widest mb-1 flex items-center gap-1">
-              IRONCORE PROTOCOL
-            </h2>
-            <h1 className="text-xl font-black text-white">Welcome back, <span className="text-noir-accent">{username}</span></h1>
-          </div>
-        </header>
 
-        {activeTab === "dashboard" && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-            <Dashboard />
-            <ProgressAnalytics />
-          </div>
-        )}
-        {activeTab === "workout" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><WorkoutLogger /></div>}
-        {activeTab === "leaderboard" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><Leaderboard /></div>}
-        {activeTab === "profile" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><Profile /></div>}
+
+        <div className={activeTab === "dashboard" ? "space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out" : "hidden"}>
+          <Dashboard />
+          <ProgressAnalytics />
+        </div>
+        <div className={activeTab === "workout" ? "animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out" : "hidden"}>
+          <WorkoutLogger />
+        </div>
+        <div className={activeTab === "leaderboard" ? "animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out" : "hidden"}>
+          <Leaderboard />
+        </div>
+        <div className={activeTab === "profile" ? "animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out" : "hidden"}>
+          <Profile />
+        </div>
       </div>
 
       {/* Bottom Navigation for mobile-first usage */}

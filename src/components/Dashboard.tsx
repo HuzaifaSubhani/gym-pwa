@@ -3,8 +3,17 @@
 import { useState, useEffect } from "react";
 import { Weight, Activity, Flame, ChevronRight } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { PROTOCOL_WEEKS } from "@/data/protocol";
+import { PROTOCOL_WEEKS, PROTOCOL_START_DATE } from "@/data/protocol";
 import { supabase } from "@/lib/supabaseClient";
+
+function getProtocolDateString(week: number, dayNum: number) {
+  const date = new Date(PROTOCOL_START_DATE);
+  date.setDate(date.getDate() + ((week - 1) * 7 + (dayNum - 1)));
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 export default function Dashboard() {
   const { state, setWeightLog } = useProtocol();
@@ -16,7 +25,16 @@ export default function Dashboard() {
     }
   };
 
-  const progressPercentage = Math.round(((state.activeWeek - 1) / PROTOCOL_WEEKS) * 100);
+  let completedDays = 0;
+  for (let i = 1; i <= 7; i++) {
+    const dStr = getProtocolDateString(state.activeWeek, i);
+    if (state.workoutLogs[dStr] && Object.keys(state.workoutLogs[dStr]).length > 0) {
+      completedDays++;
+    }
+  }
+  // Assume 4 workouts per week is 100%
+  const progressPercentage = Math.min(100, Math.round((completedDays / 4) * 100));
+  
   const isWeekend = state.activeDayOfWeek >= 5;
 
   return (
@@ -44,7 +62,7 @@ export default function Dashboard() {
           <div className="bg-noir-bg/60 backdrop-blur-md rounded-2xl p-5 border border-noir-border/50">
             <div className="flex justify-between items-end mb-3">
               <div>
-                <p className="text-[10px] text-noir-text-muted uppercase tracking-widest font-bold mb-1">Completion</p>
+                <p className="text-[10px] text-noir-text-muted uppercase tracking-widest font-bold mb-1">Weekly Progress</p>
                 <p className="text-xl font-bold text-noir-accent">{progressPercentage}%</p>
               </div>
             </div>

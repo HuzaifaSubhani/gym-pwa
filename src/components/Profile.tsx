@@ -202,7 +202,6 @@ export default function Profile() {
 
       <header className="mb-6 px-2 flex items-center justify-between">
         <div>
-          <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">Your Identity</h2>
           <h1 className="text-3xl font-black tracking-tight">Profile</h1>
         </div>
       </header>
@@ -294,23 +293,6 @@ export default function Profile() {
                 className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-lg font-bold text-noir-text focus:outline-none focus:border-noir-accent transition-colors" 
               />
             </div>
-            
-            {myProfile.avatar_url && (
-              <div>
-                <div className="flex justify-between items-end mb-2 ml-1">
-                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase">Avatar Focus</label>
-                  <span className="text-[10px] font-bold text-noir-accent">{avatarPosition}%</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="100" 
-                  value={avatarPosition} 
-                  onChange={(e) => setAvatarPosition(Number(e.target.value))}
-                  className="w-full h-2 bg-noir-bg rounded-lg appearance-none cursor-pointer accent-noir-accent"
-                />
-              </div>
-            )}
           </div>
         </div>
 

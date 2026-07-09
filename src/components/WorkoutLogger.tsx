@@ -48,7 +48,7 @@ function DaySelector() {
         </button>
       </div>
 
-      <div className="flex justify-between gap-2 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto pb-2 pr-4 scrollbar-hide">
         {days.map((day) => {
           const isActive = state.activeDayOfWeek === day.num;
           const dateStr = getProtocolDateString(state.activeWeek, day.num);
@@ -82,7 +82,7 @@ function DaySelector() {
             <button
               key={day.num}
               onClick={() => setActiveWeekDay(state.activeWeek, day.num)}
-              className={`flex-1 min-w-[56px] min-h-[64px] flex flex-col items-center justify-center rounded-lg border transition-colors relative ${isActive ? "bg-noir-accent/10 border-noir-accent text-noir-accent font-bold" : "bg-noir-bg border-noir-border text-noir-text-muted hover:border-noir-text"
+              className={`flex-shrink-0 w-[60px] min-h-[64px] flex flex-col items-center justify-center rounded-lg border transition-colors relative ${isActive ? "bg-noir-accent/10 border-noir-accent text-noir-accent font-bold" : "bg-noir-bg border-noir-border text-noir-text-muted hover:border-noir-text"
                 }`}
             >
               <span className="text-xs uppercase">{day.label}</span>
@@ -268,7 +268,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                 <span className="inline-block w-1 h-1 rounded-full bg-noir-border"></span>
                 <button 
                   onClick={(e) => { e.stopPropagation(); setIsVideoModalOpen(true); }}
-                  className="flex items-center gap-1 text-noir-accent hover:opacity-80 transition-colors bg-noir-accent/10 px-2 py-0.5 rounded border border-noir-accent/30"
+                  className="flex items-center gap-1 text-white hover:opacity-80 transition-colors bg-white/10 px-2 py-0.5 rounded border border-white/30"
                 >
                   <Play size={12} className="fill-current" /> <span className="uppercase font-bold tracking-wider text-[9px]">Demo</span>
                 </button>
