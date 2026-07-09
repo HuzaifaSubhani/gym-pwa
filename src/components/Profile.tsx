@@ -18,6 +18,10 @@ type ProfileData = {
   nutrition_goal?: string;
 };
 
+let cachedProfileData: any = null;
+let cacheTime = 0;
+const CACHE_DURATION = 1000 * 60 * 5; // 5 minutes
+
 export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -49,6 +53,26 @@ export default function Profile() {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      if (cachedProfileData && (Date.now() - cacheTime < CACHE_DURATION)) {
+        setUser(cachedProfileData.user);
+        setMyProfile(cachedProfileData.myProfile);
+        setEditUsername(cachedProfileData.myProfile.username || "");
+        setAvatarPosition(cachedProfileData.myProfile.avatar_position ?? 50);
+        if (cachedProfileData.myProfile.age) setAge(cachedProfileData.myProfile.age);
+        if (cachedProfileData.myProfile.gender) setGender(cachedProfileData.myProfile.gender);
+        if (cachedProfileData.myProfile.height_cm) {
+          setHeightCm(cachedProfileData.myProfile.height_cm);
+          const totalInches = cachedProfileData.myProfile.height_cm / 2.54;
+          setHeightFt(Math.floor(totalInches / 12));
+          setHeightIn(Math.round(totalInches % 12));
+        }
+        if (cachedProfileData.myProfile.weight_kg) setWeightKg(cachedProfileData.myProfile.weight_kg);
+        if (cachedProfileData.myProfile.activity_level) setActivityLevel(cachedProfileData.myProfile.activity_level);
+        if (cachedProfileData.myProfile.nutrition_goal) setNutritionGoal(cachedProfileData.myProfile.nutrition_goal);
+        setLoading(false);
+        return;
+      }
+      
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user ?? null;
       setUser(user);
@@ -70,6 +94,12 @@ export default function Profile() {
           if (data.weight_kg) setWeightKg(data.weight_kg);
           if (data.activity_level) setActivityLevel(data.activity_level);
           if (data.nutrition_goal) setNutritionGoal(data.nutrition_goal);
+          
+          cachedProfileData = {
+            user,
+            myProfile: { ...data, avatar_position: data.avatar_position ?? 50 }
+          };
+          cacheTime = Date.now();
         }
       }
       setLoading(false);

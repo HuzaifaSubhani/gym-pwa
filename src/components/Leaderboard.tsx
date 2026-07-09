@@ -60,6 +60,10 @@ function getLevelInfo(volume: number) {
   return { xp, level, progress: Math.min(100, Math.max(0, progress)) };
 }
 
+let cachedData: any = null;
+let cacheTime = 0;
+const CACHE_DURATION = 1000 * 60 * 5; // 5 minutes
+
 export default function Leaderboard() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -72,7 +76,16 @@ export default function Leaderboard() {
     fetchLeaderboardData();
   }, []);
 
-  const fetchLeaderboardData = async () => {
+  const fetchLeaderboardData = async (forceRefetch = false) => {
+    if (!forceRefetch && cachedData && (Date.now() - cacheTime < CACHE_DURATION)) {
+      setEntries(cachedData.entries);
+      setChallenges(cachedData.challenges);
+      setUser(cachedData.user);
+      setMyProfile(cachedData.myProfile);
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     const currentUser = session?.user ?? null;
@@ -187,6 +200,15 @@ export default function Leaderboard() {
 
       calculatedEntries.sort((a, b) => b.score - a.score);
       setEntries(calculatedEntries);
+      
+      // Update cache
+      cachedData = {
+        entries: calculatedEntries,
+        challenges: enhancedChallenges || [],
+        user: currentUser,
+        myProfile: currentUserProfile || null
+      };
+      cacheTime = Date.now();
     }
     setLoading(false);
   };
@@ -225,7 +247,7 @@ export default function Leaderboard() {
       console.error(error);
       alert("Failed to send challenge. Did you run the SQL script to create the table?");
     } else {
-      await fetchLeaderboardData();
+      await fetchLeaderboardData(true);
     }
     setActionLoading(null);
   };
@@ -241,14 +263,14 @@ export default function Leaderboard() {
       end_date: endDate.toISOString()
     }).eq('id', challengeId);
     
-    await fetchLeaderboardData();
+    await fetchLeaderboardData(true);
     setActionLoading(null);
   };
 
   const declineChallenge = async (challengeId: string) => {
     setActionLoading(`decline-${challengeId}`);
     await supabase.from('challenges').update({ status: 'declined' }).eq('id', challengeId);
-    await fetchLeaderboardData();
+    await fetchLeaderboardData(true);
     setActionLoading(null);
   };
 
