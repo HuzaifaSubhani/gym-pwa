@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { supabase } from "@/lib/supabaseClient";
 import { getCurrentProtocolDateInfo } from "@/data/protocol";
 
-export type SetLog = { weight: string; reps: string; drops?: { weight: string; reps: string }[] };
+export type SetLog = { weight: string; reps: string; drops?: { weight: string; reps: string }[]; rating?: string; };
 
 export type TrackedLift = { id: string; name: string; muscle: string; color: string };
 
@@ -254,18 +254,21 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
   };
 
   const setCustomDayRoutine = (dayNum: number, name: string, focus: string) => {
-    setState((prev) => ({
-      ...prev,
-      customRoutine: {
-        ...prev.customRoutine,
-        [dayNum]: {
-          dayName: name,
-          focus: focus,
-          exercises: [],
-          isPartial: false // completely overrides base schema
+    setState((prev) => {
+      const existing = prev.customRoutine?.[dayNum];
+      return {
+        ...prev,
+        customRoutine: {
+          ...prev.customRoutine,
+          [dayNum]: {
+            dayName: name,
+            focus: focus,
+            exercises: existing?.isPartial === false ? existing.exercises : [],
+            isPartial: false // completely overrides base schema
+          }
         }
-      }
-    }));
+      };
+    });
   };
 
   const updateTimer = (updates: Partial<ProtocolState["timer"]>) => {

@@ -29,6 +29,7 @@ type LeaderboardEntry = {
   progress: number;
   workouts: number;
   totalVolume: number;
+  score: number;
 };
 
 function getLevelInfo(volume: number) {
@@ -113,12 +114,13 @@ export default function Leaderboard() {
             level,
             progress,
             workouts: workoutsCount,
-            totalVolume: Math.round(stats.volume)
+            totalVolume: Math.round(stats.volume),
+            score: xp + (workoutsCount * 50)
           };
         });
 
-        // Sort by XP descending
-        calculatedEntries.sort((a, b) => b.xp - a.xp);
+        // Sort by Score descending
+        calculatedEntries.sort((a, b) => b.score - a.score);
         setEntries(calculatedEntries);
       }
       setLoading(false);
@@ -222,7 +224,7 @@ export default function Leaderboard() {
                     
                     <div className="flex justify-between items-center text-[9px] md:text-[10px] uppercase font-bold text-noir-text-muted tracking-wider">
                       <span className="flex items-center gap-1"><Dumbbell size={10} /> {entry.workouts} WOs</span>
-                      <span>{entry.xp.toLocaleString()} XP</span>
+                      <span>{entry.score.toLocaleString()} SCORE</span>
                     </div>
                   </div>
                 </div>

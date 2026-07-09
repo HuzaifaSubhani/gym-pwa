@@ -107,6 +107,9 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   const dayLogs = state.workoutLogs[dateStr] || {};
   const globalExLogs = dayLogs[exercise.id] || [];
 
+  const prevDateStr = activeWeek > 1 ? getProtocolDateString(activeWeek - 1, activeDayOfWeek) : null;
+  const prevLogs = prevDateStr ? state.workoutLogs[prevDateStr]?.[exercise.id] || [] : [];
+
   // Local state for inputs
   const [localLogs, setLocalLogs] = useState<SetLog[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -123,13 +126,15 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
 
   // Sync local state when global state or date changes
   useEffect(() => {
+    if (isDirty) return;
     // Fill up to the required sets
     const synced = Array.from({ length: exercise.sets }).map((_, i) => {
       if (globalExLogs[i]) {
         return {
           weight: globalExLogs[i].weight,
           reps: globalExLogs[i].reps,
-          drops: globalExLogs[i].drops ? [...globalExLogs[i].drops] : []
+          drops: globalExLogs[i].drops ? [...globalExLogs[i].drops] : [],
+          rating: globalExLogs[i].rating
         };
       }
       return { weight: "", reps: "", drops: [] };
@@ -143,13 +148,10 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   useEffect(() => {
     if (!isDirty) return;
 
-    setSaveStatus("saving");
     const timeout = setTimeout(() => {
       setFullExerciseLogs(dateStr, exercise.id, localLogs);
-      setSaveStatus("saved");
       setIsDirty(false);
-      setTimeout(() => setSaveStatus("idle"), 2000); // Reset status after 2 seconds
-    }, 800); // 800ms debounce
+    }, 500); // 500ms debounce
 
     return () => clearTimeout(timeout);
   }, [localLogs, isDirty, dateStr, exercise.id, setFullExerciseLogs]);
@@ -164,7 +166,7 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   const fullNote = ((note || "") + " " + (exercise.notes || "")).toLowerCase();
   const isDropSetNote = fullNote.includes("drop set");
 
-  const handleUpdateLocalLog = (setIndex: number, field: "weight" | "reps", value: string) => {
+  const handleUpdateLocalLog = (setIndex: number, field: "weight" | "reps" | "rating", value: string) => {
     const newLogs = [...localLogs];
     newLogs[setIndex] = { ...newLogs[setIndex], [field]: value };
     setLocalLogs(newLogs);
@@ -305,7 +307,31 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                     value={log.reps}
                     onChange={(e) => handleUpdateLocalLog(i, "reps", e.target.value)}
                   />
+                  {/* Rating buttons */}
+                  <div className="flex gap-1 ml-auto">
+                    <button 
+                      onClick={() => handleUpdateLocalLog(i, "rating", "easy")} 
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${log.rating === 'easy' ? 'bg-green-500/20 text-green-500 border border-green-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted'}`}
+                    >E</button>
+                    <button 
+                      onClick={() => handleUpdateLocalLog(i, "rating", "hard")} 
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${log.rating === 'hard' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted'}`}
+                    >H</button>
+                    <button 
+                      onClick={() => handleUpdateLocalLog(i, "rating", "extreme")} 
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${log.rating === 'extreme' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted'}`}
+                    >X</button>
+                  </div>
                 </div>
+
+                {prevLogs[i] && prevLogs[i].weight && (
+                  <div className="text-[10px] text-noir-text-muted ml-10">
+                    Last Week: {prevLogs[i].weight}kg × {prevLogs[i].reps} 
+                    {prevLogs[i].rating === 'easy' && ' 🟢 Easy'}
+                    {prevLogs[i].rating === 'hard' && ' 🟡 Hard'}
+                    {prevLogs[i].rating === 'extreme' && ' 🔴 Extreme'}
+                  </div>
+                )}
 
                 {/* Render 2 additional drop inputs for the final drop set */}
                 {showDropSets && (
@@ -357,16 +383,12 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
         {/* Actions row */}
         <div className="flex gap-2 items-center pt-3 border-t border-noir-border justify-between">
           <div className="flex items-center gap-2 px-2 text-sm">
-            {saveStatus === "saving" && <><Loader2 className="animate-spin text-noir-text-muted" size={16} /><span className="text-noir-text-muted">Saving...</span></>}
-            {saveStatus === "saved" && <><Check className="text-noir-accent" size={16} /><span className="text-noir-accent font-bold">Saved!</span></>}
-            {saveStatus === "idle" && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); startTimer(effectiveRest); }} 
-                className="flex items-center gap-1 text-xs font-bold text-noir-accent uppercase tracking-wider hover:text-[#2cff05] transition-colors bg-noir-accent/10 px-3 py-1.5 rounded-lg border border-noir-accent/30"
-              >
-                Start {effectiveRest}s Rest
-              </button>
-            )}
+            <button 
+              onClick={(e) => { e.stopPropagation(); startTimer(effectiveRest); }} 
+              className="flex items-center gap-1 text-xs font-bold text-noir-accent uppercase tracking-wider hover:text-[#2cff05] transition-colors bg-noir-accent/10 px-3 py-1.5 rounded-lg border border-noir-accent/30"
+            >
+              Start {effectiveRest}s Rest
+            </button>
           </div>
           <div className="flex gap-2">
             <button onClick={handleDeleteExercise} className="px-3 py-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text-muted hover:text-red-500 hover:border-red-500 transition-colors min-h-[44px] text-xs font-bold uppercase tracking-wider">
@@ -640,7 +662,7 @@ export default function WorkoutLogger() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg/80 backdrop-blur-sm">
           <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
             <h2 className="text-xl font-bold mb-4 text-noir-accent">Build Custom Routine</h2>
-            <p className="text-sm text-noir-text-muted mb-4">This will clear the current day's protocol exercises and let you build a completely custom day.</p>
+            <p className="text-sm text-noir-text-muted mb-4">{mergedRoutine?.isPartial === false ? "Update the name and focus of your custom day." : "This will clear the current day's protocol exercises and let you build a completely custom day."}</p>
             <form onSubmit={(e) => {
               e.preventDefault();
               if (!routineNameEdit || !routineFocusEdit) return;
@@ -657,8 +679,8 @@ export default function WorkoutLogger() {
               </div>
               <div className="flex gap-3 pt-4 border-t border-noir-border">
                 <button type="button" onClick={() => setIsEditRoutineModalOpen(false)} className="flex-1 px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-surface-light font-bold">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-3 rounded-lg bg-red-600/20 text-red-500 border border-red-900 hover:bg-red-600/30 font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2">
-                  <Trash2 size={16} /> Wipe & Build Custom
+                <button type="submit" className={`flex-1 px-4 py-3 rounded-lg font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 ${mergedRoutine?.isPartial === false ? "bg-noir-accent text-noir-bg hover:bg-[#2cff05]" : "bg-red-600/20 text-red-500 border border-red-900 hover:bg-red-600/30"}`}>
+                  {mergedRoutine?.isPartial === false ? "Update Custom Day" : <><Trash2 size={16} /> Wipe & Build Custom</>}
                 </button>
               </div>
             </form>

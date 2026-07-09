@@ -125,7 +125,7 @@ export default function LoginPage() {
 
 
   return (
-    <main className="flex-1 flex flex-col h-[100dvh] items-center justify-center bg-noir-bg p-4 overflow-y-auto relative">
+    <main className="flex-1 flex flex-col min-h-[100dvh] items-center justify-center bg-noir-bg p-4 overflow-y-auto relative">
       {/* Background decoration */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-noir-accent/10 blur-[120px] rounded-full pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-noir-accent/5 blur-[120px] rounded-full pointer-events-none"></div>
