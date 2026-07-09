@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef, useMemo } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { getCurrentProtocolDateInfo } from "@/data/protocol";
 
@@ -55,13 +55,15 @@ const initialState: ProtocolState = {
   ],
 };
 
+// Module-level guard: survives component remounts, only resets on full page reload
+let _hasSynced = false;
+
 const ProtocolContext = createContext<ProtocolContextType | undefined>(undefined);
 
 export function ProtocolProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ProtocolState>(initialState);
   const [isLoaded, setIsLoaded] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const hasSyncedRef = useRef(false);
 
   useEffect(() => {
     if (userId) {
@@ -92,23 +94,27 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
   }, [state, isLoaded, userId]);
 
   const syncWithUser = useCallback(async (id: string) => {
-    // Hard guard: only sync once per app lifecycle
-    if (hasSyncedRef.current) return;
-    hasSyncedRef.current = true;
+    // Module-level guard: only sync once per browser tab session
+    if (_hasSynced) return;
+    _hasSynced = true;
     
     setUserId(id);
     
     // Attempt to pull from Supabase to merge/override local
-    const { data: logs } = await supabase.from("workout_logs").select("*").eq("user_id", id);
-    if (logs && logs.length > 0) {
-      setState(prev => {
-        const mergedLogs = { ...prev.workoutLogs };
-        logs.forEach(log => {
-          if (!mergedLogs[log.date_str]) mergedLogs[log.date_str] = {};
-          mergedLogs[log.date_str][log.exercise_id] = log.logs;
+    try {
+      const { data: logs } = await supabase.from("workout_logs").select("*").eq("user_id", id);
+      if (logs && logs.length > 0) {
+        setState(prev => {
+          const mergedLogs = { ...prev.workoutLogs };
+          logs.forEach(log => {
+            if (!mergedLogs[log.date_str]) mergedLogs[log.date_str] = {};
+            mergedLogs[log.date_str][log.exercise_id] = log.logs;
+          });
+          return { ...prev, workoutLogs: mergedLogs };
         });
-        return { ...prev, workoutLogs: mergedLogs };
-      });
+      }
+    } catch (e) {
+      console.error("Error syncing workout logs:", e);
     }
   }, []);
 
@@ -147,7 +153,7 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
   const setFullExerciseLogs = useCallback((dateStr: string, exerciseId: string, logs: SetLog[]) => {
     setState((prev) => {
       const dayLogs = prev.workoutLogs[dateStr] || {};
-      const newState = {
+      return {
         ...prev,
         workoutLogs: {
           ...prev.workoutLogs,
@@ -157,22 +163,20 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
           },
         },
       };
-      
-      // Async sync to Supabase (fire and forget) using cached session to avoid redundant network calls
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          supabase.from("workout_logs").upsert({
-            user_id: session.user.id,
-            date_str: dateStr,
-            exercise_id: exerciseId,
-            logs: logs
-          }, { onConflict: "user_id, date_str, exercise_id" }).then(({ error }) => {
-            if (error) console.error("Error syncing log to Supabase:", error);
-          });
-        }
-      });
-      
-      return newState;
+    });
+    
+    // Async sync to Supabase OUTSIDE of setState (fire and forget)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        supabase.from("workout_logs").upsert({
+          user_id: session.user.id,
+          date_str: dateStr,
+          exercise_id: exerciseId,
+          logs: logs
+        }, { onConflict: "user_id, date_str, exercise_id" }).then(({ error }) => {
+          if (error) console.error("Error syncing log to Supabase:", error);
+        });
+      }
     });
   }, []);
 
