@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { getCurrentProtocolDateInfo } from "@/data/protocol";
 
@@ -61,6 +61,7 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ProtocolState>(initialState);
   const [isLoaded, setIsLoaded] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const hasSyncedRef = useRef(false);
 
   useEffect(() => {
     if (userId) {
@@ -91,6 +92,10 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
   }, [state, isLoaded, userId]);
 
   const syncWithUser = useCallback(async (id: string) => {
+    // Hard guard: only sync once per app lifecycle
+    if (hasSyncedRef.current) return;
+    hasSyncedRef.current = true;
+    
     setUserId(id);
     
     // Attempt to pull from Supabase to merge/override local
@@ -308,8 +313,12 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const contextValue = useMemo(() => ({
+    state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift
+  }), [state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift]);
+
   return (
-    <ProtocolContext.Provider value={{ state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift }}>
+    <ProtocolContext.Provider value={contextValue}>
       {children}
     </ProtocolContext.Provider>
   );
