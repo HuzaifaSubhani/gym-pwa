@@ -352,7 +352,10 @@ export default function Profile() {
                 activityLevel === (myProfile.activity_level || "1.55") &&
                 nutritionGoal === (myProfile.nutrition_goal || "maintain")
               )
+            }
             className="w-full px-4 py-4 rounded-lg bg-noir-accent text-noir-bg hover:opacity-90 font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(208,56,243,0.2)] flex justify-center items-center gap-2"
+          >
+            {saveStatus === "saving" ? <><Loader2 className="animate-spin" size={20} /> Saving...</> : <><Save size={20} /> Save Profile</>}
           </button>
         </form>
 
