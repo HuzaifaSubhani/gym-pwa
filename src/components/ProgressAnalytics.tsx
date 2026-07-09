@@ -2,7 +2,7 @@
 
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { ROUTINE_SCHEMA } from "@/data/protocol";
-import { Dumbbell, CalendarCheck, Plus, Trash2 } from "lucide-react";
+import { Dumbbell, CalendarCheck, Plus, Trash2, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
@@ -13,11 +13,11 @@ export default function ProgressAnalytics() {
   
   // Fallback to default if trackedLifts somehow isn't initialized yet
   const trackedLifts = state.trackedLifts || [
-    { id: "m1", name: "Incline DB Press", muscle: "Upper Chest", color: "#39ff14" },
-    { id: "t1", name: "Pull-ups / Pulldown", muscle: "Lats", color: "#00ffff" },
-    { id: "w1", name: "Hack Squat", muscle: "Quads", color: "#ff00ff" },
-    { id: "th1", name: "Smith Machine Press", muscle: "Shoulders", color: "#ffff00" },
-    { id: "f1", name: "Split Squats", muscle: "Legs", color: "#ff3333" },
+    { id: "m1", name: "Incline DB Press", muscle: "Upper Chest", color: "#D038F3" },
+    { id: "t1", name: "Pull-ups / Pulldown", muscle: "Lats", color: "#D038F3" },
+    { id: "w1", name: "Hack Squat", muscle: "Quads", color: "#D038F3" },
+    { id: "th1", name: "Smith Machine Press", muscle: "Shoulders", color: "#D038F3" },
+    { id: "f1", name: "Split Squats", muscle: "Legs", color: "#D038F3" },
   ];
 
   const availableExercisesToTrack = useMemo(() => {
@@ -69,6 +69,33 @@ export default function ProgressAnalytics() {
     return { totalWorkouts, totalSetsLogged };
   }, [state.workoutLogs]);
 
+  // Compute PRs
+  const personalRecords = useMemo(() => {
+    const prs: Record<string, { weight: number, reps: number, date: string, name: string }> = {};
+    const exMap = new Map<string, string>();
+    
+    // Build name map
+    Object.values(ROUTINE_SCHEMA).forEach(day => day.exercises.forEach(ex => exMap.set(ex.id, ex.name)));
+    if (state.customRoutine) Object.values(state.customRoutine).forEach((day: any) => day.exercises?.forEach((ex: any) => exMap.set(ex.id, ex.name)));
+    if (state.customDailyExercises) Object.values(state.customDailyExercises).forEach((dayExs: any[]) => dayExs.forEach(ex => exMap.set(ex.id, ex.name)));
+
+    Object.entries(state.workoutLogs).forEach(([dateStr, dayLogs]) => {
+      Object.entries(dayLogs).forEach(([exId, logs]) => {
+        logs.forEach(log => {
+          const w = parseFloat(log.weight);
+          const r = parseInt(log.reps, 10);
+          if (!isNaN(w) && !isNaN(r)) {
+            if (!prs[exId] || w > prs[exId].weight || (w === prs[exId].weight && r > prs[exId].reps)) {
+              prs[exId] = { weight: w, reps: r, date: dateStr, name: exMap.get(exId) || "Unknown Lift" };
+            }
+          }
+        });
+      });
+    });
+    
+    return Object.values(prs).sort((a, b) => b.weight - a.weight).slice(0, 3);
+  }, [state.workoutLogs, state.customRoutine, state.customDailyExercises]);
+
   // Generate chart data series
   const chartData = useMemo(() => {
     const sortedDates = Object.keys(state.workoutLogs).sort();
@@ -115,6 +142,34 @@ export default function ProgressAnalytics() {
         <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">Analytics</h2>
         <h1 className="text-3xl font-black">Progress</h1>
       </header>
+
+      {/* Personal Records Section */}
+      {personalRecords.length > 0 && (
+        <div className="mb-8 relative p-6 bg-noir-surface border border-[#D038F3]/40 rounded-2xl shadow-[0_0_25px_rgba(208,56,243,0.15)] overflow-hidden">
+          <div className="absolute top-[-50%] right-[-10%] w-64 h-64 bg-[#D038F3]/10 blur-[80px] rounded-full pointer-events-none"></div>
+          <div className="absolute bottom-[-50%] left-[-10%] w-64 h-64 bg-[#D038F3]/10 blur-[80px] rounded-full pointer-events-none"></div>
+          
+          <div className="flex items-center gap-2 mb-6 relative z-10">
+            <Trophy className="text-[#D038F3]" size={24} />
+            <h3 className="text-xl font-black uppercase tracking-wider text-white">All-Time PRs</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+            {personalRecords.map((pr, idx) => {
+              const d = new Date(pr.date);
+              const shortDate = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+              return (
+                <div key={idx} className="bg-noir-bg/60 backdrop-blur-sm border border-[#D038F3]/20 rounded-xl p-4 flex flex-col items-center text-center shadow-inner">
+                  <span className="text-[#D038F3] font-bold text-[10px] uppercase tracking-widest mb-2 line-clamp-1">{pr.name}</span>
+                  <span className="text-4xl font-black text-white leading-none">{pr.weight}<span className="text-sm font-bold text-noir-text-muted ml-1">kg</span></span>
+                  <span className="text-xs font-bold text-noir-text-muted mt-2 tracking-wider">× {pr.reps} REPS</span>
+                  <span className="text-[9px] text-noir-text-muted mt-3 opacity-60 uppercase tracking-widest">{shortDate}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Cumulative Stats */}
       <div className="grid grid-cols-2 gap-4">
@@ -167,7 +222,7 @@ export default function ProgressAnalytics() {
           const currentMax = series.data[series.data.length - 1].weight;
           const initialMax = series.data[0].weight;
           const diff = currentMax - initialMax;
-          const progressColor = diff > 0 ? "text-noir-accent" : diff < 0 ? "text-red-500" : "text-noir-text-muted";
+          const progressColor = diff > 0 ? "text-[#D038F3]" : diff < 0 ? "text-red-500" : "text-noir-text-muted";
 
           return (
             <div key={series.id} className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg">
@@ -215,17 +270,17 @@ export default function ProgressAnalytics() {
                     />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#121212', border: '1px solid #333', borderRadius: '8px' }}
-                      itemStyle={{ color: series.color, fontWeight: 'bold' }}
+                      itemStyle={{ color: '#D038F3', fontWeight: 'bold' }}
                       formatter={(value: any) => [`${value} kg`, 'Max Weight']}
                       labelStyle={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="weight" 
-                      stroke={series.color} 
+                      stroke="#D038F3" 
                       strokeWidth={3} 
-                      dot={{ r: 4, strokeWidth: 2, fill: '#121212' }} 
-                      activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
+                      dot={{ r: 4, strokeWidth: 2, fill: '#121212', stroke: '#D038F3' }} 
+                      activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2, fill: '#D038F3' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -254,7 +309,7 @@ export default function ProgressAnalytics() {
                         id: ex.id,
                         name: ex.name,
                         muscle: "Custom",
-                        color: `#${Math.floor(Math.random()*16777215).toString(16)}`
+                        color: "#D038F3"
                       });
                       setIsAddTrackerOpen(false);
                     }}

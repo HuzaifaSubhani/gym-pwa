@@ -153,11 +153,11 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         },
       };
       
-      // Async sync to Supabase (fire and forget)
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) {
+      // Async sync to Supabase (fire and forget) using cached session to avoid redundant network calls
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
           supabase.from("workout_logs").upsert({
-            user_id: user.id,
+            user_id: session.user.id,
             date_str: dateStr,
             exercise_id: exerciseId,
             logs: logs

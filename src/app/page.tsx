@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import WorkoutLogger from "@/components/WorkoutLogger";
 import ProgressAnalytics from "@/components/ProgressAnalytics";
+import Dashboard from "@/components/Dashboard";
 import Leaderboard from "@/components/Leaderboard";
 import Profile from "@/components/Profile";
 import { Dumbbell, LayoutDashboard, Trophy, User, Loader2 } from "lucide-react";
@@ -55,10 +56,7 @@ export default function Home() {
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-28 md:px-8 max-w-3xl mx-auto w-full">
         {activeTab === "dashboard" && (
           <div className="space-y-8 animate-in fade-in duration-500">
-            <header className="mb-6">
-              <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">The Hub</h2>
-              <h1 className="text-3xl font-black">Performance Analytics</h1>
-            </header>
+            <Dashboard />
             <ProgressAnalytics />
           </div>
         )}
