@@ -6,7 +6,7 @@ import ProgressAnalytics from "@/components/ProgressAnalytics";
 import Dashboard from "@/components/Dashboard";
 import Leaderboard from "@/components/Leaderboard";
 import Profile from "@/components/Profile";
-import { Home, Dumbbell, Trophy, User, Loader2 } from "lucide-react";
+import { Home as HomeIcon, Dumbbell, Trophy, User, Loader2 } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { getCurrentProtocolDateInfo } from "@/data/protocol";
 import { supabase } from "@/lib/supabaseClient";
@@ -101,7 +101,7 @@ export default function Home() {
               activeTab === "dashboard" ? "text-noir-accent" : "text-noir-text-muted"
             }`}
           >
-            <Home size={24} />
+            <HomeIcon size={24} />
             <span className="text-[10px] uppercase font-bold tracking-wider">Home</span>
           </button>
           
