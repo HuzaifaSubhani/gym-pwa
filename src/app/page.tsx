@@ -39,7 +39,8 @@ export default function Home() {
       }
     };
     checkAuth();
-  }, [router, syncWithUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Sync current actual date on load to ensure active week/day are accurate based on the timeline
