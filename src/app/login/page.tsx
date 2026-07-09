@@ -103,8 +103,20 @@ export default function LoginPage() {
           setSuccessMsg("Check your email for the confirmation link!");
         }
       } else if (authMode === "login") {
+        let loginEmail = domEmail;
+        
+        // If it doesn't look like an email, assume it's a username and try to resolve it
+        if (!loginEmail.includes('@')) {
+          const { data: resolvedEmail, error: rpcError } = await supabase.rpc('get_email_from_username', { p_username: loginEmail });
+          if (resolvedEmail) {
+            loginEmail = resolvedEmail;
+          } else {
+            throw new Error("Username not found");
+          }
+        }
+
         const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: domEmail,
+          email: loginEmail,
           password: activePassword,
         });
         
@@ -203,17 +215,17 @@ export default function LoginPage() {
         <form onSubmit={handleAuth} className="space-y-4">
           {(authMode === "login" || authMode === "signup" || authMode === "forgot") && (
             <div>
-              <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Email</label>
+              <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Username or Email</label>
               <input
                 required
                 id="email"
                 name="email"
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="username"
                 className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-noir-text focus:outline-none focus:border-noir-accent transition-colors"
-                placeholder="gymbro@example.com"
+                placeholder="Ronnie or gymbro@example.com"
               />
             </div>
           )}
