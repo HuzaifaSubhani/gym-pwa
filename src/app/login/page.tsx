@@ -59,18 +59,28 @@ export default function LoginPage() {
     setError(null);
     setSuccessMsg(null);
 
+    // Grab values from DOM directly to bypass any Autofill bugs
+    const form = e.target as HTMLFormElement;
+    const domEmail = (form.elements.namedItem('email') as HTMLInputElement)?.value || email;
+    const domPassword = (form.elements.namedItem('password') as HTMLInputElement)?.value || password;
+    const domUsername = (form.elements.namedItem('username') as HTMLInputElement)?.value || username;
+    const domConfirm = (form.elements.namedItem('confirmpassword') as HTMLInputElement)?.value || confirmPassword;
+    const domNewPassword = (form.elements.namedItem('newpassword') as HTMLInputElement)?.value || password;
+
+    const activePassword = authMode === 'reset' ? domNewPassword : domPassword;
+
     try {
       if (authMode === "signup") {
-        if (password !== confirmPassword) {
+        if (activePassword !== domConfirm) {
           throw new Error("Passwords do not match");
         }
         
         const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
+          email: domEmail,
+          password: activePassword,
           options: {
             data: {
-              username: username
+              username: domUsername
             }
           }
         });
@@ -84,15 +94,15 @@ export default function LoginPage() {
         }
       } else if (authMode === "login") {
         const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+          email: domEmail,
+          password: activePassword,
         });
         
         if (signInError) throw signInError;
         
         router.push("/");
       } else if (authMode === "forgot") {
-        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(domEmail, {
           redirectTo: `${window.location.origin}/login`,
         });
         
@@ -101,12 +111,12 @@ export default function LoginPage() {
         setAuthMode("login");
         setSuccessMsg("Password reset email sent! Check your inbox.");
       } else if (authMode === "reset") {
-        if (password !== confirmPassword) {
+        if (activePassword !== domConfirm) {
           throw new Error("Passwords do not match");
         }
 
         const { error: updateError } = await supabase.auth.updateUser({
-          password: password
+          password: activePassword
         });
 
         if (updateError) throw updateError;
