@@ -208,6 +208,8 @@ export default function Profile() {
                 src={myProfile.avatar_url} 
                 alt="DP" 
                 className="w-28 h-28 rounded-full border-2 border-noir-accent object-cover shadow-[0_0_15px_rgba(208,56,243,0.2)]" 
+              />
+            ) : (
               <div className="w-28 h-28 rounded-full bg-noir-bg border-2 border-dashed border-noir-border flex items-center justify-center text-3xl font-bold">
                 {myProfile.username.substring(0, 2).toUpperCase()}
               </div>
