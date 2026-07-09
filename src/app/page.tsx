@@ -92,8 +92,9 @@ export default function Home() {
       </div>
 
       {/* Bottom Navigation for mobile-first usage */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-noir-surface border-t border-noir-border pb-safe">
-        <div className="flex">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
+        <div className="max-w-3xl mx-auto bg-noir-surface border-t border-noir-border pb-safe pointer-events-auto">
+          <div className="flex">
           <button
             onClick={() => setActiveTab("dashboard")}
             className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
@@ -133,6 +134,7 @@ export default function Home() {
             <User size={24} />
             <span className="text-[10px] uppercase font-bold tracking-wider">Profile</span>
           </button>
+        </div>
         </div>
       </nav>
     </main>
