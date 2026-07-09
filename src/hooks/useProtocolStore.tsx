@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { getCurrentProtocolDateInfo } from "@/data/protocol";
 
@@ -90,7 +90,7 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
     }
   }, [state, isLoaded, userId]);
 
-  const syncWithUser = async (id: string) => {
+  const syncWithUser = useCallback(async (id: string) => {
     setUserId(id);
     
     // Attempt to pull from Supabase to merge/override local
@@ -105,9 +105,9 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         return { ...prev, workoutLogs: mergedLogs };
       });
     }
-  };
+  }, []);
 
-  const setHabit = (dateStr: string, type: "morning" | "evening", value: boolean) => {
+  const setHabit = useCallback((dateStr: string, type: "morning" | "evening", value: boolean) => {
     setState((prev) => ({
       ...prev,
       habits: {
@@ -118,9 +118,9 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         },
       },
     }));
-  };
+  }, []);
 
-  const setWorkoutLog = (dateStr: string, exerciseId: string, setIndex: number, log: SetLog) => {
+  const setWorkoutLog = useCallback((dateStr: string, exerciseId: string, setIndex: number, log: SetLog) => {
     setState((prev) => {
       const dayLogs = prev.workoutLogs[dateStr] || {};
       const exLogs = [...(dayLogs[exerciseId] || [])];
@@ -137,9 +137,9 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         },
       };
     });
-  };
+  }, []);
 
-  const setFullExerciseLogs = (dateStr: string, exerciseId: string, logs: SetLog[]) => {
+  const setFullExerciseLogs = useCallback((dateStr: string, exerciseId: string, logs: SetLog[]) => {
     setState((prev) => {
       const dayLogs = prev.workoutLogs[dateStr] || {};
       const newState = {
@@ -169,9 +169,9 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
       
       return newState;
     });
-  };
+  }, []);
 
-  const setWeightLog = (week: number, weight: string) => {
+  const setWeightLog = useCallback((week: number, weight: string) => {
     setState((prev) => ({
       ...prev,
       weightLogs: {
@@ -179,17 +179,17 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         [week]: weight,
       },
     }));
-  };
+  }, []);
 
-  const setActiveWeekDay = (week: number, day: number) => {
+  const setActiveWeekDay = useCallback((week: number, day: number) => {
     setState((prev) => ({
       ...prev,
       activeWeek: week,
       activeDayOfWeek: day,
     }));
-  };
+  }, []);
 
-  const addCustomExercise = (exercise: any, scope: "today" | "every_week", dayNum: number, dateStr: string) => {
+  const addCustomExercise = useCallback((exercise: any, scope: "today" | "every_week", dayNum: number, dateStr: string) => {
     setState((prev) => {
       if (scope === "today") {
         const existing = prev.customDailyExercises?.[dateStr] || [];
@@ -229,9 +229,9 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         }
       }
     });
-  };
+  }, []);
 
-  const removeExercise = (dayNum: number, dateStr: string, exerciseId: string) => {
+  const removeExercise = useCallback((dayNum: number, dateStr: string, exerciseId: string) => {
     setState((prev) => {
       const newCustomDaily = { ...prev.customDailyExercises };
       if (newCustomDaily[dateStr]) {
@@ -251,9 +251,9 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         } : newCustomRoutine
       };
     });
-  };
+  }, []);
 
-  const setCustomDayRoutine = (dayNum: number, name: string, focus: string) => {
+  const setCustomDayRoutine = useCallback((dayNum: number, name: string, focus: string) => {
     setState((prev) => {
       const existing = prev.customRoutine?.[dayNum];
       return {
@@ -269,16 +269,16 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         }
       };
     });
-  };
+  }, []);
 
-  const updateTimer = (updates: Partial<ProtocolState["timer"]>) => {
+  const updateTimer = useCallback((updates: Partial<ProtocolState["timer"]>) => {
     setState(prev => ({
       ...prev,
       timer: { ...prev.timer, ...updates }
     }));
-  };
+  }, []);
 
-  const startTimer = (seconds: number) => {
+  const startTimer = useCallback((seconds: number) => {
     setState(prev => ({
       ...prev,
       timer: {
@@ -288,9 +288,9 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         endTime: Date.now() + seconds * 1000
       }
     }));
-  };
+  }, []);
 
-  const addTrackedLift = (lift: TrackedLift) => {
+  const addTrackedLift = useCallback((lift: TrackedLift) => {
     setState(prev => {
       // Ensure no duplicates
       if (prev.trackedLifts?.find(l => l.id === lift.id)) return prev;
@@ -299,14 +299,14 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         trackedLifts: [...(prev.trackedLifts || []), lift]
       };
     });
-  };
+  }, []);
 
-  const removeTrackedLift = (id: string) => {
+  const removeTrackedLift = useCallback((id: string) => {
     setState(prev => ({
       ...prev,
       trackedLifts: (prev.trackedLifts || []).filter(l => l.id !== id)
     }));
-  };
+  }, []);
 
   return (
     <ProtocolContext.Provider value={{ state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift }}>
