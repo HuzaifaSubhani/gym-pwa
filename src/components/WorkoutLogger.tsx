@@ -311,16 +311,16 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                   <div className="flex gap-1 ml-auto">
                     <button 
                       onClick={() => handleUpdateLocalLog(i, "rating", "easy")} 
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${log.rating === 'easy' ? 'bg-green-500/20 text-green-500 border border-green-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted'}`}
-                    >E</button>
+                      className={`px-2 py-1 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'easy' ? 'bg-green-500/20 text-green-500 border border-green-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-green-500'}`}
+                    >EASY</button>
                     <button 
                       onClick={() => handleUpdateLocalLog(i, "rating", "hard")} 
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${log.rating === 'hard' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted'}`}
-                    >H</button>
+                      className={`px-2 py-1 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'hard' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-yellow-500'}`}
+                    >MED</button>
                     <button 
                       onClick={() => handleUpdateLocalLog(i, "rating", "extreme")} 
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${log.rating === 'extreme' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted'}`}
-                    >X</button>
+                      className={`px-2 py-1 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'extreme' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-red-500'}`}
+                    >HARD</button>
                   </div>
                 </div>
 
@@ -328,8 +328,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                   <div className="text-[10px] text-noir-text-muted ml-10">
                     Last Week: {prevLogs[i].weight}kg × {prevLogs[i].reps} 
                     {prevLogs[i].rating === 'easy' && ' 🟢 Easy'}
-                    {prevLogs[i].rating === 'hard' && ' 🟡 Hard'}
-                    {prevLogs[i].rating === 'extreme' && ' 🔴 Extreme'}
+                    {prevLogs[i].rating === 'hard' && ' 🟡 Med'}
+                    {prevLogs[i].rating === 'extreme' && ' 🔴 Hard'}
                   </div>
                 )}
 

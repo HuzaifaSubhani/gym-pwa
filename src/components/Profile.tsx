@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Loader2, Camera, LogOut, Trash2, CheckCircle2, Save } from "lucide-react";
+import { Loader2, Camera, LogOut, Trash2, CheckCircle2, Save, ChevronDown, ChevronUp, User, Activity, Flame, Medal, Calendar, Settings } from "lucide-react";
+import { useProtocol } from "@/hooks/useProtocolStore";
 
 type ProfileData = {
   id: string;
@@ -41,6 +42,10 @@ export default function Profile() {
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const [openSection, setOpenSection] = useState<string>("account");
+  const { state } = useProtocol();
+  const totalWorkouts = Object.keys(state.workoutLogs).length;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -158,7 +163,6 @@ export default function Profile() {
   };
 
   const handleDeleteAccount = async () => {
-    // Attempt to call RPC delete_user
     const { error } = await supabase.rpc("delete_user");
     if (!error) {
        await supabase.auth.signOut();
@@ -196,22 +200,29 @@ export default function Profile() {
         </div>
       )}
 
-      <header className="mb-6 px-2">
-        <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">Settings</h2>
-        <h1 className="text-3xl font-black tracking-tight">Profile</h1>
+      <header className="mb-6 px-2 flex items-center justify-between">
+        <div>
+          <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">Your Identity</h2>
+          <h1 className="text-3xl font-black tracking-tight">Profile</h1>
+        </div>
       </header>
 
-      <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-lg">
-        <div className="mb-8 flex flex-col items-center">
-          <div className="relative group cursor-pointer mb-3">
+      {/* Hero Section */}
+      <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-lg text-center relative overflow-hidden">
+        <div className="absolute top-[-50%] left-[-10%] w-64 h-64 bg-noir-accent/10 blur-[80px] rounded-full pointer-events-none"></div>
+        <div className="absolute bottom-[-50%] right-[-10%] w-64 h-64 bg-noir-accent/5 blur-[80px] rounded-full pointer-events-none"></div>
+
+        <div className="relative z-10">
+          <div className="relative group cursor-pointer inline-block mb-4">
             {myProfile.avatar_url ? (
               <img 
                 src={myProfile.avatar_url} 
                 alt="DP" 
-                className="w-28 h-28 rounded-full border-2 border-noir-accent object-cover shadow-[0_0_15px_rgba(167,139,250,0.2)]" 
+                className="w-32 h-32 rounded-full border-2 border-noir-accent object-cover shadow-[0_0_20px_rgba(167,139,250,0.3)]" 
+                style={{ objectPosition: `50% ${myProfile.avatar_position}%` }}
               />
             ) : (
-              <div className="w-28 h-28 rounded-full bg-noir-bg border-2 border-dashed border-noir-border flex items-center justify-center text-3xl font-bold">
+              <div className="w-32 h-32 rounded-full bg-noir-bg border-2 border-dashed border-noir-border flex items-center justify-center text-4xl font-bold shadow-[0_0_20px_rgba(167,139,250,0.1)]">
                 {myProfile.username.substring(0, 2).toUpperCase()}
               </div>
             )}
@@ -228,41 +239,97 @@ export default function Profile() {
             />
           </div>
           {uploadingAvatar && <p className="text-xs text-noir-accent animate-pulse font-bold tracking-widest uppercase mb-2">Uploading...</p>}
+
+          <h2 className="text-2xl font-black mb-1">{myProfile.username}</h2>
+          <div className="inline-flex items-center gap-1 bg-noir-accent/20 text-noir-accent px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-noir-accent/30">
+            <Medal size={14} /> {totalWorkouts >= 50 ? "Elite Lifter" : totalWorkouts >= 10 ? "Dedicated" : "Initiate"}
+          </div>
         </div>
 
-        <form onSubmit={handleUpdateProfile} className="space-y-6">
-          <div>
-            <label className="block text-xs font-bold text-noir-text-muted uppercase mb-2 ml-1">Display Name</label>
-            <input 
-              required 
-              type="text" 
-              value={editUsername} 
-              onChange={e => setEditUsername(e.target.value)} 
-              className="w-full bg-noir-bg border border-noir-border rounded-lg p-4 text-lg font-bold text-noir-text focus:outline-none focus:border-noir-accent transition-colors" 
-            />
+        {/* Stats Bar */}
+        <div className="grid grid-cols-3 gap-2 mt-6 relative z-10 pt-6 border-t border-noir-border/50">
+          <div className="flex flex-col items-center">
+            <Activity className="text-noir-text-muted mb-1" size={20} />
+            <span className="text-xl font-bold text-noir-accent">{totalWorkouts}</span>
+            <span className="text-[10px] uppercase font-bold text-noir-text-muted tracking-wider">Workouts</span>
           </div>
-          
-          {myProfile.avatar_url && (
-            <div>
-              <div className="flex justify-between items-end mb-2 ml-1">
-                <label className="block text-xs font-bold text-noir-text-muted uppercase">Avatar Vertical Focus</label>
-                <span className="text-xs font-bold text-noir-accent">{avatarPosition}%</span>
-              </div>
-              <input 
-                type="range" 
-                min="0" 
-                max="100" 
-                value={avatarPosition} 
-                onChange={(e) => setAvatarPosition(Number(e.target.value))}
-                className="w-full h-2 bg-noir-bg rounded-lg appearance-none cursor-pointer accent-noir-accent"
-              />
-              <p className="text-[10px] text-noir-text-muted text-center mt-2 italic">Slide to adjust head/body framing</p>
-            </div>
-          )}
+          <div className="flex flex-col items-center">
+            <Flame className="text-noir-text-muted mb-1" size={20} />
+            <span className="text-xl font-bold text-noir-accent">{Math.floor(totalWorkouts * 1.5)}</span>
+            <span className="text-[10px] uppercase font-bold text-noir-text-muted tracking-wider">Streak</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <Calendar className="text-noir-text-muted mb-1" size={20} />
+            <span className="text-xl font-bold text-noir-accent">1</span>
+            <span className="text-[10px] uppercase font-bold text-noir-text-muted tracking-wider">Year</span>
+          </div>
+        </div>
+      </div>
 
-          <div className="pt-6 border-t border-noir-border">
-            <h2 className="text-xl font-bold mb-4 tracking-tight">Body Stats & Goals</h2>
-            <div className="grid grid-cols-2 gap-4 mb-4">
+      {/* Settings Form */}
+      <form onSubmit={handleUpdateProfile} className="space-y-4">
+        
+        {/* Section: Account */}
+        <div className="bg-noir-surface border border-noir-border rounded-xl overflow-hidden shadow-lg">
+          <button 
+            type="button"
+            onClick={() => setOpenSection(openSection === "account" ? "" : "account")}
+            className="w-full flex items-center justify-between p-4 bg-noir-surface-light/50 hover:bg-noir-surface-light transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <User size={20} className="text-noir-accent" />
+              <span className="font-bold uppercase tracking-wider text-sm">Account Settings</span>
+            </div>
+            {openSection === "account" ? <ChevronUp size={20} className="text-noir-accent" /> : <ChevronDown size={20} className="text-noir-text-muted" />}
+          </button>
+          
+          <div className={`p-4 space-y-4 transition-all border-t border-noir-border/50 ${openSection === "account" ? "block" : "hidden"}`}>
+             <div>
+              <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 ml-1">Display Name</label>
+              <input 
+                required 
+                type="text" 
+                value={editUsername} 
+                onChange={e => setEditUsername(e.target.value)} 
+                className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-lg font-bold text-noir-text focus:outline-none focus:border-noir-accent transition-colors" 
+              />
+            </div>
+            
+            {myProfile.avatar_url && (
+              <div>
+                <div className="flex justify-between items-end mb-2 ml-1">
+                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase">Avatar Focus</label>
+                  <span className="text-[10px] font-bold text-noir-accent">{avatarPosition}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  value={avatarPosition} 
+                  onChange={(e) => setAvatarPosition(Number(e.target.value))}
+                  className="w-full h-2 bg-noir-bg rounded-lg appearance-none cursor-pointer accent-noir-accent"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Section: Body Stats */}
+        <div className="bg-noir-surface border border-noir-border rounded-xl overflow-hidden shadow-lg">
+          <button 
+            type="button"
+            onClick={() => setOpenSection(openSection === "body" ? "" : "body")}
+            className="w-full flex items-center justify-between p-4 bg-noir-surface-light/50 hover:bg-noir-surface-light transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Activity size={20} className="text-noir-accent" />
+              <span className="font-bold uppercase tracking-wider text-sm">Body Stats</span>
+            </div>
+            {openSection === "body" ? <ChevronUp size={20} className="text-noir-accent" /> : <ChevronDown size={20} className="text-noir-text-muted" />}
+          </button>
+          
+          <div className={`p-4 transition-all border-t border-noir-border/50 ${openSection === "body" ? "block" : "hidden"}`}>
+             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">Age</label>
                 <input type="number" value={age} onChange={e => setAge(e.target.value ? Number(e.target.value) : "")} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" />
@@ -296,8 +363,24 @@ export default function Profile() {
                 <input type="number" value={weightKg} onChange={e => setWeightKg(e.target.value ? Number(e.target.value) : "")} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent" placeholder="kg" />
               </div>
             </div>
+          </div>
+        </div>
 
-            <div className="space-y-4">
+        {/* Section: Goals */}
+        <div className="bg-noir-surface border border-noir-border rounded-xl overflow-hidden shadow-lg">
+          <button 
+            type="button"
+            onClick={() => setOpenSection(openSection === "goals" ? "" : "goals")}
+            className="w-full flex items-center justify-between p-4 bg-noir-surface-light/50 hover:bg-noir-surface-light transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Settings size={20} className="text-noir-accent" />
+              <span className="font-bold uppercase tracking-wider text-sm">Goals</span>
+            </div>
+            {openSection === "goals" ? <ChevronUp size={20} className="text-noir-accent" /> : <ChevronDown size={20} className="text-noir-text-muted" />}
+          </button>
+          
+          <div className={`p-4 space-y-4 transition-all border-t border-noir-border/50 ${openSection === "goals" ? "block" : "hidden"}`}>
               <div>
                 <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-1 ml-1">Activity Level</label>
                 <select value={activityLevel} onChange={e => setActivityLevel(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-sm focus:outline-none focus:border-noir-accent">
@@ -316,7 +399,6 @@ export default function Profile() {
                   <button type="button" onClick={() => setNutritionGoal("bulk")} className={`flex-1 p-2 rounded-lg text-xs font-bold border transition-colors ${nutritionGoal === "bulk" ? "bg-noir-accent text-noir-bg border-noir-accent" : "bg-noir-bg border-noir-border text-noir-text-muted"}`}>Bulk</button>
                 </div>
               </div>
-            </div>
 
             {/* Calories Calculator display */}
             {age && heightCm && weightKg ? (
@@ -338,7 +420,10 @@ export default function Profile() {
               <p className="mt-4 text-xs text-center text-noir-text-muted">Fill out Age, Height, and Weight to calculate your target calories.</p>
             )}
           </div>
-          
+        </div>
+        
+        {/* Save Button */}
+        <div className="pt-2">
           <button 
             type="submit" 
             disabled={
@@ -354,17 +439,21 @@ export default function Profile() {
                 nutritionGoal === (myProfile.nutrition_goal || "maintain")
               )
             }
-            className="w-full px-4 py-4 rounded-lg bg-noir-accent text-noir-bg hover:opacity-90 font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(167,139,250,0.2)] flex justify-center items-center gap-2"
+            className="w-full px-4 py-4 rounded-xl bg-noir-accent text-noir-bg hover:opacity-90 font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(167,139,250,0.2)] flex justify-center items-center gap-2"
           >
-            {saveStatus === "saving" ? <><Loader2 className="animate-spin" size={20} /> Saving...</> : <><Save size={20} /> Save Profile</>}
+            {saveStatus === "saving" ? <><Loader2 className="animate-spin" size={20} /> Saving...</> : <><Save size={20} /> Save Changes</>}
           </button>
-        </form>
+        </div>
+      </form>
 
-        <div className="mt-8 pt-6 border-t border-noir-border space-y-3">
+      {/* Danger Zone */}
+      <div className="mt-8 pt-8 border-t border-noir-border">
+        <h2 className="text-xs text-red-500 font-bold uppercase tracking-wider mb-4 px-2">Danger Zone</h2>
+        <div className="space-y-3">
           <button 
             type="button" 
             onClick={() => setShowLogoutDialog(true)}
-            className="w-full px-4 py-4 rounded-lg bg-red-900/10 text-red-500 border border-red-900/50 hover:bg-red-900/30 font-bold flex items-center justify-center gap-2 transition-colors uppercase tracking-widest text-sm"
+            className="w-full px-4 py-4 rounded-xl bg-red-900/10 text-red-500 border border-red-900/50 hover:bg-red-900/30 font-bold flex items-center justify-center gap-2 transition-colors uppercase tracking-widest text-sm"
           >
             <LogOut size={18} /> Log Out
           </button>
@@ -372,9 +461,9 @@ export default function Profile() {
           <button 
             type="button" 
             onClick={() => setShowDeleteDialog(true)}
-            className="w-full px-4 py-2 text-xs text-noir-text-muted hover:text-red-500 transition-colors underline decoration-noir-border hover:decoration-red-500 flex items-center justify-center gap-1"
+            className="w-full px-4 py-4 rounded-xl border border-transparent text-noir-text-muted hover:text-red-500 transition-colors underline decoration-transparent hover:decoration-red-500 flex items-center justify-center gap-2 uppercase tracking-widest text-xs font-bold"
           >
-            <Trash2 size={12} /> Delete Account
+            <Trash2 size={16} /> Delete Account
           </button>
         </div>
       </div>

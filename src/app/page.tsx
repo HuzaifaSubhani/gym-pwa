@@ -6,7 +6,7 @@ import ProgressAnalytics from "@/components/ProgressAnalytics";
 import Dashboard from "@/components/Dashboard";
 import Leaderboard from "@/components/Leaderboard";
 import Profile from "@/components/Profile";
-import { Dumbbell, LayoutDashboard, Trophy, User, Loader2 } from "lucide-react";
+import { Home, Dumbbell, Trophy, User, Loader2 } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { getCurrentProtocolDateInfo } from "@/data/protocol";
 import { supabase } from "@/lib/supabaseClient";
@@ -101,8 +101,8 @@ export default function Home() {
               activeTab === "dashboard" ? "text-noir-accent" : "text-noir-text-muted"
             }`}
           >
-            <LayoutDashboard size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider">Hub</span>
+            <Home size={24} />
+            <span className="text-[10px] uppercase font-bold tracking-wider">Home</span>
           </button>
           
           <button
@@ -112,7 +112,7 @@ export default function Home() {
             }`}
           >
             <Dumbbell size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider">Log</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider">Train</span>
           </button>
           
           <button
@@ -122,7 +122,7 @@ export default function Home() {
             }`}
           >
             <Trophy size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider">Squad</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider">Ranks</span>
           </button>
           
           <button
@@ -132,7 +132,7 @@ export default function Home() {
             }`}
           >
             <User size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider">Profile</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider">You</span>
           </button>
         </div>
         </div>
