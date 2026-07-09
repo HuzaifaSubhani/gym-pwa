@@ -88,6 +88,16 @@ export default function LoginPage() {
         if (signUpError) throw signUpError;
         
         if (data.user && data.session) {
+          if (window.PasswordCredential) {
+            try {
+              const cred = new (window as any).PasswordCredential({
+                id: domEmail,
+                password: activePassword,
+                name: domUsername || domEmail
+              });
+              await navigator.credentials.store(cred);
+            } catch (e) { console.error("Credential store error", e); }
+          }
           router.push("/");
         } else {
           setSuccessMsg("Check your email for the confirmation link!");
@@ -99,6 +109,17 @@ export default function LoginPage() {
         });
         
         if (signInError) throw signInError;
+        
+        if (window.PasswordCredential) {
+          try {
+            const cred = new (window as any).PasswordCredential({
+              id: domEmail,
+              password: activePassword,
+              name: domEmail
+            });
+            await navigator.credentials.store(cred);
+          } catch (e) { console.error("Credential store error", e); }
+        }
         
         router.push("/");
       } else if (authMode === "forgot") {
@@ -251,7 +272,29 @@ export default function LoginPage() {
           {authMode === "login" && (
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
+                if (window.PasswordCredential && navigator.credentials) {
+                  try {
+                    const cred = await navigator.credentials.get({ password: true }) as any;
+                    if (cred && cred.id && cred.password) {
+                      setIsLoading(true);
+                      const { error } = await supabase.auth.signInWithPassword({
+                        email: cred.id,
+                        password: cred.password,
+                      });
+                      if (error) {
+                        setError(error.message);
+                        setIsLoading(false);
+                      } else {
+                        router.push("/");
+                      }
+                      return;
+                    }
+                  } catch (e) {
+                    console.error("Biometric prompt failed", e);
+                  }
+                }
+                // Fallback to manual focus
                 const el = document.getElementById('password');
                 if (el) el.focus();
               }}

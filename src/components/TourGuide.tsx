@@ -55,12 +55,12 @@ export default function TourGuide() {
           }
         ],
         onDestroyStarted: () => {
-          localStorage.setItem("tourCompleted", "true");
           driverObj.destroy();
         }
       });
 
       driverObj.drive();
+      localStorage.setItem("tourCompleted", "true");
     }, 1000);
 
     return () => clearTimeout(timer);
