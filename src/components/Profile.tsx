@@ -164,12 +164,73 @@ export default function Profile() {
     }
   };
 
+  const compressImage = (file: File, maxSizeMB: number = 1): Promise<File> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return resolve(file);
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          let quality = 0.9;
+          const compress = () => {
+            canvas.toBlob((blob) => {
+              if (!blob) return resolve(file);
+              if (blob.size / 1024 / 1024 > maxSizeMB && quality > 0.1) {
+                quality -= 0.1;
+                compress();
+              } else {
+                const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(newFile);
+              }
+            }, 'image/jpeg', quality);
+          };
+          compress();
+        };
+        img.onerror = () => resolve(file);
+      };
+      reader.onerror = () => resolve(file);
+    });
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !user) return;
-    const file = e.target.files[0];
+    const originalFile = e.target.files[0];
     
     setUploadingAvatar(true);
-    const fileExt = file.name.split('.').pop();
+    showToast("Compressing image...");
+    
+    const file = await compressImage(originalFile, 1);
+    
+    const fileExt = file.name.split('.').pop() || 'jpg';
     const filePath = `${user.id}-${Math.random()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
