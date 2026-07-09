@@ -42,7 +42,7 @@ export default function TourGuide() {
             element: '#tour-exercise-card', 
             popover: { 
               title: 'Log Your Sets', 
-              description: 'Fill in weight and reps. Once a card is fully filled, it glows green so you know it’s complete!',
+              description: 'Fill in weight and reps. Once a card is fully filled, it glows purple so you know it’s complete!',
               side: "top", 
               align: 'start' 
             } 
@@ -50,7 +50,7 @@ export default function TourGuide() {
           { 
             popover: { 
               title: 'Earn XP and Level Up 🎮', 
-              description: 'Logging volume grants you XP. Heavier lifts = more XP. Climb the leaderboard and reach Level 10!' 
+              description: 'Logging volume grants you XP. Heavier lifts = more XP. Climb the leaderboard and reach max level!' 
             } 
           }
         ],

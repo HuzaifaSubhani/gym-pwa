@@ -311,16 +311,16 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                   <div className="flex gap-1 ml-auto">
                     <button 
                       onClick={() => handleUpdateLocalLog(i, "rating", "easy")} 
-                      className={`px-2 py-1 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'easy' ? 'bg-green-500/20 text-green-500 border border-green-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-green-500'}`}
-                    >EASY</button>
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'easy' ? 'bg-green-500/20 text-green-500 border border-green-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-green-500'}`}
+                    >E</button>
                     <button 
                       onClick={() => handleUpdateLocalLog(i, "rating", "hard")} 
-                      className={`px-2 py-1 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'hard' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-yellow-500'}`}
-                    >MED</button>
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'hard' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-yellow-500'}`}
+                    >M</button>
                     <button 
                       onClick={() => handleUpdateLocalLog(i, "rating", "extreme")} 
-                      className={`px-2 py-1 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'extreme' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-red-500'}`}
-                    >HARD</button>
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'extreme' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-red-500'}`}
+                    >H</button>
                   </div>
                 </div>
 

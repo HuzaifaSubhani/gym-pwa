@@ -42,6 +42,10 @@ export default function RestTimer() {
           osc.start();
           gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1);
           osc.stop(ctx.currentTime + 1);
+          
+          if ('vibrate' in navigator) {
+            navigator.vibrate([200, 100, 200, 100, 400]);
+          }
         } catch (e) {
           console.error("Audio playback failed", e);
         }
@@ -85,16 +89,16 @@ export default function RestTimer() {
 
         <div className="flex items-center gap-2">
           <button 
-            onClick={() => addTime(-30)} 
-            className="w-10 h-10 rounded-full bg-noir-bg border border-noir-border flex items-center justify-center hover:text-noir-accent hover:border-noir-accent transition-colors"
+            onClick={() => addTime(-10)} 
+            className="w-10 h-10 rounded-full bg-noir-bg border border-noir-border flex items-center justify-center hover:text-noir-accent hover:border-noir-accent transition-colors text-xs font-bold"
           >
-            <Minus size={18} />
+            -10s
           </button>
           <button 
-            onClick={() => addTime(30)} 
-            className="w-10 h-10 rounded-full bg-noir-bg border border-noir-border flex items-center justify-center hover:text-noir-accent hover:border-noir-accent transition-colors"
+            onClick={() => addTime(10)} 
+            className="w-10 h-10 rounded-full bg-noir-bg border border-noir-border flex items-center justify-center hover:text-noir-accent hover:border-noir-accent transition-colors text-xs font-bold"
           >
-            <Plus size={18} />
+            +10s
           </button>
           <div className="w-px h-8 bg-noir-border mx-1"></div>
           <button 
