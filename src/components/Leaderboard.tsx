@@ -146,8 +146,9 @@ export default function Leaderboard() {
       });
 
       // Enhance challenges with profiles and calculate active volumes
+      let enhancedChallenges: any[] = [];
       if (currentUser) {
-        const enhancedChallenges = fetchedChallenges.map(c => {
+        enhancedChallenges = fetchedChallenges.map(c => {
           const isChallenger = c.challenger_id === currentUser.id;
           const opponentId = isChallenger ? c.challenged_id : c.challenger_id;
           const opponentProfile = profiles.find(p => p.id === opponentId);
@@ -204,7 +205,7 @@ export default function Leaderboard() {
       // Update cache
       cachedData = {
         entries: calculatedEntries,
-        challenges: enhancedChallenges || [],
+        challenges: enhancedChallenges,
         user: currentUser,
         myProfile: currentUserProfile || null
       };
