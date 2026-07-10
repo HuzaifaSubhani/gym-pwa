@@ -84,7 +84,6 @@ export default function Dashboard({ avatarUrl }: { avatarUrl?: string | null }) 
       {/* Weekly Weight Check-in */}
       {isWeekend && (
         <section className="relative p-6 bg-noir-surface/80 backdrop-blur-sm rounded-2xl border border-noir-border shadow-lg overflow-hidden group">
-          <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-noir-accent to-[#A78BFA]"></div>
           
           <div className="flex items-center gap-3 mb-5">
             <div className="p-2 bg-noir-bg rounded-lg border border-noir-border group-hover:border-noir-accent transition-colors">

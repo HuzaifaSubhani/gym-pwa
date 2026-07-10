@@ -2,7 +2,7 @@
 
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { ROUTINE_SCHEMA, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTOCOL_START_DATE } from "@/data/protocol";
-import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search, ArrowRight, X, Activity, Dumbbell } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search, ArrowRight, X, Activity, Dumbbell, Shield, Mountain, Crosshair, Footprints, Target, HeartPulse } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import TourGuide from "./TourGuide";
 import ExerciseVideoModal from "./ExerciseVideoModal";
@@ -29,26 +29,16 @@ function DaySelector() {
   ];
 
   return (
-    <div id="tour-day-selector" className="bg-noir-surface rounded-xl border border-noir-border p-4 shadow-lg mb-6 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => setActiveWeekDay(Math.max(1, state.activeWeek - 1), state.activeDayOfWeek)}
-          className="p-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text hover:text-noir-accent transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50"
-          disabled={state.activeWeek === 1}
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <span className="font-bold">Week {state.activeWeek}</span>
-        <button
-          onClick={() => setActiveWeekDay(Math.min(PROTOCOL_WEEKS, state.activeWeek + 1), state.activeDayOfWeek)}
-          className="p-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text hover:text-noir-accent transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50"
-          disabled={state.activeWeek === PROTOCOL_WEEKS}
-        >
-          <ChevronRight size={20} />
-        </button>
-      </div>
+    <div id="tour-day-selector" className="bg-noir-surface rounded-xl border border-noir-border p-3 shadow-lg mb-6 flex items-center gap-2">
+      <button
+        onClick={() => setActiveWeekDay(Math.max(1, state.activeWeek - 1), state.activeDayOfWeek)}
+        className="shrink-0 p-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text hover:text-noir-accent transition-colors disabled:opacity-50"
+        disabled={state.activeWeek === 1}
+      >
+        <ChevronLeft size={20} />
+      </button>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 pr-4 scrollbar-hide">
+      <div className="flex flex-1 gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
         {days.map((day) => {
           const isActive = state.activeDayOfWeek === day.num;
           const dateStr = getProtocolDateString(state.activeWeek, day.num);
@@ -63,7 +53,7 @@ function DaySelector() {
               dayRoutine = custom;
             }
           }
-          
+
           const dailyExtras = state.customDailyExercises?.[dateStr] || [];
           const logsForDay = state.workoutLogs[dateStr] || {};
           let isComplete = false;
@@ -82,20 +72,33 @@ function DaySelector() {
             <button
               key={day.num}
               onClick={() => setActiveWeekDay(state.activeWeek, day.num)}
-              className={`flex-shrink-0 w-[60px] min-h-[64px] flex flex-col items-center justify-center rounded-lg border transition-colors relative ${isActive ? "bg-noir-accent/10 border-noir-accent text-noir-accent font-bold" : "bg-noir-bg border-noir-border text-noir-text-muted hover:border-noir-text"
-                }`}
+              className={`shrink-0 snap-center min-w-[70px] flex flex-col items-center p-2 rounded-lg border transition-all ${
+                isActive 
+                  ? "bg-noir-accent/10 border-noir-accent shadow-[0_0_10px_rgba(167,139,250,0.1)] text-white" 
+                  : "bg-noir-bg border-noir-border text-noir-text hover:border-noir-border/80"
+              }`}
             >
-              <span className="text-xs uppercase">{day.label}</span>
-              <span className="text-[10px] opacity-80 mt-1">{dateLabel}</span>
-              {isComplete && (
-                <div className="absolute -top-1 -right-1 bg-noir-accent rounded-full p-0.5">
-                  <Check size={12} className="text-noir-bg font-bold" />
-                </div>
-              )}
+              <div className="text-[10px] uppercase font-bold tracking-widest relative w-full text-center">
+                {day.label}
+                {isComplete && (
+                  <span className="absolute -right-1 -top-1 w-3 h-3 bg-noir-accent rounded-full flex items-center justify-center border border-noir-surface">
+                    <Check size={8} className="text-noir-bg" />
+                  </span>
+                )}
+              </div>
+              <div className={`text-xs mt-1 ${isActive ? "text-noir-accent font-bold" : "text-noir-text-muted"}`}>{dateLabel}</div>
             </button>
           );
         })}
       </div>
+
+      <button
+        onClick={() => setActiveWeekDay(Math.min(PROTOCOL_WEEKS, state.activeWeek + 1), state.activeDayOfWeek)}
+        className="shrink-0 p-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text hover:text-noir-accent transition-colors disabled:opacity-50"
+        disabled={state.activeWeek === PROTOCOL_WEEKS}
+      >
+        <ChevronRight size={20} />
+      </button>
     </div>
   );
 }
@@ -417,13 +420,13 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
 }
 
 const CATEGORIES = [
-  { id: "chest", name: "Chest", parts: ["chest"], emoji: "🦍" },
-  { id: "back", name: "Back", parts: ["back"], emoji: "🦇" },
-  { id: "shoulders", name: "Shoulders", parts: ["shoulders"], emoji: "🥥" },
-  { id: "arms", name: "Arms", parts: ["upper arms", "lower arms"], emoji: "💪" },
-  { id: "legs", name: "Legs", parts: ["upper legs", "lower legs"], emoji: "🦵" },
-  { id: "core", name: "Core", parts: ["waist"], emoji: "🍫" },
-  { id: "cardio", name: "Cardio", parts: ["cardio"], emoji: "🫀" },
+  { id: "chest", name: "Chest", parts: ["chest"], Icon: Shield },
+  { id: "back", name: "Back", parts: ["back"], Icon: Mountain },
+  { id: "shoulders", name: "Shoulders", parts: ["shoulders"], Icon: Crosshair },
+  { id: "arms", name: "Arms", parts: ["upper arms", "lower arms"], Icon: Dumbbell },
+  { id: "legs", name: "Legs", parts: ["upper legs", "lower legs"], Icon: Footprints },
+  { id: "core", name: "Core", parts: ["waist"], Icon: Target },
+  { id: "cardio", name: "Cardio", parts: ["cardio"], Icon: HeartPulse },
 ];
 
 function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: () => void; onAdd: (ex: any, scope: "today" | "every_week") => void }) {
@@ -536,10 +539,10 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
                     setSelectedCategory(cat);
                     setView("list");
                   }}
-                  className="bg-noir-bg border border-noir-border hover:border-noir-accent p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(167,139,250,0.15)] group"
+                  className="bg-noir-bg border border-noir-border hover:border-noir-accent p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(167,139,250,0.15)] group"
                 >
-                  <div className="text-3xl filter grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300">
-                    {cat.emoji}
+                  <div className="text-noir-text-muted group-hover:text-noir-accent transition-colors duration-300">
+                    <cat.Icon size={32} strokeWidth={1.5} />
                   </div>
                   <span className="font-bold text-sm tracking-wide text-noir-text-muted group-hover:text-white transition-colors">{cat.name}</span>
                 </button>
