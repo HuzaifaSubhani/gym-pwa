@@ -750,7 +750,7 @@ export default function WorkoutLogger() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg/80 backdrop-blur-sm">
           <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
             <h2 className="text-xl font-bold mb-4 text-noir-accent">Build Custom Routine</h2>
-            <p className="text-sm text-noir-text-muted mb-4">{mergedRoutine?.isPartial === false ? "Update the name and focus of your custom day." : "This will clear the current day's protocol exercises and let you build a completely custom day."}</p>
+            <p className="text-sm text-noir-text-muted mb-4">{(mergedRoutine as any)?.isPartial === false ? "Update the name and focus of your custom day." : "This will clear the current day's protocol exercises and let you build a completely custom day."}</p>
             <form onSubmit={(e) => {
               e.preventDefault();
               if (!routineNameEdit || !routineFocusEdit) return;
@@ -767,8 +767,8 @@ export default function WorkoutLogger() {
               </div>
               <div className="flex gap-3 pt-4 border-t border-noir-border">
                 <button type="button" onClick={() => setIsEditRoutineModalOpen(false)} className="flex-1 px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-surface-light font-bold">Cancel</button>
-                <button type="submit" className={`flex-1 px-4 py-3 rounded-lg font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform ${mergedRoutine?.isPartial === false ? "bg-noir-accent text-noir-bg hover:opacity-90" : "bg-red-600/20 text-red-500 border border-red-900 hover:bg-red-600/30"}`}>
-                  {mergedRoutine?.isPartial === false ? "Update Custom Day" : <><Trash2 size={16} /> Wipe & Build Custom</>}
+                <button type="submit" className={`flex-1 px-4 py-3 rounded-lg font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform ${(mergedRoutine as any)?.isPartial === false ? "bg-noir-accent text-noir-bg hover:opacity-90" : "bg-red-600/20 text-red-500 border border-red-900 hover:bg-red-600/30"}`}>
+                  {(mergedRoutine as any)?.isPartial === false ? "Update Custom Day" : <><Trash2 size={16} /> Wipe & Build Custom</>}
                 </button>
               </div>
             </form>

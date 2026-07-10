@@ -55,6 +55,7 @@ export default function Profile() {
     const fetchProfile = async () => {
       if (cachedProfileData && (Date.now() - cacheTime < CACHE_DURATION)) {
         setUser(cachedProfileData.user);
+        const data = cachedProfileData.myProfile;
         setMyProfile({ ...data, avatar_position: data.avatar_position ?? 50 });
         setEditUsername(data.username || "");
         setAvatarPosition(data.avatar_position ?? 50);

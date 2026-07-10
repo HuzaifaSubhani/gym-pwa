@@ -15,7 +15,7 @@ function getProtocolDateString(week: number, dayNum: number) {
   return `${y}-${m}-${d}`;
 }
 
-export default function Dashboard({ avatarUrl }: { avatarUrl?: string | null }) {
+export default function Dashboard({ avatarUrl, username }: { avatarUrl?: string | null, username?: string }) {
   const { state, setWeightLog } = useProtocol();
   const [weightInput, setWeightInput] = useState(state.weightLogs[state.activeWeek] || "");
 
