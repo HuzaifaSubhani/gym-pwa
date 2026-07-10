@@ -5,7 +5,6 @@ import { ROUTINE_SCHEMA, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTO
 import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search, ArrowRight, X, Activity, Dumbbell, Shield, Mountain, Crosshair, Footprints, Target, HeartPulse } from "lucide-react";
 import { GiMuscularTorso, GiBiceps, GiArm, GiLeg, GiHeartBeats, GiShoulderArmor, GiAbdominalArmor, GiSpineArrow } from "react-icons/gi";
 import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import TourGuide from "./TourGuide";
 import ExerciseVideoModal from "./ExerciseVideoModal";
 
@@ -484,12 +483,12 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
     displayedExercises = dbExercises.filter(ex => selectedCategory.parts.includes(ex.t));
   }
 
-  const modalContent = (
+  return (
     <div className="fixed inset-0 z-[100] flex justify-center md:items-center md:p-4 bg-noir-bg animate-in fade-in">
       <div className="bg-noir-surface border-0 md:border md:border-noir-border md:rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col h-[100dvh] md:h-auto md:max-h-[90vh]">
         
         {/* Header */}
-        <div className="p-4 pt-[max(1rem,env(safe-area-inset-top))] border-b border-noir-border flex items-center gap-3 relative bg-noir-surface/50">
+        <div className="p-4 border-b border-noir-border flex items-center gap-3 relative bg-noir-surface/50">
           {(view === "list" || view === "setup" || searchTerm) && (
             <button 
               onClick={() => {
@@ -516,7 +515,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex-1 overflow-y-auto p-4 pb-32 flex flex-col gap-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           
           {/* Search Bar */}
           {view !== "setup" && (
@@ -656,8 +655,6 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
       </div>
     </div>
   );
-
-  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }
 
 export default function WorkoutLogger() {
