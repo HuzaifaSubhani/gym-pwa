@@ -682,8 +682,9 @@ export default function WorkoutLogger() {
   const finalExercises = mergedRoutine ? [...mergedRoutine.exercises, ...dailyExtras] : [...dailyExtras];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-      <DaySelector />
+    <>
+      <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+        <DaySelector />
 
       {finalExercises.length === 0 ? (
         <div className="p-8 text-center bg-noir-surface rounded-xl border border-noir-border shadow-lg">
@@ -735,7 +736,9 @@ export default function WorkoutLogger() {
             </button>
           </div>
         </>
+        </>
       )}
+      </div>
       
       <AddExerciseModal 
         isOpen={isAddModalOpen} 
@@ -775,6 +778,6 @@ export default function WorkoutLogger() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
