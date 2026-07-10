@@ -484,11 +484,11 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg animate-in fade-in">
-      <div className="bg-noir-surface border border-noir-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-[100] flex justify-center md:items-center md:p-4 bg-noir-bg animate-in fade-in">
+      <div className="bg-noir-surface border-0 md:border md:border-noir-border md:rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col h-[100dvh] md:h-auto md:max-h-[90vh]">
         
         {/* Header */}
-        <div className="p-4 border-b border-noir-border flex items-center gap-3 relative bg-noir-surface/50">
+        <div className="p-4 pt-[max(1rem,env(safe-area-inset-top))] border-b border-noir-border flex items-center gap-3 relative bg-noir-surface/50">
           {(view === "list" || view === "setup" || searchTerm) && (
             <button 
               onClick={() => {
