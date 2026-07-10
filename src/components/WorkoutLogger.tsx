@@ -484,7 +484,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg/90 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg animate-in fade-in">
       <div className="bg-noir-surface border border-noir-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
@@ -515,7 +515,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           
           {/* Search Bar */}
           {view !== "setup" && (
@@ -598,7 +598,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="flex flex-col items-center text-center mb-2">
                 {selectedExercise.g ? (
-                  <div className="relative w-full h-40 rounded-xl border border-noir-border mb-4 overflow-hidden bg-white shadow-xl flex items-center justify-center p-2">
+                  <div className="relative w-full h-32 rounded-xl border border-noir-border mb-3 overflow-hidden bg-white shadow-xl flex items-center justify-center p-2">
                     <img src={selectedExercise.g} alt={selectedExercise.name} className="w-full h-full object-contain" />
                   </div>
                 ) : (
