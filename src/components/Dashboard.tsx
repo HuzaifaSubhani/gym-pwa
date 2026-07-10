@@ -46,34 +46,31 @@ export default function Dashboard({ avatarUrl }: { avatarUrl?: string | null }) 
         <div className="absolute bottom-[-20%] right-[-10%] w-64 h-64 bg-[#A78BFA]/20 blur-[100px] rounded-full pointer-events-none"></div>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
         
-        <div className="relative z-10">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-xs text-noir-accent font-bold uppercase tracking-widest mb-1 flex items-center gap-1">
-                <Activity size={14} /> Active Training Phase
-              </h2>
-              <h1 className="text-3xl font-black text-white">Week {state.activeWeek}</h1>
-            </div>
+        <div className="relative z-10 flex justify-between items-center bg-noir-surface/60 backdrop-blur-md p-4 rounded-2xl border border-noir-border/50">
+          <div className="flex items-center gap-3">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full border-2 border-noir-accent object-cover shadow-[0_0_15px_rgba(167,139,250,0.3)] animate-float" />
+              <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full border-2 border-noir-accent object-cover shadow-lg" />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center shadow-[0_0_15px_rgba(167,139,250,0.3)] animate-float">
-                <Flame className="text-[#A78BFA]" size={24} />
+              <div className="w-12 h-12 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center shadow-lg">
+                <Flame className="text-noir-accent" size={24} />
               </div>
             )}
+            <div>
+              <h1 className="text-xl font-black text-white">{username || "Athlete"}</h1>
+              <h2 className="text-xs text-noir-accent font-bold uppercase tracking-widest mt-0.5">Week {state.activeWeek}</h2>
+            </div>
           </div>
           
-          <div className="bg-noir-bg/60 backdrop-blur-md rounded-xl p-4 border border-noir-border/50">
-            <div className="flex justify-between items-center mb-2">
-              <p className="text-[10px] text-noir-text-muted uppercase tracking-widest font-bold">Weekly Progress</p>
-              <p className="text-sm font-bold text-noir-accent">{progressPercentage}%</p>
-            </div>
-            
-            <div className="w-full bg-noir-surface rounded-full h-1.5 overflow-hidden shadow-inner relative">
-              <div 
-                className="absolute top-0 left-0 h-full bg-gradient-to-r from-noir-accent to-[#A78BFA] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(167,139,250,0.5)]" 
-                style={{ width: `${Math.max(2, progressPercentage)}%` }}
-              ></div>
+          <div className="text-right flex flex-col items-end justify-center">
+            <p className="text-[10px] text-noir-text-muted uppercase tracking-widest font-bold mb-1">Weekly Progress</p>
+            <div className="flex items-center gap-2">
+              <div className="w-24 bg-noir-bg rounded-full h-2 overflow-hidden shadow-inner border border-noir-border/50">
+                <div 
+                  className="h-full bg-gradient-to-r from-noir-accent to-[#A78BFA] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(167,139,250,0.5)]" 
+                  style={{ width: `${Math.max(2, progressPercentage)}%` }}
+                ></div>
+              </div>
+              <p className="text-xs font-bold text-noir-accent w-8 text-right">{progressPercentage}%</p>
             </div>
           </div>
         </div>

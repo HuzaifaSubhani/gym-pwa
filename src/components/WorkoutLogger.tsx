@@ -421,14 +421,14 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
 }
 
 const CATEGORIES = [
-  { id: "chest", name: "Chest", parts: ["pectorals", "serratus anterior"], Icon: GiMuscularTorso },
-  { id: "back", name: "Back", parts: ["lats", "upper back", "traps", "levator scapulae"], Icon: GiSpineArrow },
-  { id: "shoulders", name: "Shoulders", parts: ["delts"], Icon: GiShoulderArmor },
-  { id: "biceps", name: "Biceps", parts: ["biceps"], Icon: GiBiceps },
-  { id: "triceps", name: "Triceps", parts: ["triceps"], Icon: GiArm },
-  { id: "legs", name: "Legs", parts: ["quads", "glutes", "hamstrings", "calves", "adductors", "abductors"], Icon: GiLeg },
-  { id: "core", name: "Core", parts: ["abs", "spine"], Icon: GiAbdominalArmor },
-  { id: "cardio", name: "Cardio", parts: ["cardiovascular system"], Icon: GiHeartBeats },
+  { id: "chest", name: "Chest", parts: ["pectorals", "serratus anterior"], IconFallback: GiMuscularTorso },
+  { id: "back", name: "Back", parts: ["lats", "upper back", "traps", "levator scapulae"], iconUrl: "/back.png", IconFallback: GiSpineArrow },
+  { id: "shoulders", name: "Shoulders", parts: ["delts"], iconUrl: "/Shoulder.png", IconFallback: GiShoulderArmor },
+  { id: "biceps", name: "Biceps", parts: ["biceps"], iconUrl: "/bicep.png", IconFallback: GiBiceps },
+  { id: "triceps", name: "Triceps", parts: ["triceps"], iconUrl: "/Tricep.png", IconFallback: GiArm },
+  { id: "legs", name: "Legs", parts: ["quads", "glutes", "hamstrings", "calves", "adductors", "abductors"], iconUrl: "/legs.png", IconFallback: GiLeg },
+  { id: "core", name: "Core", parts: ["abs", "spine"], iconUrl: "/core.png", IconFallback: GiAbdominalArmor },
+  { id: "cardio", name: "Cardio", parts: ["cardiovascular system"], IconFallback: GiHeartBeats },
 ];
 
 function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: () => void; onAdd: (ex: any, scope: "today" | "every_week") => void }) {
@@ -544,7 +544,11 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
                   className="bg-noir-bg border border-noir-border hover:border-noir-accent p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(167,139,250,0.15)] group"
                 >
                   <div className="text-noir-text-muted group-hover:text-noir-accent transition-colors duration-300">
-                    <cat.Icon size={32} strokeWidth={1.5} />
+                    {cat.iconUrl ? (
+                      <img src={cat.iconUrl} alt={cat.name} className="w-10 h-10 object-contain brightness-0 invert opacity-60 group-hover:opacity-100 transition-all" />
+                    ) : (
+                      <cat.IconFallback size={32} strokeWidth={1.5} />
+                    )}
                   </div>
                   <span className="font-bold text-sm tracking-wide text-noir-text-muted group-hover:text-white transition-colors">{cat.name}</span>
                 </button>
@@ -594,8 +598,8 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="flex flex-col items-center text-center mb-2">
                 {selectedExercise.g ? (
-                  <div className="relative w-full aspect-video rounded-xl border border-noir-border mb-4 overflow-hidden bg-noir-bg shadow-xl">
-                    <img src={selectedExercise.g} alt={selectedExercise.name} className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="relative w-full aspect-video rounded-xl border border-noir-border mb-4 overflow-hidden bg-white shadow-xl flex items-center justify-center">
+                    <img src={selectedExercise.g} alt={selectedExercise.name} className="absolute inset-0 w-full h-full object-contain" />
                   </div>
                 ) : (
                   <div className="w-full aspect-video rounded-xl border border-noir-border mb-4 bg-noir-bg flex items-center justify-center shadow-xl text-noir-text-muted">
