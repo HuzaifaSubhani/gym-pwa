@@ -2,7 +2,7 @@
 
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { ROUTINE_SCHEMA, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTOCOL_START_DATE } from "@/data/protocol";
-import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search, ArrowRight, X, Activity, Dumbbell } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import TourGuide from "./TourGuide";
 import ExerciseVideoModal from "./ExerciseVideoModal";
@@ -416,18 +416,29 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
   );
 }
 
+const CATEGORIES = [
+  { id: "chest", name: "Chest", parts: ["chest"], emoji: "🦍" },
+  { id: "back", name: "Back", parts: ["back"], emoji: "🦇" },
+  { id: "shoulders", name: "Shoulders", parts: ["shoulders"], emoji: "🥥" },
+  { id: "arms", name: "Arms", parts: ["upper arms", "lower arms"], emoji: "💪" },
+  { id: "legs", name: "Legs", parts: ["upper legs", "lower legs"], emoji: "🦵" },
+  { id: "core", name: "Core", parts: ["waist"], emoji: "🍫" },
+  { id: "cardio", name: "Cardio", parts: ["cardio"], emoji: "🫀" },
+];
+
 function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: () => void; onAdd: (ex: any, scope: "today" | "every_week") => void }) {
-  const [name, setName] = useState("");
+  const [view, setView] = useState<"categories" | "list" | "setup">("categories");
+  const [selectedCategory, setSelectedCategory] = useState<typeof CATEGORIES[0] | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Setup state
   const [sets, setSets] = useState("3");
   const [reps, setReps] = useState("8-10");
   const [rest, setRest] = useState("60");
   const [scope, setScope] = useState<"today" | "every_week">("today");
   
   const [dbExercises, setDbExercises] = useState<any[]>([]);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [selectedGifUrl, setSelectedGifUrl] = useState<string | undefined>();
-  const [isSearching, setIsSearching] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && dbExercises.length === 0) {
@@ -436,134 +447,202 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
         .then(data => setDbExercises(data))
         .catch(err => console.error("Failed to load exercise db:", err));
     }
-  }, [isOpen, dbExercises.length]);
-
-  useEffect(() => {
-    if (!name || name.length < 2) {
-      setSearchResults([]);
-      return;
+    if (isOpen) {
+      // Reset state on open
+      setView("categories");
+      setSearchTerm("");
+      setSelectedCategory(null);
+      setSelectedExercise(null);
     }
-    const term = name.toLowerCase();
-    const results = dbExercises.filter(ex => ex.name.toLowerCase().includes(term)).slice(0, 10);
-    setSearchResults(results);
-  }, [name, dbExercises]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setSearchResults([]);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isOpen, dbExercises.length]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name) return;
-    
+  const handleAdd = () => {
     onAdd({
       id: `custom_${Date.now()}`,
-      name,
+      name: selectedExercise.name,
       sets: parseInt(sets, 10) || 3,
       reps,
       rest: parseInt(rest, 10) || 60,
-      gif_url: selectedGifUrl
+      gif_url: selectedExercise.g
     }, scope);
-    
-    // Reset and close
-    setName("");
-    setSelectedGifUrl(undefined);
     onClose();
   };
 
+  // Filter exercises based on view
+  let displayedExercises: any[] = [];
+  if (searchTerm.length >= 2) {
+    displayedExercises = dbExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  } else if (selectedCategory) {
+    displayedExercises = dbExercises.filter(ex => selectedCategory.parts.includes(ex.b));
+  }
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg/80 backdrop-blur-sm">
-      <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-visible">
-        <h2 className="text-xl font-bold mb-4">Add Custom Exercise</h2>
-        <form onSubmit={handleSubmit} className="space-y-4 relative">
-          <div className="relative" ref={searchRef}>
-            <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Exercise Name</label>
-            <div className="relative">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg/90 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-noir-surface border border-noir-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+        
+        {/* Header */}
+        <div className="p-4 border-b border-noir-border flex items-center gap-3 relative bg-noir-surface/50">
+          {(view === "list" || view === "setup" || searchTerm) && (
+            <button 
+              onClick={() => {
+                if (view === "setup") {
+                  setView(searchTerm ? "categories" : "list");
+                  if (searchTerm) setSearchTerm("");
+                } else {
+                  setView("categories");
+                  setSearchTerm("");
+                  setSelectedCategory(null);
+                }
+              }}
+              className="p-2 rounded-full hover:bg-noir-bg text-noir-text-muted hover:text-noir-accent transition-colors"
+            >
+              <ArrowRight size={18} className="rotate-180" />
+            </button>
+          )}
+          <h2 className="text-xl font-bold flex-1">
+            {view === "setup" ? "Configure Set" : selectedCategory && !searchTerm ? selectedCategory.name : "Add Exercise"}
+          </h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-noir-bg text-noir-text-muted hover:text-white transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+          
+          {/* Search Bar */}
+          {view !== "setup" && (
+            <div className="relative shrink-0">
               <input 
-                required 
                 type="text" 
-                value={name} 
-                onChange={e => {
-                  setName(e.target.value);
-                  setSelectedGifUrl(undefined);
-                  setIsSearching(true);
-                }} 
-                onFocus={() => setIsSearching(true)}
-                className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 pl-10 text-noir-text focus:outline-none focus:border-noir-accent" 
-                placeholder="Search or type custom name..." 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)} 
+                className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 pl-10 text-noir-text focus:outline-none focus:border-noir-accent placeholder:text-noir-text-muted/50" 
+                placeholder="Search 1,300+ exercises..." 
               />
               <Search className="absolute left-3 top-3.5 text-noir-text-muted" size={18} />
             </div>
+          )}
 
-            {isSearching && searchResults.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-noir-surface border border-noir-border rounded-lg shadow-xl overflow-hidden max-h-48 overflow-y-auto">
-                {searchResults.map(res => (
-                  <div 
-                    key={res.id} 
-                    className="p-3 hover:bg-noir-bg cursor-pointer border-b border-noir-border/50 last:border-0 flex items-center justify-between"
-                    onClick={() => {
-                      setName(res.name);
-                      setSelectedGifUrl(res.g);
-                      setSearchResults([]);
-                      setIsSearching(false);
-                    }}
-                  >
-                    <div>
-                      <div className="font-bold text-sm">{res.name}</div>
-                      <div className="text-[10px] text-noir-text-muted uppercase">{res.b} • {res.t}</div>
-                    </div>
-                    {res.g && <Play size={14} className="text-noir-accent" />}
+          {/* Categories Grid */}
+          {view === "categories" && !searchTerm && (
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              {CATEGORIES.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setSelectedCategory(cat);
+                    setView("list");
+                  }}
+                  className="bg-noir-bg border border-noir-border hover:border-noir-accent p-4 rounded-xl flex flex-col items-center justify-center gap-2 transition-all hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(167,139,250,0.15)] group"
+                >
+                  <div className="text-3xl filter grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300">
+                    {cat.emoji}
                   </div>
-                ))}
+                  <span className="font-bold text-sm tracking-wide text-noir-text-muted group-hover:text-white transition-colors">{cat.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Exercise List */}
+          {(view === "list" || searchTerm.length >= 2) && view !== "setup" && (
+            <div className="flex flex-col gap-2 mt-2 pb-10">
+              {displayedExercises.slice(0, 50).map(ex => (
+                <div 
+                  key={ex.id}
+                  onClick={() => {
+                    setSelectedExercise({ name: ex.name, g: ex.g });
+                    setView("setup");
+                  }}
+                  className="flex items-center gap-4 p-3 bg-noir-bg border border-noir-border rounded-xl cursor-pointer hover:border-noir-accent hover:shadow-[0_0_15px_rgba(167,139,250,0.15)] transition-all group"
+                >
+                  {ex.g ? (
+                    <img 
+                      src={ex.g} 
+                      alt={ex.name}
+                      loading="lazy"
+                      className="w-16 h-16 rounded-lg object-cover bg-noir-surface flex-shrink-0 opacity-80 group-hover:opacity-100 transition-opacity"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-noir-surface border border-noir-border/50 flex items-center justify-center flex-shrink-0 text-noir-text-muted group-hover:text-noir-accent group-hover:border-noir-accent/50 transition-colors">
+                      <Dumbbell size={20} />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-sm truncate group-hover:text-noir-accent transition-colors capitalize">{ex.name}</h3>
+                    <p className="text-[10px] text-noir-text-muted uppercase tracking-wider mt-1">{ex.b} • {ex.t}</p>
+                  </div>
+                  <ChevronRight size={16} className="text-noir-text-muted group-hover:text-noir-accent flex-shrink-0" />
+                </div>
+              ))}
+              {displayedExercises.length === 0 && (
+                <div className="text-center py-10 text-noir-text-muted">No exercises found.</div>
+              )}
+            </div>
+          )}
+
+          {/* Setup View */}
+          {view === "setup" && selectedExercise && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="flex flex-col items-center text-center mb-2">
+                {selectedExercise.g ? (
+                  <div className="relative w-full aspect-video rounded-xl border border-noir-border mb-4 overflow-hidden bg-noir-bg shadow-xl">
+                    <img src={selectedExercise.g} alt={selectedExercise.name} className="absolute inset-0 w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-full aspect-video rounded-xl border border-noir-border mb-4 bg-noir-bg flex items-center justify-center shadow-xl text-noir-text-muted">
+                    <Dumbbell size={48} className="opacity-20" />
+                  </div>
+                )}
+                <h3 className="text-xl font-black capitalize text-white">{selectedExercise.name}</h3>
               </div>
-            )}
-            
-            {selectedGifUrl && (
-              <div className="mt-2 text-[10px] text-noir-accent flex items-center gap-1 font-bold uppercase tracking-wider">
-                <Check size={12} /> Animation Attached
+              
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Sets</label>
+                  <input type="number" value={sets} onChange={e => setSets(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(167,139,250,0.3)] transition-all" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Reps</label>
+                  <input type="text" value={reps} onChange={e => setReps(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(167,139,250,0.3)] transition-all" placeholder="8-10" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Rest (s)</label>
+                  <input type="number" value={rest} onChange={e => setRest(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(167,139,250,0.3)] transition-all" />
+                </div>
               </div>
-            )}
-          </div>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Sets</label>
-              <input type="number" value={sets} onChange={e => setSets(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-noir-text focus:outline-none focus:border-noir-accent" />
+              
+              <div className="pt-2">
+                <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-3 tracking-widest">Frequency</label>
+                <div className="flex gap-4">
+                  <label className="flex-1 flex flex-col items-center gap-2 cursor-pointer relative">
+                    <input type="radio" checked={scope === "today"} onChange={() => setScope("today")} className="peer sr-only" />
+                    <div className="w-full p-3 rounded-xl border border-noir-border text-center peer-checked:bg-noir-accent/10 peer-checked:border-noir-accent peer-checked:text-noir-accent transition-all">
+                      <span className="text-sm font-bold">Today Only</span>
+                    </div>
+                  </label>
+                  <label className="flex-1 flex flex-col items-center gap-2 cursor-pointer relative">
+                    <input type="radio" checked={scope === "every_week"} onChange={() => setScope("every_week")} className="peer sr-only" />
+                    <div className="w-full p-3 rounded-xl border border-noir-border text-center peer-checked:bg-noir-accent/10 peer-checked:border-noir-accent peer-checked:text-noir-accent transition-all">
+                      <span className="text-sm font-bold">Every Week</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <button 
+                onClick={handleAdd}
+                className="w-full bg-noir-accent text-noir-bg font-black py-4 rounded-xl hover:opacity-90 transition-opacity mt-4 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(167,139,250,0.4)]"
+              >
+                <Check size={20} /> ADD TO ROUTINE
+              </button>
             </div>
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Reps</label>
-              <input type="text" value={reps} onChange={e => setReps(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-noir-text focus:outline-none focus:border-noir-accent" placeholder="e.g. 8-10" />
-            </div>
-            <div className="flex-1">
-              <label className="block text-xs font-bold text-noir-text-muted uppercase mb-1">Rest (s)</label>
-              <input type="number" value={rest} onChange={e => setRest(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-noir-text focus:outline-none focus:border-noir-accent" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-noir-text-muted uppercase mb-2">Scope</label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" checked={scope === "today"} onChange={() => setScope("today")} className="accent-noir-accent" />
-                <span className="text-sm">Today only</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" checked={scope === "every_week"} onChange={() => setScope("every_week")} className="accent-noir-accent" />
-                <span className="text-sm">Every week</span>
-              </label>
-            </div>
-          </div>
-          <div className="flex gap-3 pt-4 border-t border-noir-border">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-3 rounded-lg border border-noir-border hover:bg-noir-surface-light font-bold">Cancel</button>
-            <button type="submit" className="flex-1 px-4 py-3 rounded-lg bg-noir-accent text-noir-bg hover:opacity-90 active:scale-95 transition-transform font-bold shadow-[0_0_15px_rgba(208,56,243,0.3)]">Add Exercise</button>
-          </div>
-        </form>
+          )}
+
+        </div>
       </div>
     </div>
   );
