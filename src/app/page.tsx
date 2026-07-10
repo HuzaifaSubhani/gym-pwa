@@ -74,7 +74,7 @@ export default function Home() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#A78BFA]/5 rounded-full pointer-events-none fixed animate-glow-pulse" style={{ animationDelay: '3s' }}></div>
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none fixed"></div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-28 md:px-8 max-w-3xl mx-auto w-full relative z-10">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 pb-28 md:px-8 max-w-3xl mx-auto w-full relative z-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         
 
 
