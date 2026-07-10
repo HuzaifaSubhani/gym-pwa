@@ -55,20 +55,20 @@ export default function Profile() {
     const fetchProfile = async () => {
       if (cachedProfileData && (Date.now() - cacheTime < CACHE_DURATION)) {
         setUser(cachedProfileData.user);
-        setMyProfile(cachedProfileData.myProfile);
-        setEditUsername(cachedProfileData.myProfile.username || "");
-        setAvatarPosition(cachedProfileData.myProfile.avatar_position ?? 50);
-        if (cachedProfileData.myProfile.age) setAge(cachedProfileData.myProfile.age);
-        if (cachedProfileData.myProfile.gender) setGender(cachedProfileData.myProfile.gender);
-        if (cachedProfileData.myProfile.height_cm) {
-          setHeightCm(cachedProfileData.myProfile.height_cm);
-          const totalInches = cachedProfileData.myProfile.height_cm / 2.54;
+        setMyProfile({ ...data, avatar_position: data.avatar_position ?? 50 });
+        setEditUsername(data.username || "");
+        setAvatarPosition(data.avatar_position ?? 50);
+        if (data.age) setAge(data.age);
+        if (data.gender) setGender(data.gender);
+        if (data.height_cm) {
+          setHeightCm(data.height_cm);
+          const totalInches = data.height_cm / 2.54;
           setHeightFt(Math.floor(totalInches / 12));
           setHeightIn(Math.round(totalInches % 12));
         }
-        if (cachedProfileData.myProfile.weight_kg) setWeightKg(cachedProfileData.myProfile.weight_kg);
-        if (cachedProfileData.myProfile.activity_level) setActivityLevel(cachedProfileData.myProfile.activity_level);
-        if (cachedProfileData.myProfile.nutrition_goal) setNutritionGoal(cachedProfileData.myProfile.nutrition_goal);
+        if (data.weight_kg) setWeightKg(data.weight_kg);
+        if (data.activity_level) setActivityLevel(data.activity_level);
+        if (data.nutrition_goal) setNutritionGoal(data.nutrition_goal);
         setLoading(false);
         return;
       }
@@ -281,6 +281,28 @@ export default function Profile() {
     );
   }
 
+  let totalVolume = 0;
+  Object.values(state.workoutLogs).forEach((dayLogs: any) => {
+    Object.values(dayLogs).forEach((exLogs: any) => {
+      exLogs.forEach((log: any) => {
+        if (log && log.weight && log.reps) {
+          totalVolume += (Number(log.weight) * Number(log.reps));
+        }
+      });
+    });
+  });
+
+  const xp = Math.round(totalVolume / 10);
+  const level = Math.floor(Math.sqrt(xp / 100)) + 1;
+  const currentLevelXP = 100 * Math.pow(level - 1, 2);
+  const nextLevelXP = 100 * Math.pow(level, 2);
+  
+  let progress = 0;
+  if (nextLevelXP > currentLevelXP) {
+    progress = ((xp - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100;
+  }
+  progress = Math.min(100, Math.max(0, progress));
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20 relative">
       {/* Toast Notification */}
@@ -291,28 +313,29 @@ export default function Profile() {
         </div>
       )}
 
-      <header className="mb-6 px-2 flex items-center justify-between">
+      <header className="mb-4 px-2 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Profile</h1>
+          <h1 className="text-3xl font-black tracking-tight">Your Player Card</h1>
         </div>
       </header>
 
       {/* Hero Section */}
-      <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-lg text-center relative overflow-hidden">
-        <div className="absolute top-[-50%] left-[-10%] w-64 h-64 bg-noir-accent/10 blur-[80px] rounded-full pointer-events-none"></div>
-        <div className="absolute bottom-[-50%] right-[-10%] w-64 h-64 bg-noir-accent/5 blur-[80px] rounded-full pointer-events-none"></div>
-
-        <div className="relative z-10">
+      <div className="bg-noir-surface border border-noir-border rounded-2xl shadow-lg relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-noir-accent/20 via-transparent to-transparent opacity-50"></div>
+        <div className="absolute -top-32 -left-32 w-64 h-64 bg-noir-accent/30 blur-[100px] rounded-full"></div>
+        
+        <div className="p-8 text-center relative z-10 flex flex-col items-center">
+          
           <div className="relative group cursor-pointer inline-block mb-4">
             {myProfile.avatar_url ? (
               <img 
                 src={myProfile.avatar_url} 
                 alt="DP" 
-                className="w-32 h-32 rounded-full border-2 border-noir-accent object-cover shadow-[0_0_20px_rgba(167,139,250,0.3)]" 
+                className="w-32 h-32 rounded-full border-4 border-noir-bg object-cover shadow-[0_0_25px_rgba(167,139,250,0.5)] ring-2 ring-noir-accent" 
                 style={{ objectPosition: `50% ${myProfile.avatar_position}%` }}
               />
             ) : (
-              <div className="w-32 h-32 rounded-full bg-noir-bg border-2 border-dashed border-noir-border flex items-center justify-center text-4xl font-bold shadow-[0_0_20px_rgba(167,139,250,0.1)]">
+              <div className="w-32 h-32 rounded-full bg-noir-bg border-4 border-noir-surface flex items-center justify-center text-5xl font-black shadow-[0_0_25px_rgba(167,139,250,0.5)] ring-2 ring-noir-accent">
                 {myProfile.username.substring(0, 2).toUpperCase()}
               </div>
             )}
@@ -330,28 +353,32 @@ export default function Profile() {
           </div>
           {uploadingAvatar && <p className="text-xs text-noir-accent animate-pulse font-bold tracking-widest uppercase mb-2">Uploading...</p>}
 
-          <h2 className="text-2xl font-black mb-1">{myProfile.username}</h2>
-          <div className="inline-flex items-center gap-1 bg-noir-accent/20 text-noir-accent px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-noir-accent/30">
-            <Medal size={14} /> {totalWorkouts >= 50 ? "Elite Lifter" : totalWorkouts >= 10 ? "Dedicated" : "Initiate"}
+          <h2 className="text-3xl font-black mb-1">{myProfile.username}</h2>
+          <div className="flex flex-col items-center gap-1 mb-4">
+            <span className="text-noir-accent font-bold tracking-widest uppercase text-xs">Level {level} Elite</span>
+            <div className="w-48 bg-noir-bg rounded-full h-1.5 shadow-inner overflow-hidden border border-noir-border/50">
+              <div className="h-full bg-noir-accent shadow-[0_0_10px_rgba(167,139,250,0.8)] rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
+            </div>
+            <span className="text-[10px] text-noir-text-muted">{xp.toLocaleString()} XP / {nextLevelXP.toLocaleString()} XP</span>
           </div>
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-3 gap-2 mt-6 relative z-10 pt-6 border-t border-noir-border/50">
-          <div className="flex flex-col items-center">
-            <Activity className="text-noir-text-muted mb-1" size={20} />
-            <span className="text-xl font-bold text-noir-accent">{totalWorkouts}</span>
-            <span className="text-[10px] uppercase font-bold text-noir-text-muted tracking-wider">Workouts</span>
+        <div className="grid grid-cols-3 gap-1 relative z-10 bg-noir-bg/50 border-t border-noir-border backdrop-blur-md p-4">
+          <div className="flex flex-col items-center text-center">
+            <Activity className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]" size={20} />
+            <span className="text-xl font-bold text-white">{totalWorkouts}</span>
+            <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Workouts</span>
           </div>
-          <div className="flex flex-col items-center">
-            <Flame className="text-noir-text-muted mb-1" size={20} />
-            <span className="text-xl font-bold text-noir-accent">{Math.floor(totalWorkouts * 1.5)}</span>
-            <span className="text-[10px] uppercase font-bold text-noir-text-muted tracking-wider">Streak</span>
+          <div className="flex flex-col items-center text-center border-l border-r border-noir-border/50">
+            <Flame className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]" size={20} />
+            <span className="text-xl font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</span>
+            <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Volume (kg)</span>
           </div>
-          <div className="flex flex-col items-center">
-            <Calendar className="text-noir-text-muted mb-1" size={20} />
-            <span className="text-xl font-bold text-noir-accent">1</span>
-            <span className="text-[10px] uppercase font-bold text-noir-text-muted tracking-wider">Year</span>
+          <div className="flex flex-col items-center text-center">
+            <Medal className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]" size={20} />
+            <span className="text-xl font-bold text-white">{totalWorkouts >= 50 ? '3' : totalWorkouts >= 10 ? '2' : '1'}</span>
+            <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Tier</span>
           </div>
         </div>
       </div>
@@ -360,14 +387,14 @@ export default function Profile() {
       <form onSubmit={handleUpdateProfile} className="space-y-4">
         
         {/* Section: Account */}
-        <div className="bg-noir-surface border border-noir-border rounded-xl overflow-hidden shadow-lg">
+        <div className="bg-noir-surface/60 backdrop-blur-sm border border-noir-border rounded-xl overflow-hidden shadow-lg">
           <button 
             type="button"
             onClick={() => setOpenSection(openSection === "account" ? "" : "account")}
-            className="w-full flex items-center justify-between p-4 bg-noir-surface-light/50 hover:bg-noir-surface-light transition-colors"
+            className="w-full flex items-center justify-between p-5 hover:bg-noir-surface-light transition-colors"
           >
             <div className="flex items-center gap-3">
-              <User size={20} className="text-noir-accent" />
+              <User size={20} className="text-noir-accent drop-shadow-[0_0_5px_rgba(167,139,250,0.3)]" />
               <span className="font-bold uppercase tracking-wider text-sm">Account Settings</span>
             </div>
             {openSection === "account" ? <ChevronUp size={20} className="text-noir-accent" /> : <ChevronDown size={20} className="text-noir-text-muted" />}

@@ -81,37 +81,6 @@ export default function Dashboard({ avatarUrl }: { avatarUrl?: string | null }) 
         </div>
       </section>
 
-      {/* Weekly Weight Check-in */}
-      {isWeekend && (
-        <section className="relative p-6 bg-noir-surface/80 backdrop-blur-sm rounded-2xl border border-noir-border shadow-lg overflow-hidden group">
-          
-          <div className="flex items-center gap-3 mb-5">
-            <div className="p-2 bg-noir-bg rounded-lg border border-noir-border group-hover:border-noir-accent transition-colors">
-              <Weight className="text-noir-accent" size={20} />
-            </div>
-            <div>
-              <h2 className="text-lg font-black text-white leading-tight">Week {state.activeWeek} Weigh-In</h2>
-              <p className="text-[10px] text-noir-text-muted uppercase tracking-widest mt-0.5">Track your bodyweight trends</p>
-            </div>
-          </div>
-          
-          <div className="flex gap-3 relative z-10">
-            <input
-              type="number"
-              placeholder="e.g. 85.5 kg"
-              value={weightInput}
-              onChange={(e) => setWeightInput(e.target.value)}
-              className="flex-1 bg-noir-bg border border-noir-border rounded-xl px-4 py-3 text-lg font-mono focus:outline-none focus:border-[#A78BFA] transition-colors shadow-inner"
-            />
-            <button
-              onClick={handleWeightSubmit}
-              className="bg-gradient-to-r from-noir-accent to-[#A78BFA] text-noir-bg px-5 py-3 rounded-xl font-bold hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(167,139,250,0.3)]"
-            >
-              Log <ChevronRight size={18} />
-            </button>
-          </div>
-        </section>
-      )}
     </div>
   );
 }

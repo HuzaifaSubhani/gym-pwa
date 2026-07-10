@@ -3,6 +3,7 @@
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { ROUTINE_SCHEMA, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTOCOL_START_DATE } from "@/data/protocol";
 import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search, ArrowRight, X, Activity, Dumbbell, Shield, Mountain, Crosshair, Footprints, Target, HeartPulse } from "lucide-react";
+import { GiMuscularTorso, GiMuscleUp, GiBiceps, GiArm, GiLeg, GiHeartBeats } from "react-icons/gi";
 import { useState, useEffect, useRef } from "react";
 import TourGuide from "./TourGuide";
 import ExerciseVideoModal from "./ExerciseVideoModal";
@@ -420,13 +421,14 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
 }
 
 const CATEGORIES = [
-  { id: "chest", name: "Chest", parts: ["chest"], Icon: Shield },
-  { id: "back", name: "Back", parts: ["back"], Icon: Mountain },
-  { id: "shoulders", name: "Shoulders", parts: ["shoulders"], Icon: Crosshair },
-  { id: "arms", name: "Arms", parts: ["upper arms", "lower arms"], Icon: Dumbbell },
-  { id: "legs", name: "Legs", parts: ["upper legs", "lower legs"], Icon: Footprints },
-  { id: "core", name: "Core", parts: ["waist"], Icon: Target },
-  { id: "cardio", name: "Cardio", parts: ["cardio"], Icon: HeartPulse },
+  { id: "chest", name: "Chest", parts: ["pectorals", "serratus anterior"], Icon: GiMuscularTorso },
+  { id: "back", name: "Back", parts: ["lats", "upper back", "traps", "levator scapulae"], Icon: GiMuscleUp },
+  { id: "shoulders", name: "Shoulders", parts: ["delts"], Icon: Target },
+  { id: "biceps", name: "Biceps", parts: ["biceps"], Icon: GiBiceps },
+  { id: "triceps", name: "Triceps", parts: ["triceps"], Icon: GiArm },
+  { id: "legs", name: "Legs", parts: ["quads", "glutes", "hamstrings", "calves", "adductors", "abductors"], Icon: GiLeg },
+  { id: "core", name: "Core", parts: ["abs", "spine"], Icon: Crosshair },
+  { id: "cardio", name: "Cardio", parts: ["cardiovascular system"], Icon: GiHeartBeats },
 ];
 
 function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: () => void; onAdd: (ex: any, scope: "today" | "every_week") => void }) {
@@ -478,7 +480,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
   if (searchTerm.length >= 2) {
     displayedExercises = dbExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm.toLowerCase()));
   } else if (selectedCategory) {
-    displayedExercises = dbExercises.filter(ex => selectedCategory.parts.includes(ex.b));
+    displayedExercises = dbExercises.filter(ex => selectedCategory.parts.includes(ex.t));
   }
 
   return (
