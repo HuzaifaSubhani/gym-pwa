@@ -313,11 +313,7 @@ export default function Profile() {
         </div>
       )}
 
-      <header className="mb-4 px-2 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight">Your Player Card</h1>
-        </div>
-      </header>
+
 
       {/* Hero Section */}
       <div className="bg-noir-surface border border-noir-border rounded-2xl shadow-lg relative overflow-hidden group">

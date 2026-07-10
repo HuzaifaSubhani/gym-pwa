@@ -3,7 +3,7 @@
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { ROUTINE_SCHEMA, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTOCOL_START_DATE } from "@/data/protocol";
 import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search, ArrowRight, X, Activity, Dumbbell, Shield, Mountain, Crosshair, Footprints, Target, HeartPulse } from "lucide-react";
-import { GiMuscularTorso, GiMuscleUp, GiBiceps, GiArm, GiLeg, GiHeartBeats } from "react-icons/gi";
+import { GiMuscularTorso, GiBiceps, GiArm, GiLeg, GiHeartBeats, GiShoulderArmor, GiAbdominalArmor, GiSpineArrow } from "react-icons/gi";
 import { useState, useEffect, useRef } from "react";
 import TourGuide from "./TourGuide";
 import ExerciseVideoModal from "./ExerciseVideoModal";
@@ -422,12 +422,12 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
 
 const CATEGORIES = [
   { id: "chest", name: "Chest", parts: ["pectorals", "serratus anterior"], Icon: GiMuscularTorso },
-  { id: "back", name: "Back", parts: ["lats", "upper back", "traps", "levator scapulae"], Icon: GiMuscleUp },
-  { id: "shoulders", name: "Shoulders", parts: ["delts"], Icon: Target },
+  { id: "back", name: "Back", parts: ["lats", "upper back", "traps", "levator scapulae"], Icon: GiSpineArrow },
+  { id: "shoulders", name: "Shoulders", parts: ["delts"], Icon: GiShoulderArmor },
   { id: "biceps", name: "Biceps", parts: ["biceps"], Icon: GiBiceps },
   { id: "triceps", name: "Triceps", parts: ["triceps"], Icon: GiArm },
   { id: "legs", name: "Legs", parts: ["quads", "glutes", "hamstrings", "calves", "adductors", "abductors"], Icon: GiLeg },
-  { id: "core", name: "Core", parts: ["abs", "spine"], Icon: Crosshair },
+  { id: "core", name: "Core", parts: ["abs", "spine"], Icon: GiAbdominalArmor },
   { id: "cardio", name: "Cardio", parts: ["cardiovascular system"], Icon: GiHeartBeats },
 ];
 
