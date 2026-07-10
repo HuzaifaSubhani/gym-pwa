@@ -545,7 +545,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
                 >
                   <div className="text-noir-text-muted group-hover:text-noir-accent transition-colors duration-300">
                     {cat.iconUrl ? (
-                      <img src={cat.iconUrl} alt={cat.name} className="w-12 h-12 object-contain opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
+                      <img src={cat.iconUrl} alt={cat.name} className="w-12 h-12 object-contain brightness-0 invert opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
                     ) : (
                       <cat.IconFallback size={32} strokeWidth={1.5} />
                     )}
@@ -598,8 +598,8 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="flex flex-col items-center text-center mb-2">
                 {selectedExercise.g ? (
-                  <div className="relative w-full h-56 rounded-xl border border-noir-border mb-4 overflow-hidden bg-noir-surface shadow-xl flex items-center justify-center p-2">
-                    <img src={selectedExercise.g} alt={selectedExercise.name} className="w-full h-full object-contain mix-blend-lighten" />
+                  <div className="relative w-full h-40 rounded-xl border border-noir-border mb-4 overflow-hidden bg-white shadow-xl flex items-center justify-center p-2">
+                    <img src={selectedExercise.g} alt={selectedExercise.name} className="w-full h-full object-contain" />
                   </div>
                 ) : (
                   <div className="w-full aspect-video rounded-xl border border-noir-border mb-4 bg-noir-bg flex items-center justify-center shadow-xl text-noir-text-muted">
