@@ -63,15 +63,13 @@ export default function Dashboard({ avatarUrl }: { avatarUrl?: string | null }) 
             )}
           </div>
           
-          <div className="bg-noir-bg/60 backdrop-blur-md rounded-2xl p-5 border border-noir-border/50">
-            <div className="flex justify-between items-end mb-3">
-              <div>
-                <p className="text-[10px] text-noir-text-muted uppercase tracking-widest font-bold mb-1">Weekly Progress</p>
-                <p className="text-xl font-bold text-noir-accent">{progressPercentage}%</p>
-              </div>
+          <div className="bg-noir-bg/60 backdrop-blur-md rounded-xl p-4 border border-noir-border/50">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-[10px] text-noir-text-muted uppercase tracking-widest font-bold">Weekly Progress</p>
+              <p className="text-sm font-bold text-noir-accent">{progressPercentage}%</p>
             </div>
             
-            <div className="w-full bg-noir-surface rounded-full h-2 overflow-hidden shadow-inner relative">
+            <div className="w-full bg-noir-surface rounded-full h-1.5 overflow-hidden shadow-inner relative">
               <div 
                 className="absolute top-0 left-0 h-full bg-gradient-to-r from-noir-accent to-[#A78BFA] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(167,139,250,0.5)]" 
                 style={{ width: `${Math.max(2, progressPercentage)}%` }}
