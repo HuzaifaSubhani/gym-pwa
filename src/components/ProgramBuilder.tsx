@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { Program, DayRoutine } from "@/data/protocol";
 import exercisesData from "@/data/exercises.json";
-import { Plus, Trash2, Save, X, Search, Check, Globe } from "lucide-react";
+import { Plus, Trash2, Save, X, Search, Check, Globe, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
@@ -131,7 +131,7 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[100] bg-noir-bg overflow-y-auto">
-      <div className="max-w-3xl mx-auto min-h-screen p-4 sm:p-6 pb-32">
+      <div className="max-w-3xl mx-auto min-h-screen p-4 sm:p-6 pb-48">
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-black">Program Forge</h1>
           <button onClick={onClose} className="p-2 bg-noir-surface rounded-full text-noir-text hover:text-red-500">
@@ -257,7 +257,7 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-noir-surface border-t border-noir-border p-4 flex gap-4">
+      <div className="fixed bottom-20 left-0 right-0 bg-noir-surface border-t border-noir-border p-4 flex gap-4 max-w-3xl mx-auto">
         <button 
           onClick={handleSaveLocal}
           className="flex-1 bg-noir-bg border border-noir-accent text-noir-accent font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-noir-accent/10"
