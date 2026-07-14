@@ -6,7 +6,6 @@ import ProgressAnalytics from "@/components/ProgressAnalytics";
 import Dashboard from "@/components/Dashboard";
 import Leaderboard from "@/components/Leaderboard";
 import Profile from "@/components/Profile";
-import WorkoutHistory from "@/components/WorkoutHistory";
 import CommunityPrograms from "@/components/CommunityPrograms";
 import { Home as HomeIcon, Dumbbell, Trophy, User, CalendarDays, Loader2, Globe } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
@@ -15,7 +14,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "leaderboard" | "history" | "explore" | "profile">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "leaderboard" | "explore" | "profile">("dashboard");
   const { state, setActiveWeekDay, syncWithUser } = useProtocol();
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [username, setUsername] = useState("Athlete");
@@ -85,7 +84,6 @@ export default function Home() {
         )}
         {activeTab === "workout" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><WorkoutLogger /></div>}
         {activeTab === "leaderboard" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><Leaderboard /></div>}
-        {activeTab === "history" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><WorkoutHistory /></div>}
         {activeTab === "explore" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><CommunityPrograms /></div>}
         {activeTab === "profile" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><Profile /></div>}
       </div>
@@ -124,16 +122,6 @@ export default function Home() {
             <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">Ranks</span>
           </button>
           
-          <button
-            onClick={() => setActiveTab("history")}
-            className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
-              activeTab === "history" ? "text-noir-accent" : "text-noir-text-muted"
-            }`}
-          >
-            <CalendarDays size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">History</span>
-          </button>
-
           <button
             onClick={() => setActiveTab("explore")}
             className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
