@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { getCurrentProtocolDateInfo } from "@/data/protocol";
+import { getCurrentProtocolDateInfo, Program, DEFAULT_IRONCORE_PROGRAM } from "@/data/protocol";
 
 export type SetLog = { weight: string; reps: string; drops?: { weight: string; reps: string }[]; rating?: string; };
 
@@ -18,6 +18,8 @@ export type ProtocolState = {
   customDailyExercises?: Record<string, any[]>; // { dateStr: Exercise[] }
   timer: { isActive: boolean; endTime: number; isPaused: boolean; duration: number };
   trackedLifts: TrackedLift[];
+  programs: Record<string, Program>;
+  activeProgramId: string;
 };
 
 type ProtocolContextType = {
@@ -35,6 +37,8 @@ type ProtocolContextType = {
   startTimer: (seconds: number) => void;
   addTrackedLift: (lift: TrackedLift) => void;
   removeTrackedLift: (id: string) => void;
+  saveProgram: (program: Program) => void;
+  setActiveProgram: (id: string) => void;
 };
 
 const { currentWeek, currentDayOfWeek } = getCurrentProtocolDateInfo();
@@ -53,6 +57,10 @@ const initialState: ProtocolState = {
     { id: "th1", name: "Smith Machine Press", muscle: "Shoulders", color: "#ffff00" },
     { id: "f1", name: "Split Squats", muscle: "Legs", color: "#ff3333" },
   ],
+  programs: {
+    [DEFAULT_IRONCORE_PROGRAM.id]: DEFAULT_IRONCORE_PROGRAM
+  },
+  activeProgramId: DEFAULT_IRONCORE_PROGRAM.id,
 };
 
 // Module-level guard: survives component remounts, only resets on full page reload
@@ -317,9 +325,27 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const saveProgram = useCallback((program: Program) => {
+    setState(prev => ({
+      ...prev,
+      programs: {
+        ...prev.programs,
+        [program.id]: program
+      }
+    }));
+  }, []);
+
+  const setActiveProgram = useCallback((id: string) => {
+    setState(prev => ({
+      ...prev,
+      activeProgramId: id,
+      activeWeek: 1, // Reset to week 1 when changing programs
+    }));
+  }, []);
+
   const contextValue = useMemo(() => ({
-    state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift
-  }), [state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift]);
+    state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift, saveProgram, setActiveProgram
+  }), [state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift, saveProgram, setActiveProgram]);
 
   return (
     <ProtocolContext.Provider value={contextValue}>

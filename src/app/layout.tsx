@@ -27,6 +27,8 @@ export const viewport: Viewport = {
   userScalable: false, // Prevents zooming on inputs for native feel
 };
 
+import ErrorBoundary from "@/components/ErrorBoundary";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,10 +37,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-noir-bg text-noir-text overscroll-none pb-safe">
-        <ProtocolProvider>
-          {children}
-          <RestTimer />
-        </ProtocolProvider>
+        <ErrorBoundary>
+          <ProtocolProvider>
+            {children}
+            <RestTimer />
+          </ProtocolProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

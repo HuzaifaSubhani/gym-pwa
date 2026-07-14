@@ -1,10 +1,11 @@
 "use client";
 
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
-import { ROUTINE_SCHEMA, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTOCOL_START_DATE } from "@/data/protocol";
+import { DEFAULT_IRONCORE_PROGRAM, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTOCOL_START_DATE } from "@/data/protocol";
 import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search, ArrowRight, X, Activity, Dumbbell, Shield, Mountain, Crosshair, Footprints, Target, HeartPulse } from "lucide-react";
 import { GiMuscularTorso, GiBiceps, GiArm, GiLeg, GiHeartBeats, GiShoulderArmor, GiAbdominalArmor, GiSpineArrow } from "react-icons/gi";
 import { useState, useEffect, useRef } from "react";
+import confetti from "canvas-confetti";
 import TourGuide from "./TourGuide";
 import ExerciseVideoModal from "./ExerciseVideoModal";
 
@@ -29,6 +30,8 @@ function DaySelector() {
     { num: 4, label: "Thu" }, { num: 5, label: "Fri" }, { num: 6, label: "Sat" }, { num: 7, label: "Sun" }
   ];
 
+  const activeProgram = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
+
   return (
     <div id="tour-day-selector" className="bg-noir-surface rounded-xl border border-noir-border p-3 shadow-lg mb-6 flex items-center gap-2">
       <button
@@ -45,7 +48,7 @@ function DaySelector() {
           const dateStr = getProtocolDateString(state.activeWeek, day.num);
           const dateLabel = getShortDateLabel(dateStr);
           
-          let dayRoutine = ROUTINE_SCHEMA[day.num];
+          let dayRoutine = activeProgram.routine_schema[day.num];
           if (state.customRoutine?.[day.num]) {
             const custom = state.customRoutine[day.num];
             if (custom.isPartial && dayRoutine) {
@@ -75,7 +78,7 @@ function DaySelector() {
               onClick={() => setActiveWeekDay(state.activeWeek, day.num)}
               className={`shrink-0 snap-center min-w-[70px] flex flex-col items-center p-2 rounded-lg border transition-all ${
                 isActive 
-                  ? "bg-noir-accent/10 border-noir-accent shadow-[0_0_10px_rgba(167,139,250,0.1)] text-white" 
+                  ? "bg-noir-accent/10 border-noir-accent shadow-[0_0_10px_rgba(204,255,0,0.1)] text-white" 
                   : "bg-noir-bg border-noir-border text-noir-text hover:border-noir-border/80"
               }`}
             >
@@ -94,9 +97,9 @@ function DaySelector() {
       </div>
 
       <button
-        onClick={() => setActiveWeekDay(Math.min(PROTOCOL_WEEKS, state.activeWeek + 1), state.activeDayOfWeek)}
+        onClick={() => setActiveWeekDay(Math.min(activeProgram.duration_weeks, state.activeWeek + 1), state.activeDayOfWeek)}
         className="shrink-0 p-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text hover:text-noir-accent transition-colors disabled:opacity-50"
-        disabled={state.activeWeek === PROTOCOL_WEEKS}
+        disabled={state.activeWeek === activeProgram.duration_weeks}
       >
         <ChevronRight size={20} />
       </button>
@@ -175,6 +178,14 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
     newLogs[setIndex] = { ...newLogs[setIndex], [field]: value };
     setLocalLogs(newLogs);
     setIsDirty(true);
+
+    if (field !== "rating" && value !== "") {
+      const isCompleteNow = newLogs[setIndex].weight !== "" && newLogs[setIndex].reps !== "";
+      const wasComplete = localLogs[setIndex].weight !== "" && localLogs[setIndex].reps !== "";
+      if (isCompleteNow && !wasComplete) {
+        if ('vibrate' in navigator) navigator.vibrate(50);
+      }
+    }
   };
 
   const handleUpdateDropLog = (setIndex: number, dropIndex: number, field: "weight" | "reps", value: string) => {
@@ -541,7 +552,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
                     setSelectedCategory(cat);
                     setView("list");
                   }}
-                  className="bg-noir-bg border border-noir-border hover:border-noir-accent p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(167,139,250,0.15)] group"
+                  className="bg-noir-bg border border-noir-border hover:border-noir-accent p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(204,255,0,0.15)] group"
                 >
                   <div className="text-noir-text-muted group-hover:text-noir-accent transition-colors duration-300">
                     {cat.iconUrl ? (
@@ -566,7 +577,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
                     setSelectedExercise({ name: ex.name, g: ex.g });
                     setView("setup");
                   }}
-                  className="flex items-center gap-4 p-3 bg-noir-bg border border-noir-border rounded-xl cursor-pointer hover:border-noir-accent hover:shadow-[0_0_15px_rgba(167,139,250,0.15)] transition-all group"
+                  className="flex items-center gap-4 p-3 bg-noir-bg border border-noir-border rounded-xl cursor-pointer hover:border-noir-accent hover:shadow-[0_0_15px_rgba(204,255,0,0.15)] transition-all group"
                 >
                   {ex.g ? (
                     <img 
@@ -612,15 +623,15 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
               <div className="flex gap-4">
                 <div className="flex-1">
                   <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Sets</label>
-                  <input type="number" value={sets} onChange={e => setSets(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(167,139,250,0.3)] transition-all" />
+                  <input type="number" value={sets} onChange={e => setSets(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(204,255,0,0.3)] transition-all" />
                 </div>
                 <div className="flex-1">
                   <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Reps</label>
-                  <input type="text" value={reps} onChange={e => setReps(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(167,139,250,0.3)] transition-all" placeholder="8-10" />
+                  <input type="text" value={reps} onChange={e => setReps(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(204,255,0,0.3)] transition-all" placeholder="8-10" />
                 </div>
                 <div className="flex-1">
                   <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Rest (s)</label>
-                  <input type="number" value={rest} onChange={e => setRest(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(167,139,250,0.3)] transition-all" />
+                  <input type="number" value={rest} onChange={e => setRest(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(204,255,0,0.3)] transition-all" />
                 </div>
               </div>
               
@@ -644,7 +655,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
 
               <button 
                 onClick={handleAdd}
-                className="w-full bg-noir-accent text-noir-bg font-black py-4 rounded-xl hover:opacity-90 transition-opacity mt-4 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(167,139,250,0.4)]"
+                className="w-full bg-noir-accent text-noir-bg font-black py-4 rounded-xl hover:opacity-90 transition-opacity mt-4 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(204,255,0,0.4)]"
               >
                 <Check size={20} /> ADD TO ROUTINE
               </button>
@@ -664,15 +675,17 @@ export default function WorkoutLogger() {
   const [routineNameEdit, setRoutineNameEdit] = useState("");
   const [routineFocusEdit, setRoutineFocusEdit] = useState("");
   
-  const baseRoutine = ROUTINE_SCHEMA[state.activeDayOfWeek];
+  const activeProgram = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
   const dateStr = getProtocolDateString(state.activeWeek, state.activeDayOfWeek);
 
   // Merge custom routines
-  let mergedRoutine = baseRoutine;
+  const activeProgramData = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
+  let dayRoutine = activeProgramData.routine_schema[state.activeDayOfWeek];
+  let mergedRoutine = dayRoutine;
   if (state.customRoutine?.[state.activeDayOfWeek]) {
     const custom = state.customRoutine[state.activeDayOfWeek];
-    if (custom.isPartial && baseRoutine) {
-      mergedRoutine = { ...baseRoutine, exercises: [...baseRoutine.exercises, ...custom.exercises] };
+    if (custom.isPartial && dayRoutine) {
+      mergedRoutine = { ...dayRoutine, exercises: [...dayRoutine.exercises, ...custom.exercises] };
     } else {
       mergedRoutine = custom;
     }
@@ -680,6 +693,30 @@ export default function WorkoutLogger() {
 
   const dailyExtras = state.customDailyExercises?.[dateStr] || [];
   const finalExercises = mergedRoutine ? [...mergedRoutine.exercises, ...dailyExtras] : [...dailyExtras];
+
+  const logsForDay = state.workoutLogs[dateStr] || {};
+  let isComplete = false;
+  if (finalExercises.length > 0) {
+    isComplete = finalExercises.every(ex => {
+      const exLogs = logsForDay[ex.id] || [];
+      if (exLogs.length < ex.sets) return false;
+      return exLogs.slice(0, ex.sets).every(log => log && log.weight !== "" && log.reps !== "");
+    });
+  }
+
+  const prevIsCompleteRef = useRef(false);
+  useEffect(() => {
+    if (isComplete && !prevIsCompleteRef.current) {
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#CCFF00', '#FFFFFF', '#000000']
+      });
+      if ('vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 200]);
+    }
+    prevIsCompleteRef.current = isComplete;
+  }, [isComplete]);
 
   return (
     <>
@@ -735,7 +772,6 @@ export default function WorkoutLogger() {
               + Add Exercise
             </button>
           </div>
-        </>
         </>
       )}
       </div>

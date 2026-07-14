@@ -6,14 +6,16 @@ import ProgressAnalytics from "@/components/ProgressAnalytics";
 import Dashboard from "@/components/Dashboard";
 import Leaderboard from "@/components/Leaderboard";
 import Profile from "@/components/Profile";
-import { Home as HomeIcon, Dumbbell, Trophy, User, Loader2 } from "lucide-react";
+import WorkoutHistory from "@/components/WorkoutHistory";
+import CommunityPrograms from "@/components/CommunityPrograms";
+import { Home as HomeIcon, Dumbbell, Trophy, User, CalendarDays, Loader2, Globe } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { getCurrentProtocolDateInfo } from "@/data/protocol";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "leaderboard" | "profile">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "leaderboard" | "history" | "explore" | "profile">("dashboard");
   const { state, setActiveWeekDay, syncWithUser } = useProtocol();
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [username, setUsername] = useState("Athlete");
@@ -70,8 +72,8 @@ export default function Home() {
   return (
     <main className="flex-1 flex flex-col h-[100dvh] overflow-hidden bg-noir-bg relative">
       {/* Global Background Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#A78BFA]/10 rounded-full pointer-events-none fixed animate-glow-pulse"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#A78BFA]/5 rounded-full pointer-events-none fixed animate-glow-pulse" style={{ animationDelay: '3s' }}></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#CCFF00]/10 rounded-full pointer-events-none fixed animate-glow-pulse"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#CCFF00]/5 rounded-full pointer-events-none fixed animate-glow-pulse" style={{ animationDelay: '3s' }}></div>
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none fixed"></div>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 pb-28 md:px-8 max-w-3xl mx-auto w-full relative z-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -86,12 +88,14 @@ export default function Home() {
         )}
         {activeTab === "workout" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><WorkoutLogger /></div>}
         {activeTab === "leaderboard" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><Leaderboard /></div>}
+        {activeTab === "history" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><WorkoutHistory /></div>}
+        {activeTab === "explore" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><CommunityPrograms /></div>}
         {activeTab === "profile" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><Profile /></div>}
       </div>
 
       {/* Bottom Navigation for mobile-first usage */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
-        <div className="max-w-3xl mx-auto bg-noir-surface border-t border-noir-border pb-safe pointer-events-auto">
+        <div className="max-w-3xl mx-auto bg-noir-surface/80 backdrop-blur-xl border-t border-noir-border pb-safe pointer-events-auto shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
           <div className="flex">
           <button
             onClick={() => setActiveTab("dashboard")}
@@ -100,7 +104,7 @@ export default function Home() {
             }`}
           >
             <HomeIcon size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider">Home</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">Home</span>
           </button>
           
           <button
@@ -110,7 +114,7 @@ export default function Home() {
             }`}
           >
             <Dumbbell size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider">Train</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">Train</span>
           </button>
           
           <button
@@ -120,7 +124,27 @@ export default function Home() {
             }`}
           >
             <Trophy size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider">Ranks</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">Ranks</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
+              activeTab === "history" ? "text-noir-accent" : "text-noir-text-muted"
+            }`}
+          >
+            <CalendarDays size={24} />
+            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">History</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("explore")}
+            className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
+              activeTab === "explore" ? "text-noir-accent" : "text-noir-text-muted"
+            }`}
+          >
+            <Globe size={24} />
+            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">Explore</span>
           </button>
           
           <button
@@ -130,11 +154,11 @@ export default function Home() {
             }`}
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt="You" className={`w-6 h-6 rounded-full border border-noir-border object-cover ${activeTab === "profile" ? "border-noir-accent shadow-[0_0_10px_rgba(167,139,250,0.5)]" : ""}`} />
+              <img src={avatarUrl} alt="You" className={`w-6 h-6 rounded-full border border-noir-border object-cover ${activeTab === "profile" ? "border-noir-accent shadow-[0_0_10px_rgba(204,255,0,0.5)]" : ""}`} />
             ) : (
               <User size={24} />
             )}
-            <span className="text-[10px] uppercase font-bold tracking-wider">You</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">You</span>
           </button>
         </div>
         </div>

@@ -328,11 +328,11 @@ export default function Profile() {
               <img 
                 src={myProfile.avatar_url} 
                 alt="DP" 
-                className="w-32 h-32 rounded-full border-4 border-noir-bg object-cover shadow-[0_0_25px_rgba(167,139,250,0.5)] ring-2 ring-noir-accent" 
+                className="w-32 h-32 rounded-full border-4 border-noir-bg object-cover shadow-[0_0_25px_rgba(204,255,0,0.5)] ring-2 ring-noir-accent" 
                 style={{ objectPosition: `50% ${myProfile.avatar_position}%` }}
               />
             ) : (
-              <div className="w-32 h-32 rounded-full bg-noir-bg border-4 border-noir-surface flex items-center justify-center text-5xl font-black shadow-[0_0_25px_rgba(167,139,250,0.5)] ring-2 ring-noir-accent">
+              <div className="w-32 h-32 rounded-full bg-noir-bg border-4 border-noir-surface flex items-center justify-center text-5xl font-black shadow-[0_0_25px_rgba(204,255,0,0.5)] ring-2 ring-noir-accent">
                 {myProfile.username.substring(0, 2).toUpperCase()}
               </div>
             )}
@@ -354,7 +354,7 @@ export default function Profile() {
           <div className="flex flex-col items-center gap-1 mb-4">
             <span className="text-noir-accent font-bold tracking-widest uppercase text-xs">Level {level} Elite</span>
             <div className="w-48 bg-noir-bg rounded-full h-1.5 shadow-inner overflow-hidden border border-noir-border/50">
-              <div className="h-full bg-noir-accent shadow-[0_0_10px_rgba(167,139,250,0.8)] rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
+              <div className="h-full bg-noir-accent shadow-[0_0_10px_rgba(204,255,0,0.8)] rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
             </div>
             <span className="text-[10px] text-noir-text-muted">{xp.toLocaleString()} XP / {nextLevelXP.toLocaleString()} XP</span>
           </div>
@@ -363,17 +363,17 @@ export default function Profile() {
         {/* Stats Bar */}
         <div className="grid grid-cols-3 gap-1 relative z-10 bg-noir-bg/50 border-t border-noir-border backdrop-blur-md p-4">
           <div className="flex flex-col items-center text-center">
-            <Activity className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]" size={20} />
+            <Activity className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(204,255,0,0.5)]" size={20} />
             <span className="text-xl font-bold text-white">{totalWorkouts}</span>
             <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Workouts</span>
           </div>
           <div className="flex flex-col items-center text-center border-l border-r border-noir-border/50">
-            <Flame className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]" size={20} />
+            <Flame className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(204,255,0,0.5)]" size={20} />
             <span className="text-xl font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</span>
             <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Volume (kg)</span>
           </div>
           <div className="flex flex-col items-center text-center">
-            <Medal className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]" size={20} />
+            <Medal className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(204,255,0,0.5)]" size={20} />
             <span className="text-xl font-bold text-white">{totalWorkouts >= 50 ? '3' : totalWorkouts >= 10 ? '2' : '1'}</span>
             <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Tier</span>
           </div>
@@ -391,7 +391,7 @@ export default function Profile() {
             className="w-full flex items-center justify-between p-5 hover:bg-noir-surface-light transition-colors"
           >
             <div className="flex items-center gap-3">
-              <User size={20} className="text-noir-accent drop-shadow-[0_0_5px_rgba(167,139,250,0.3)]" />
+              <User size={20} className="text-noir-accent drop-shadow-[0_0_5px_rgba(204,255,0,0.3)]" />
               <span className="font-bold uppercase tracking-wider text-sm">Account Settings</span>
             </div>
             {openSection === "account" ? <ChevronUp size={20} className="text-noir-accent" /> : <ChevronDown size={20} className="text-noir-text-muted" />}
@@ -536,7 +536,7 @@ export default function Profile() {
                 nutritionGoal === (myProfile.nutrition_goal || "maintain")
               )
             }
-            className="w-full px-4 py-4 rounded-xl bg-noir-accent text-noir-bg hover:opacity-90 font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(167,139,250,0.2)] flex justify-center items-center gap-2"
+            className="w-full px-4 py-4 rounded-xl bg-noir-accent text-noir-bg hover:opacity-90 font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(204,255,0,0.2)] flex justify-center items-center gap-2"
           >
             {saveStatus === "saving" ? <><Loader2 className="animate-spin" size={20} /> Saving...</> : <><Save size={20} /> Save Changes</>}
           </button>
