@@ -289,6 +289,14 @@ export default function Leaderboard() {
     setActionLoading(null);
   };
 
+  const forfeitChallenge = async (challengeId: string) => {
+    if (!confirm("Are you sure you want to forfeit this challenge?")) return;
+    setActionLoading(`forfeit-${challengeId}`);
+    await supabase.from('challenges').update({ status: 'declined' }).eq('id', challengeId);
+    await fetchLeaderboardData(true);
+    setActionLoading(null);
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-noir-text-muted animate-in fade-in">
@@ -304,7 +312,7 @@ export default function Leaderboard() {
         <Trophy className="mx-auto mb-4 text-noir-accent opacity-50" size={48} />
         <h2 className="text-2xl font-black mb-2">Join the Squad</h2>
         <p className="text-noir-text-muted mb-6 text-sm">Log in to track your progress against your buddies and climb the leaderboard.</p>
-        <Link href="/login" className="inline-flex items-center gap-2 bg-noir-accent hover:opacity-90 text-noir-bg font-bold py-3 px-6 rounded-lg shadow-[0_0_15px_rgba(204,255,0,0.3)] transition-all">
+        <Link href="/login" className="inline-flex items-center gap-2 bg-noir-accent hover:opacity-90 text-noir-bg font-bold py-3 px-6 rounded-lg shadow-lg transition-all">
           Join the Forge <ArrowRight size={18} />
         </Link>
       </div>
@@ -333,7 +341,7 @@ export default function Leaderboard() {
           
           {/* Incoming Challenges */}
           {pendingReceived.map(c => (
-            <div key={c.id} className="bg-noir-surface border border-noir-accent/50 rounded-xl p-4 shadow-[0_0_15px_rgba(204,255,0,0.1)]">
+            <div key={c.id} className="bg-noir-surface border border-noir-accent/50 rounded-xl p-4 shadow-lg">
               <div className="flex justify-between items-center mb-3">
                 <div>
                   <span className="text-xs font-bold uppercase tracking-widest text-noir-accent animate-pulse">Incoming Challenge!</span>
@@ -400,8 +408,18 @@ export default function Leaderboard() {
                     <Swords size={18} className="text-red-500" />
                     <span className="font-bold">vs {opponent?.username}</span>
                   </div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-noir-text-muted bg-noir-bg px-2 py-1 rounded-md border border-noir-border">
-                    {daysLeft > 0 ? `${daysLeft} Days Left` : 'Ending Soon'}
+                  <div className="flex items-center gap-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-noir-text-muted bg-noir-bg px-2 py-1 rounded-md border border-noir-border">
+                      {daysLeft > 0 ? `${daysLeft} Days Left` : 'Ending Soon'}
+                    </div>
+                    <button 
+                      onClick={() => forfeitChallenge(c.id)}
+                      disabled={actionLoading === `forfeit-${c.id}`}
+                      className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20 transition-colors"
+                      title="Forfeit Challenge"
+                    >
+                      {actionLoading === `forfeit-${c.id}` ? '...' : 'Forfeit'}
+                    </button>
                   </div>
                 </div>
 
@@ -447,7 +465,7 @@ export default function Leaderboard() {
                 onClick={() => setSelectedUser(entry)}
                 className={`relative flex items-center p-4 rounded-xl border transition-all cursor-pointer hover:bg-noir-surface-light ${
                   isCurrentUser 
-                    ? "bg-noir-accent/10 border-noir-accent shadow-[0_0_15px_rgba(204,255,0,0.1)]" 
+                    ? "bg-noir-accent/10 border-noir-accent shadow-lg" 
                     : "bg-noir-surface border-noir-border"
                 }`}
               >
@@ -538,7 +556,7 @@ export default function Leaderboard() {
                 <img 
                   src={selectedUser.avatar_url} 
                   alt="Avatar" 
-                  className="w-24 h-24 rounded-full border-2 border-noir-accent object-cover shadow-[0_0_20px_rgba(204,255,0,0.3)] mb-4"
+                  className="w-24 h-24 rounded-full border-2 border-noir-accent object-cover shadow-lg mb-4"
                   style={{ objectPosition: `50% ${selectedUser.avatar_position}%` }}
                 />
               ) : (

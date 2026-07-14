@@ -145,9 +145,7 @@ export default function ProgressAnalytics() {
 
       {/* Personal Records Section */}
       {personalRecords.length > 0 && (
-        <div className="mb-8 relative p-6 bg-noir-surface border border-[#CCFF00]/40 rounded-2xl shadow-[0_0_25px_rgba(208,56,243,0.15)] overflow-hidden">
-          <div className="absolute top-[-50%] right-[-10%] w-64 h-64 bg-[#CCFF00]/10 blur-[80px] rounded-full pointer-events-none"></div>
-          <div className="absolute bottom-[-50%] left-[-10%] w-64 h-64 bg-[#CCFF00]/10 blur-[80px] rounded-full pointer-events-none"></div>
+        <div className="mb-8 relative p-6 bg-noir-surface border border-[#CCFF00]/40 rounded-2xl shadow-lg overflow-hidden">
           
           <div className="flex items-center gap-2 mb-6 relative z-10">
             <Trophy className="text-[#CCFF00]" size={24} />

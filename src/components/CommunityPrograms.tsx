@@ -71,7 +71,7 @@ export default function CommunityPrograms() {
         </div>
         <button 
           onClick={() => setShowBuilder(true)}
-          className="bg-noir-accent text-black font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-lg hover:opacity-90 flex items-center gap-1 shadow-[0_0_10px_rgba(204,255,0,0.5)]"
+          className="bg-noir-accent text-black font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-lg hover:opacity-90 flex items-center gap-1 shadow-lg"
         >
           <Plus size={14} /> Create
         </button>

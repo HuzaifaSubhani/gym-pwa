@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Weight, Activity, Flame, ChevronRight } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { PROTOCOL_START_DATE } from "@/data/protocol";
+import { PROTOCOL_START_DATE, DEFAULT_IRONCORE_PROGRAM } from "@/data/protocol";
 import { supabase } from "@/lib/supabaseClient";
 
 function getProtocolDateString(week: number, dayNum: number) {
@@ -32,24 +32,10 @@ export default function Dashboard({ avatarUrl, username }: { avatarUrl?: string 
       completedDays++;
     }
   }
-  // Assume 4 workouts per week is 100%
-  const progressPercentage = Math.min(100, Math.round((completedDays / 4) * 100));
+  const activeProgram = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
+  const targetDays = Object.values(activeProgram.routine_schema).filter(day => day.exercises.length > 0).length || 1;
+  const progressPercentage = Math.min(100, Math.round((completedDays / targetDays) * 100));
   
-  let currentStreak = 0;
-  let checkDate = new Date();
-  const toDateStr = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  
-  if (state.workoutLogs[toDateStr(checkDate)] && Object.keys(state.workoutLogs[toDateStr(checkDate)]).length > 0) {
-    currentStreak++;
-  }
-  checkDate.setDate(checkDate.getDate() - 1);
-  if (currentStreak > 0 || (state.workoutLogs[toDateStr(checkDate)] && Object.keys(state.workoutLogs[toDateStr(checkDate)]).length > 0)) {
-     while (state.workoutLogs[toDateStr(checkDate)] && Object.keys(state.workoutLogs[toDateStr(checkDate)]).length > 0) {
-       currentStreak++;
-       checkDate.setDate(checkDate.getDate() - 1);
-     }
-  }
-
   return (
     <div className="space-y-6">
       {/* Premium Hub Controls */}
@@ -79,7 +65,7 @@ export default function Dashboard({ avatarUrl, username }: { avatarUrl?: string 
             <div className="flex items-center gap-2">
               <div className="w-24 bg-noir-bg rounded-full h-2 overflow-hidden shadow-inner border border-noir-border/50">
                 <div 
-                  className="h-full bg-gradient-to-r from-[#99CC00] to-noir-accent rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(204,255,0,0.4)]" 
+                  className="h-full bg-gradient-to-r from-[#99CC00] to-noir-accent rounded-full transition-all duration-1000 ease-out shadow-lg" 
                   style={{ width: `${Math.max(2, progressPercentage)}%` }}
                 ></div>
               </div>
@@ -87,21 +73,7 @@ export default function Dashboard({ avatarUrl, username }: { avatarUrl?: string 
             </div>
           </div>
         </div>
-
-        {/* Streak Counter */}
-        {currentStreak > 0 && (
-          <div className="relative z-10 bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
-            <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500">
-              <Flame size={20} className="fill-orange-500" />
-            </div>
-            <div>
-              <p className="text-orange-500 font-black text-lg">{currentStreak} Day Streak!</p>
-              <p className="text-xs text-orange-500/70 uppercase tracking-widest font-bold">Keep the fire burning 🔥</p>
-            </div>
-          </div>
-        )}
       </section>
-
     </div>
   );
 }

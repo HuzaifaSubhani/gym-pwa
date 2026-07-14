@@ -78,7 +78,7 @@ function DaySelector() {
               onClick={() => setActiveWeekDay(state.activeWeek, day.num)}
               className={`shrink-0 snap-center min-w-[70px] flex flex-col items-center p-2 rounded-lg border transition-all ${
                 isActive 
-                  ? "bg-noir-accent/10 border-noir-accent shadow-[0_0_10px_rgba(204,255,0,0.1)] text-white" 
+                  ? "bg-noir-accent/10 border-noir-accent shadow-lg text-white" 
                   : "bg-noir-bg border-noir-border text-noir-text hover:border-noir-border/80"
               }`}
             >
@@ -107,8 +107,8 @@ function DaySelector() {
   );
 }
 
-function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr }: {
-  exercise: Exercise; activeWeek: number; activeDayOfWeek: number; isFinal: boolean; dateStr: string;
+function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr, isFuture }: {
+  exercise: Exercise; activeWeek: number; activeDayOfWeek: number; isFinal: boolean; dateStr: string; isFuture: boolean;
 }) {
   const { state, setFullExerciseLogs, removeExercise, startTimer } = useProtocol();
   const dayLogs = state.workoutLogs[dateStr] || {};
@@ -310,7 +310,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                   <input
                     type="number"
                     placeholder="kg"
-                    className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px]"
+                    disabled={isFuture}
+                    className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
                     value={log.weight}
                     onChange={(e) => handleUpdateLocalLog(i, "weight", e.target.value)}
                   />
@@ -318,23 +319,26 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                   <input
                     type="number"
                     placeholder="reps"
-                    className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px]"
+                    disabled={isFuture}
+                    className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
                     value={log.reps}
                     onChange={(e) => handleUpdateLocalLog(i, "reps", e.target.value)}
                   />
-                  {/* Rating buttons */}
                   <div className="flex gap-1 ml-auto">
                     <button 
                       onClick={() => handleUpdateLocalLog(i, "rating", "easy")} 
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'easy' ? 'bg-green-500/20 text-green-500 border border-green-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-green-500'}`}
+                      disabled={isFuture}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${log.rating === 'easy' ? 'bg-green-500/20 text-green-500 border border-green-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-green-500'}`}
                     >E</button>
                     <button 
                       onClick={() => handleUpdateLocalLog(i, "rating", "hard")} 
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'hard' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-yellow-500'}`}
+                      disabled={isFuture}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${log.rating === 'hard' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-yellow-500'}`}
                     >M</button>
                     <button 
                       onClick={() => handleUpdateLocalLog(i, "rating", "extreme")} 
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${log.rating === 'extreme' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-red-500'}`}
+                      disabled={isFuture}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${log.rating === 'extreme' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-red-500'}`}
                     >H</button>
                   </div>
                 </div>
@@ -357,7 +361,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                       <input
                         type="number"
                         placeholder="kg"
-                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px]"
+                        disabled={isFuture}
+                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
                         value={log.drops?.[0]?.weight || ""}
                         onChange={(e) => handleUpdateDropLog(i, 0, "weight", e.target.value)}
                       />
@@ -365,7 +370,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                       <input
                         type="number"
                         placeholder="reps"
-                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px]"
+                        disabled={isFuture}
+                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
                         value={log.drops?.[0]?.reps || ""}
                         onChange={(e) => handleUpdateDropLog(i, 0, "reps", e.target.value)}
                       />
@@ -375,7 +381,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                       <input
                         type="number"
                         placeholder="kg"
-                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px]"
+                        disabled={isFuture}
+                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
                         value={log.drops?.[1]?.weight || ""}
                         onChange={(e) => handleUpdateDropLog(i, 1, "weight", e.target.value)}
                       />
@@ -383,7 +390,8 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
                       <input
                         type="number"
                         placeholder="reps"
-                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px]"
+                        disabled={isFuture}
+                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
                         value={log.drops?.[1]?.reps || ""}
                         onChange={(e) => handleUpdateDropLog(i, 1, "reps", e.target.value)}
                       />
@@ -406,15 +414,9 @@ function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr 
             </button>
           </div>
           <div className="flex gap-2">
-            <button onClick={handleDeleteExercise} className="px-3 py-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text-muted hover:text-red-500 hover:border-red-500 transition-colors min-h-[44px] text-xs font-bold uppercase tracking-wider">
-              Remove
-            </button>
-            <button onClick={handleCompare} className="px-3 py-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text-muted hover:text-noir-accent hover:border-noir-accent transition-colors min-h-[44px]">
-              <History size={18} />
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); setShowClearConfirm(true); }} className="px-3 py-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text-muted hover:text-red-500 hover:border-red-500 transition-colors min-h-[44px]">
-              <Trash2 size={18} />
-            </button>
+            <button onClick={handleDeleteExercise} className="px-3 py-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text-muted hover:text-red-500 hover:border-red-500 transition-colors min-h-[44px] text-xs font-bold uppercase tracking-wider">Remove</button>
+            <button onClick={handleCompare} disabled={isFuture || activeWeek <= 1} className="flex items-center gap-1 p-2 rounded-lg text-noir-text-muted hover:text-noir-accent hover:bg-noir-accent/10 transition-colors disabled:opacity-50 text-xs font-bold uppercase tracking-wider"><History size={16} /> Pull</button>
+            <button onClick={(e) => { e.stopPropagation(); setShowClearConfirm(true); }} className="p-2 rounded-lg text-noir-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"><Trash2 size={18} /></button>
           </div>
         </div>
       </div>
@@ -552,7 +554,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
                     setSelectedCategory(cat);
                     setView("list");
                   }}
-                  className="bg-noir-bg border border-noir-border hover:border-noir-accent p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(204,255,0,0.15)] group"
+                  className="bg-noir-bg border border-noir-border hover:border-noir-accent p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-lg group"
                 >
                   <div className="text-noir-text-muted group-hover:text-noir-accent transition-colors duration-300">
                     {cat.iconUrl ? (
@@ -577,7 +579,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
                     setSelectedExercise({ name: ex.name, g: ex.g });
                     setView("setup");
                   }}
-                  className="flex items-center gap-4 p-3 bg-noir-bg border border-noir-border rounded-xl cursor-pointer hover:border-noir-accent hover:shadow-[0_0_15px_rgba(204,255,0,0.15)] transition-all group"
+                  className="flex items-center gap-4 p-3 bg-noir-bg border border-noir-border rounded-xl cursor-pointer hover:border-noir-accent hover:shadow-lg transition-all group"
                 >
                   {ex.g ? (
                     <img 
@@ -623,15 +625,15 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
               <div className="flex gap-4">
                 <div className="flex-1">
                   <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Sets</label>
-                  <input type="number" value={sets} onChange={e => setSets(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(204,255,0,0.3)] transition-all" />
+                  <input type="number" value={sets} onChange={e => setSets(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-lg transition-all" />
                 </div>
                 <div className="flex-1">
                   <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Reps</label>
-                  <input type="text" value={reps} onChange={e => setReps(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(204,255,0,0.3)] transition-all" placeholder="8-10" />
+                  <input type="text" value={reps} onChange={e => setReps(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-lg transition-all" placeholder="8-10" />
                 </div>
                 <div className="flex-1">
                   <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Rest (s)</label>
-                  <input type="number" value={rest} onChange={e => setRest(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-[0_0_10px_rgba(204,255,0,0.3)] transition-all" />
+                  <input type="number" value={rest} onChange={e => setRest(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-lg transition-all" />
                 </div>
               </div>
               
@@ -655,7 +657,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
 
               <button 
                 onClick={handleAdd}
-                className="w-full bg-noir-accent text-noir-bg font-black py-4 rounded-xl hover:opacity-90 transition-opacity mt-4 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(204,255,0,0.4)]"
+                className="w-full bg-noir-accent text-noir-bg font-black py-4 rounded-xl hover:opacity-90 transition-opacity mt-4 flex items-center justify-center gap-2 shadow-lg"
               >
                 <Check size={20} /> ADD TO ROUTINE
               </button>
@@ -677,6 +679,10 @@ export default function WorkoutLogger() {
   
   const activeProgram = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
   const dateStr = getProtocolDateString(state.activeWeek, state.activeDayOfWeek);
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const isFuture = dateStr > todayStr;
 
   // Merge custom routines
   const activeProgramData = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
@@ -753,6 +759,13 @@ export default function WorkoutLogger() {
             </div>
           </header>
 
+          {isFuture && (
+            <div className="mb-4 px-4 py-3 rounded-xl bg-noir-surface border border-noir-border flex items-center justify-between shadow-lg">
+              <span className="text-sm font-bold text-noir-text-muted">This workout is scheduled for a future date.</span>
+              <Shield size={18} className="text-noir-accent" />
+            </div>
+          )}
+
           <div className="space-y-4">
             {finalExercises.map((ex, index) => (
               <ExerciseCard
@@ -762,6 +775,7 @@ export default function WorkoutLogger() {
                 activeDayOfWeek={state.activeDayOfWeek}
                 isFinal={index === finalExercises.length - 1}
                 dateStr={dateStr}
+                isFuture={isFuture}
               />
             ))}
             

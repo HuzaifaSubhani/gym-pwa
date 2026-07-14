@@ -71,9 +71,6 @@ export default function Home() {
 
   return (
     <main className="flex-1 flex flex-col h-[100dvh] overflow-hidden bg-noir-bg relative">
-      {/* Global Background Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#CCFF00]/10 rounded-full pointer-events-none fixed animate-glow-pulse"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#CCFF00]/5 rounded-full pointer-events-none fixed animate-glow-pulse" style={{ animationDelay: '3s' }}></div>
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none fixed"></div>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 pb-28 md:px-8 max-w-3xl mx-auto w-full relative z-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -154,7 +151,7 @@ export default function Home() {
             }`}
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt="You" className={`w-6 h-6 rounded-full border border-noir-border object-cover ${activeTab === "profile" ? "border-noir-accent shadow-[0_0_10px_rgba(204,255,0,0.5)]" : ""}`} />
+              <img src={avatarUrl} alt="You" className={`w-6 h-6 rounded-full border border-noir-border object-cover ${activeTab === "profile" ? "border-noir-accent shadow-lg" : ""}`} />
             ) : (
               <User size={24} />
             )}
