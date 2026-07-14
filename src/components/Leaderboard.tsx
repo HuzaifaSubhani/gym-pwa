@@ -30,6 +30,8 @@ type LeaderboardEntry = {
   workouts: number;
   totalVolume: number;
   score: number;
+  physique_tag: string;
+  pinned_pr?: any;
 };
 
 type Challenge = {
@@ -74,6 +76,7 @@ export default function Leaderboard() {
   const [selectedUser, setSelectedUser] = useState<LeaderboardEntry | null>(null);
   const [forfeitPrompt, setForfeitPrompt] = useState<{id: string, opponentName: string, opponentId: string} | null>(null);
   const [isWarsExpanded, setIsWarsExpanded] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("overall");
 
   useEffect(() => {
     fetchLeaderboardData();
@@ -220,7 +223,9 @@ export default function Leaderboard() {
           progress,
           workouts: workoutsCount,
           totalVolume: Math.round(stats.volume),
-          score: xp + (workoutsCount * 50)
+          score: xp + (workoutsCount * 50),
+          physique_tag: p.physique_tag || "overall",
+          pinned_pr: p.pinned_pr
         };
       });
 
@@ -350,12 +355,31 @@ export default function Leaderboard() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
-      <header className="mb-4 px-2 flex justify-between items-end">
-        <div>
-          <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">Competition</h2>
-          <h1 className="text-3xl font-black flex items-center gap-3">
-            Ranks <Trophy className="text-amber-400" size={28} />
-          </h1>
+      <header className="mb-4 px-2">
+        <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">Competition</h2>
+        <h1 className="text-3xl font-black flex items-center gap-3 mb-4">
+          Ranks <Trophy className="text-amber-400" size={28} />
+        </h1>
+        
+        <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]">
+          {[
+            { id: 'overall', label: 'Overall' },
+            { id: 'classic', label: 'Classic' },
+            { id: 'aesthetic', label: 'Aesthetic' },
+            { id: 'powerlifting', label: 'Powerlifting' }
+          ].map(tag => (
+            <button
+              key={tag.id}
+              onClick={() => setActiveFilter(tag.id)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all border ${
+                activeFilter === tag.id
+                  ? 'bg-noir-accent text-black border-noir-accent'
+                  : 'bg-noir-surface border-noir-border text-noir-text-muted hover:text-white'
+              }`}
+            >
+              {tag.label}
+            </button>
+          ))}
         </div>
       </header>
 
@@ -530,13 +554,15 @@ export default function Leaderboard() {
       )}
 
       {/* Leaderboard List */}
-      <div className="space-y-4">
-        {entries.length === 0 ? (
-          <div className="p-8 text-center bg-noir-surface rounded-xl border border-noir-border">
-            <p className="text-noir-text-muted">No one has logged any workouts yet. Be the first!</p>
-          </div>
-        ) : (
-          entries.map((entry, index) => {
+      <div className="bg-noir-surface/40 backdrop-blur-sm border border-noir-border rounded-xl shadow-lg p-4 pb-2">
+        <div className="flex items-center justify-between text-xs font-bold text-noir-text-muted uppercase tracking-widest px-4 pb-3 border-b border-noir-border/50 mb-3">
+          <span>Rank</span>
+          <span>Score</span>
+        </div>
+        <div className="space-y-2">
+          {entries
+            .filter(entry => activeFilter === "overall" || entry.physique_tag === activeFilter)
+            .map((entry, index) => {
             const isCurrentUser = entry.id === user?.id;
             // Check if there's an existing challenge with this user
             const existingChallenge = challenges.find(c => 
@@ -592,9 +618,16 @@ export default function Leaderboard() {
 
                   <div className="flex-1 min-w-0 py-1">
                     <div className="flex justify-between items-end mb-1.5">
-                      <h3 className={`font-black text-lg truncate tracking-tight ${isCurrentUser ? "text-noir-accent" : "text-white"}`}>
-                        {entry.username} {isCurrentUser && <span className="text-[10px] font-bold uppercase tracking-widest text-noir-text-muted ml-1">(You)</span>}
-                      </h3>
+                      <div className="flex flex-col gap-0.5">
+                        <h3 className={`font-black text-lg truncate tracking-tight ${isCurrentUser ? "text-noir-accent" : "text-white"}`}>
+                          {entry.username} {isCurrentUser && <span className="text-[10px] font-bold uppercase tracking-widest text-noir-text-muted ml-1">(You)</span>}
+                        </h3>
+                        {entry.pinned_pr && (
+                          <div className="flex items-center gap-1 bg-noir-accent/10 border border-noir-accent/30 text-noir-accent px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest w-fit">
+                            <Trophy size={10} /> {entry.pinned_pr.name}: {entry.pinned_pr.weight}kg
+                          </div>
+                        )}
+                      </div>
                       <div className="text-right flex-shrink-0 flex items-baseline gap-1">
                         <span className="text-[10px] text-noir-text-muted font-bold uppercase tracking-widest">Lvl</span>
                         <span className="text-xl font-black text-white">{entry.level}</span>
@@ -640,9 +673,10 @@ export default function Leaderboard() {
               </div>
             );
           })
-        )}
+        }
+        </div>
       </div>
-
+      
       {/* User Profile Modal */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in" onClick={() => setSelectedUser(null)}>
@@ -667,6 +701,16 @@ export default function Leaderboard() {
                 </div>
               )}
               <h2 className="text-2xl font-black mb-1 text-white">{selectedUser.username}</h2>
+              
+              {selectedUser.pinned_pr && (
+                <div className="mt-2 mb-4 inline-flex items-center gap-2 bg-noir-bg border border-noir-accent/30 text-noir-accent px-3 py-1.5 rounded-full shadow-lg">
+                  <Trophy size={14} className="animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-widest">
+                    {selectedUser.pinned_pr.name}: <span className="text-white">{selectedUser.pinned_pr.weight}kg × {selectedUser.pinned_pr.reps}</span>
+                  </span>
+                </div>
+              )}
+
               <div className="text-sm font-bold text-noir-accent uppercase tracking-widest mb-6">Level {selectedUser.level}</div>
               
               <div className="grid grid-cols-2 gap-3 w-full">

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Loader2, Users, Dumbbell, ShieldAlert, ChevronLeft } from "lucide-react";
+import { Loader2, Users, Dumbbell, ShieldAlert, ChevronLeft, Trash2, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -30,8 +30,15 @@ export default function AdminPanel() {
       setIsAdmin(true);
 
       // Fetch admin stats
-      const { data: allProfiles } = await supabase.from("profiles").select("*");
-      if (allProfiles) setProfiles(allProfiles);
+      const { data: allProfiles, error } = await supabase.rpc("admin_get_users");
+      if (error) {
+        console.error("Admin fetch error:", error);
+        // Fallback if RPC isn't set up yet
+        const { data: fallbackProfiles } = await supabase.from("profiles").select("*");
+        if (fallbackProfiles) setProfiles(fallbackProfiles);
+      } else if (allProfiles) {
+        setProfiles(allProfiles);
+      }
 
       const { count } = await supabase.from("workout_logs").select("*", { count: 'exact', head: true });
       setTotalLogs(count || 0);
@@ -41,6 +48,23 @@ export default function AdminPanel() {
 
     checkAdmin();
   }, [router]);
+
+  const handleDeleteUser = async (targetId: string, username: string) => {
+    if (!window.confirm(`⚠️ WARNING ⚠️\n\nAre you sure you want to completely eradicate ${username || 'this user'}? This will destroy all their logs, programs, and history permanently. This action cannot be undone.`)) {
+      return;
+    }
+    
+    setLoading(true);
+    const { error } = await supabase.rpc("admin_delete_user", { target_user_id: targetId });
+    if (error) {
+      alert("Failed to delete user. Make sure the SQL RPC is set up in Supabase.");
+      console.error(error);
+    } else {
+      setProfiles(prev => prev.filter(p => p.id !== targetId));
+      alert(`${username || 'User'} has been terminated.`);
+    }
+    setLoading(false);
+  };
 
   if (loading) {
     return (
@@ -100,21 +124,41 @@ export default function AdminPanel() {
               <thead className="bg-black/20 text-noir-text-muted">
                 <tr>
                   <th className="p-4 font-bold">User ID</th>
+                  <th className="p-4 font-bold">Email</th>
                   <th className="p-4 font-bold">Username</th>
                   <th className="p-4 font-bold">Admin</th>
                   <th className="p-4 font-bold">Joined</th>
+                  <th className="p-4 font-bold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-noir-border">
                 {profiles.map(p => (
-                  <tr key={p.id} className="hover:bg-noir-surface-light transition-colors">
+                  <tr key={p.id} className="hover:bg-noir-surface-light transition-colors group">
                     <td className="p-4 font-mono text-xs opacity-50">{p.id.split('-')[0]}...</td>
+                    <td className="p-4 text-xs">
+                      {p.email ? (
+                        <span className="flex items-center gap-2 opacity-70"><Mail size={12} /> {p.email}</span>
+                      ) : (
+                        <span className="opacity-30 italic">Hidden</span>
+                      )}
+                    </td>
                     <td className="p-4 font-bold">{p.username || "Unnamed"}</td>
                     <td className="p-4">
                       {p.is_admin ? <span className="bg-red-500/20 text-red-500 px-2 py-1 rounded text-xs font-bold uppercase">Admin</span> : <span className="opacity-50 text-xs">User</span>}
                     </td>
                     <td className="p-4 text-xs opacity-70">
                       {new Date(p.created_at || Date.now()).toLocaleDateString()}
+                    </td>
+                    <td className="p-4 text-right">
+                      {!p.is_admin && (
+                        <button 
+                          onClick={() => handleDeleteUser(p.id, p.username)}
+                          className="p-2 bg-red-500/10 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white"
+                          title="Terminate User"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

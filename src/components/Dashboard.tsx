@@ -2,7 +2,8 @@
 
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { PROTOCOL_START_DATE, DEFAULT_IRONCORE_PROGRAM } from "@/data/protocol";
-import { Play, CheckCircle2, ChevronRight, Activity } from "lucide-react";
+import { Play, CheckCircle2, Activity, Flame, Medal } from "lucide-react";
+import PersonalRecords from "./PersonalRecords";
 
 function getProtocolDateString(week: number, dayNum: number) {
   const date = new Date(PROTOCOL_START_DATE);
@@ -31,11 +32,34 @@ export default function Dashboard({
       completedDays++;
     }
   }
+
+  // Calculate overall stats
+  let totalWorkouts = 0;
+  let totalVolume = 0;
+  Object.keys(state.workoutLogs).forEach(date => {
+    const dayLogs = state.workoutLogs[date];
+    let hasValid = false;
+    Object.values(dayLogs).forEach((logs: any) => {
+      logs.forEach((log: any) => {
+        const w = parseFloat(log.weight) || 0;
+        const r = parseInt(log.reps) || 0;
+        if (w > 0 || r > 0) hasValid = true;
+        totalVolume += w * r;
+      });
+    });
+    if (hasValid) totalWorkouts++;
+  });
+  const xp = Math.round(totalVolume / 10);
+  const level = Math.floor(Math.sqrt(xp / 100)) + 1;
+  const currentLevelXP = 100 * Math.pow(level - 1, 2);
+  const nextLevelXP = 100 * Math.pow(level, 2);
+  
+  let progressPercentage = 0;
+  if (nextLevelXP > currentLevelXP) {
+    progressPercentage = ((xp - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100;
+  }
   
   const activeProgram = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
-  const targetDays = Object.values(activeProgram.routine_schema).filter(day => day.exercises.length > 0).length || 1;
-  const progressPercentage = Math.min(100, Math.round((completedDays / targetDays) * 100));
-
   const radius = 60;
   const stroke = 8;
   const normalizedRadius = radius - stroke * 2;
@@ -70,10 +94,6 @@ export default function Dashboard({
             <h2 className="text-zinc-300 text-xs font-semibold uppercase tracking-widest mb-1">Active Plan</h2>
             <p className="text-white font-medium text-lg truncate max-w-[180px]">{activeProgram.name}</p>
           </div>
-          <div className="text-right">
-            <h2 className="text-zinc-500 text-xs font-semibold uppercase tracking-widest mb-1">Week</h2>
-            <p className="text-white font-medium text-lg">{state.activeWeek}</p>
-          </div>
         </div>
 
         {/* Circular Progress */}
@@ -100,13 +120,27 @@ export default function Dashboard({
             />
           </svg>
           <div className="absolute flex flex-col items-center justify-center">
-            <span className="text-3xl font-light text-white tracking-tighter">{progressPercentage}%</span>
+            <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 mb-0.5">LVL</span>
+            <span className="text-4xl font-light text-white tracking-tighter leading-none">{level}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-zinc-400 mb-8">
-          <Activity size={16} />
-          <span>{completedDays} of {targetDays} workouts done</span>
+        <div className="grid grid-cols-3 gap-4 w-full mb-8 pt-6 border-t border-white/5">
+          <div className="flex flex-col items-center text-center">
+            <Activity className="text-zinc-500 mb-1" size={18} />
+            <span className="text-xl font-bold text-white">{totalWorkouts}</span>
+            <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-widest mt-1">Workouts</span>
+          </div>
+          <div className="flex flex-col items-center text-center border-l border-r border-white/5 px-2">
+            <Flame className="text-zinc-500 mb-1" size={18} />
+            <span className="text-xl font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</span>
+            <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-widest mt-1">Volume (kg)</span>
+          </div>
+          <div className="flex flex-col items-center text-center">
+            <Medal className="text-zinc-500 mb-1" size={18} />
+            <span className="text-xl font-bold text-white">{level}</span>
+            <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-widest mt-1">Level</span>
+          </div>
         </div>
 
         {/* Big Start Button */}
@@ -118,30 +152,12 @@ export default function Dashboard({
           Start Training
         </button>
       </div>
-      
-      {/* Mini Schedule View */}
+
+
+      {/* Recent PRs Widget */}
       <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl p-4">
-        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Weekly Split</h3>
-        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-          {[1, 2, 3, 4, 5, 6, 7].map(day => {
-            const dayData = activeProgram.routine_schema[day];
-            if (!dayData || dayData.exercises.length === 0) return null;
-            
-            const isCompleted = state.workoutLogs[getProtocolDateString(state.activeWeek, day)] && Object.keys(state.workoutLogs[getProtocolDateString(state.activeWeek, day)]).length > 0;
-            
-            return (
-              <div key={day} className={`flex-shrink-0 w-24 p-3 rounded-xl border ${isCompleted ? 'bg-white/5 border-white/10' : 'bg-transparent border-zinc-800'}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] text-zinc-500 font-semibold uppercase">Day {day}</span>
-                  {isCompleted && <CheckCircle2 size={12} className="text-white" />}
-                </div>
-                <p className={`text-xs font-medium truncate ${isCompleted ? 'text-zinc-300' : 'text-zinc-500'}`}>
-                  {dayData.focus}
-                </p>
-              </div>
-            );
-          })}
-        </div>
+        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Recent PRs</h3>
+        <PersonalRecords limit={4} horizontal={true} />
       </div>
     </div>
   );

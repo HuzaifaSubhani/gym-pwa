@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Loader2, Camera, LogOut, Trash2, CheckCircle2, Save, ChevronDown, ChevronUp, User, Activity, Flame, Medal, Calendar, Settings } from "lucide-react";
+import { Loader2, Camera, LogOut, Trash2, CheckCircle2, Save, ChevronDown, ChevronUp, User, Activity, Flame, Medal, Calendar, Settings, Trophy } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
+import PersonalRecords from "./PersonalRecords";
 
 type ProfileData = {
   id: string;
@@ -16,6 +17,7 @@ type ProfileData = {
   weight_kg?: number;
   activity_level?: string;
   nutrition_goal?: string;
+  physique_tag?: string;
 };
 
 let cachedProfileData: any = null;
@@ -33,8 +35,9 @@ export default function Profile() {
   const [gender, setGender] = useState("male");
   const [heightCm, setHeightCm] = useState<number | "">("");
   const [weightKg, setWeightKg] = useState<number | "">("");
-  const [activityLevel, setActivityLevel] = useState("1.55");
-  const [nutritionGoal, setNutritionGoal] = useState("maintain");
+  const [activityLevel, setActivityLevel] = useState("moderate");
+  const [nutritionGoal, setNutritionGoal] = useState("maintenance");
+  const [physiqueTag, setPhysiqueTag] = useState("overall");
   
   const [heightUnit, setHeightUnit] = useState<"cm" | "ft">("cm");
   const [heightFt, setHeightFt] = useState<number | "">("");
@@ -70,6 +73,7 @@ export default function Profile() {
         if (data.weight_kg) setWeightKg(data.weight_kg);
         if (data.activity_level) setActivityLevel(data.activity_level);
         if (data.nutrition_goal) setNutritionGoal(data.nutrition_goal);
+        if (data.physique_tag) setPhysiqueTag(data.physique_tag);
         setLoading(false);
         return;
       }
@@ -150,7 +154,8 @@ export default function Profile() {
       height_cm: heightCm || null,
       weight_kg: weightKg || null,
       activity_level: activityLevel,
-      nutrition_goal: nutritionGoal
+      nutrition_goal: nutritionGoal,
+      physique_tag: physiqueTag
     };
     const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
     
@@ -348,6 +353,16 @@ export default function Profile() {
           {uploadingAvatar && <p className="text-xs text-noir-accent animate-pulse font-bold tracking-widest uppercase mb-2">Uploading...</p>}
 
           <h2 className="text-3xl font-black mb-1">{myProfile.username}</h2>
+          
+          {myProfile.pinned_pr && (
+            <div className="mb-4 inline-flex items-center gap-2 bg-noir-bg border border-noir-accent/30 text-noir-accent px-3 py-1.5 rounded-full shadow-lg">
+              <Trophy size={14} className="animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-widest">
+                {myProfile.pinned_pr.name}: <span className="text-white">{myProfile.pinned_pr.weight}kg × {myProfile.pinned_pr.reps}</span>
+              </span>
+            </div>
+          )}
+
           <div className="flex flex-col items-center gap-1 mb-4">
             <span className="text-noir-accent font-bold tracking-widest uppercase text-xs">Level {level} Elite</span>
             <div className="w-48 bg-noir-bg rounded-full h-1.5 shadow-inner overflow-hidden border border-noir-border/50">
@@ -405,6 +420,50 @@ export default function Profile() {
                 className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-lg font-bold text-noir-text focus:outline-none focus:border-noir-accent transition-colors" 
               />
             </div>
+            <div>
+              <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 ml-1 mt-4">Physique Goal</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: 'overall', label: 'Overall (XP)' },
+                  { id: 'classic', label: 'Classic' },
+                  { id: 'aesthetic', label: 'Aesthetic' },
+                  { id: 'powerlifting', label: 'Powerlifting' }
+                ].map(tag => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => setPhysiqueTag(tag.id)}
+                    className={`p-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                      physiqueTag === tag.id 
+                        ? 'bg-noir-accent/20 border-noir-accent text-noir-accent' 
+                        : 'bg-noir-bg border-noir-border text-noir-text-muted hover:border-noir-border/80 hover:text-white'
+                    }`}
+                  >
+                    {tag.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-noir-text-muted mt-1 ml-1">Choose your primary goal to compete in specific Leaderboard brackets.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Section: Trophy Room (PRs) */}
+        <div className="bg-noir-surface/60 backdrop-blur-sm border border-noir-border rounded-xl overflow-hidden shadow-lg">
+          <button 
+            type="button"
+            onClick={() => setOpenSection(openSection === "trophies" ? "" : "trophies")}
+            className="w-full flex items-center justify-between p-5 hover:bg-noir-surface-light transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Trophy size={20} className="text-yellow-500 drop-shadow-lg" />
+              <span className="font-bold uppercase tracking-wider text-sm">Trophy Room (PRs)</span>
+            </div>
+            {openSection === "trophies" ? <ChevronUp size={20} className="text-noir-accent" /> : <ChevronDown size={20} className="text-noir-text-muted" />}
+          </button>
+          
+          <div className={`p-4 transition-all border-t border-noir-border/50 ${openSection === "trophies" ? "block" : "hidden"}`}>
+             <PersonalRecords />
           </div>
         </div>
 
