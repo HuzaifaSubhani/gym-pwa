@@ -60,6 +60,37 @@ export default function CommunityPrograms() {
     p.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handlePublishCurrent = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      alert("You must be logged in to publish programs.");
+      return;
+    }
+
+    const activeProgram = state.programs?.[state.activeProgramId];
+    if (!activeProgram) {
+      alert("No active program to publish.");
+      return;
+    }
+
+    const { error } = await supabase.from('programs').insert({
+      creator_id: session.user.id,
+      name: `${activeProgram.name} (Community Remix)`,
+      description: activeProgram.description || "A custom program shared by the community.",
+      duration_weeks: activeProgram.duration_weeks,
+      routine_schema: activeProgram.routine_schema
+    });
+
+    if (error) {
+      console.error(error);
+      alert("Failed to publish program. Did you run the SQL script?");
+    } else {
+      alert("Your current program was published to the community!");
+      // Optionally refresh the list here
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <header className="mb-4 px-2 flex justify-between items-end">
@@ -69,12 +100,20 @@ export default function CommunityPrograms() {
             Explore <Globe className="text-noir-accent" size={28} />
           </h1>
         </div>
-        <button 
-          onClick={() => setShowBuilder(true)}
-          className="bg-noir-accent text-black font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-lg hover:opacity-90 flex items-center gap-1 shadow-lg"
-        >
-          <Plus size={14} /> Create
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={handlePublishCurrent}
+            className="bg-noir-bg text-white border border-noir-border font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-lg hover:bg-noir-surface flex items-center gap-1 shadow-lg transition-colors"
+          >
+            Publish Mine
+          </button>
+          <button 
+            onClick={() => setShowBuilder(true)}
+            className="bg-noir-accent text-black font-black uppercase tracking-widest text-[10px] px-4 py-2 rounded-lg hover:opacity-90 flex items-center gap-1 shadow-lg transition-colors"
+          >
+            <Plus size={14} /> Create
+          </button>
+        </div>
       </header>
 
       <div className="relative">

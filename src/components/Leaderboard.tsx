@@ -262,12 +262,15 @@ export default function Leaderboard() {
 
   const acceptChallenge = async (challengeId: string) => {
     setActionLoading(`accept-${challengeId}`);
-    const now = new Date();
-    const endDate = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(tomorrow.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
     
     await supabase.from('challenges').update({
       status: 'active',
-      start_date: now.toISOString(),
+      start_date: tomorrow.toISOString(),
       end_date: endDate.toISOString()
     }).eq('id', challengeId);
     
@@ -399,9 +402,10 @@ export default function Leaderboard() {
             
             const daysLeft = c.end_date ? Math.ceil((new Date(c.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 7;
 
+            const isStartingTomorrow = c.start_date ? new Date().getTime() < new Date(c.start_date).getTime() : false;
+
             return (
               <div key={c.id} className="bg-noir-surface border border-red-500/30 rounded-xl p-4 shadow-lg overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-[50px] rounded-full pointer-events-none"></div>
                 
                 <div className="flex justify-between items-center mb-4 relative z-10">
                   <div className="flex items-center gap-2">
@@ -410,7 +414,7 @@ export default function Leaderboard() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-noir-text-muted bg-noir-bg px-2 py-1 rounded-md border border-noir-border">
-                      {daysLeft > 0 ? `${daysLeft} Days Left` : 'Ending Soon'}
+                      {isStartingTomorrow ? 'Starting Tomorrow' : daysLeft > 0 ? `${daysLeft} Days Left` : 'Ending Soon'}
                     </div>
                     <button 
                       onClick={() => forfeitChallenge(c.id)}
@@ -423,9 +427,15 @@ export default function Leaderboard() {
                   </div>
                 </div>
 
-                {/* VS Bar */}
-                <div className="relative h-6 bg-noir-bg rounded-lg overflow-hidden border border-noir-border flex mb-2">
-                  <div className="h-full bg-noir-accent transition-all duration-1000" style={{ width: `${myPercent}%` }}></div>
+                {isStartingTomorrow ? (
+                  <div className="text-center py-2 text-sm text-noir-text-muted italic">
+                    Rest up. War begins tomorrow.
+                  </div>
+                ) : (
+                  <>
+                    {/* VS Bar */}
+                    <div className="relative h-6 bg-noir-bg rounded-lg overflow-hidden border border-noir-border flex mb-2">
+                      <div className="h-full bg-noir-accent transition-all duration-1000" style={{ width: `${myPercent}%` }}></div>
                   <div className="h-full bg-red-500 transition-all duration-1000" style={{ width: `${100 - myPercent}%` }}></div>
                   
                   {/* Lightning overlay */}
@@ -434,10 +444,12 @@ export default function Leaderboard() {
                   </div>
                 </div>
                 
-                <div className="flex justify-between text-xs font-bold">
-                  <span className="text-noir-accent">You: {myVol.toLocaleString()} kg</span>
-                  <span className="text-red-500">{opponent?.username}: {theirVol.toLocaleString()} kg</span>
-                </div>
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className="text-noir-accent">You: {myVol.toLocaleString()} kg</span>
+                      <span className="text-red-500">{opponent?.username}: {theirVol.toLocaleString()} kg</span>
+                    </div>
+                  </>
+                )}
               </div>
             );
           })}
