@@ -78,7 +78,7 @@ export default function Home() {
 
         {activeTab === "dashboard" && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-            <Dashboard avatarUrl={avatarUrl} username={username} />
+            <Dashboard avatarUrl={avatarUrl} username={username} onStartWorkout={() => setActiveTab("workout")} />
             <ProgressAnalytics />
           </div>
         )}
