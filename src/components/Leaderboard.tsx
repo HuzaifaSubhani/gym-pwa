@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Trophy, Dumbbell, Medal, Loader2, ArrowRight, Swords, Check, X, Flame } from "lucide-react";
+import { Trophy, Dumbbell, Medal, Loader2, ArrowRight, Swords, Check, X, Flame, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 
 type Profile = {
@@ -73,6 +73,7 @@ export default function Leaderboard() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<LeaderboardEntry | null>(null);
   const [forfeitPrompt, setForfeitPrompt] = useState<{id: string, opponentName: string, opponentId: string} | null>(null);
+  const [isWarsExpanded, setIsWarsExpanded] = useState(false);
 
   useEffect(() => {
     fetchLeaderboardData();
@@ -359,9 +360,30 @@ export default function Leaderboard() {
       </header>
 
       {/* Challenges Section */}
-      {(pendingReceived.length > 0 || activeChallenges.length > 0) && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-black flex items-center gap-2 px-2"><Swords size={20} className="text-red-500" /> Active Wars</h3>
+      {(pendingReceived.length > 0 || pendingSent.length > 0 || activeChallenges.length > 0 || completedChallenges.length > 0) && (
+        <div className="bg-noir-bg border border-noir-border rounded-xl shadow-lg overflow-hidden">
+          <button 
+            onClick={() => setIsWarsExpanded(!isWarsExpanded)}
+            className="w-full flex items-center justify-between p-4 bg-noir-surface hover:bg-noir-surface-light transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Swords size={20} className={activeChallenges.length > 0 ? "text-red-500" : "text-noir-text-muted"} /> 
+              <h3 className="text-lg font-black text-white">Wars Overview</h3>
+              {(pendingReceived.length > 0 || activeChallenges.length > 0) && (
+                <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">
+                  {pendingReceived.length + activeChallenges.length} Active
+                </span>
+              )}
+            </div>
+            {isWarsExpanded ? <ChevronUp size={20} className="text-noir-text-muted" /> : <ChevronDown size={20} className="text-noir-text-muted" />}
+          </button>
+          
+          {isWarsExpanded && (
+            <div className="p-4 space-y-6 border-t border-noir-border">
+              {/* Active & Pending Section */}
+              {(pendingReceived.length > 0 || activeChallenges.length > 0 || pendingSent.length > 0) && (
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-noir-text-muted uppercase tracking-widest px-1">Current Battles</h4>
           
           {/* Incoming Challenges */}
           {pendingReceived.map(c => (
@@ -480,7 +502,7 @@ export default function Leaderboard() {
       {/* Past Wars */}
       {completedChallenges.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-black flex items-center gap-2 px-2"><Trophy size={20} className="text-noir-text-muted" /> Past Wars</h3>
+          <h4 className="text-sm font-bold text-noir-text-muted uppercase tracking-widest px-1 border-t border-noir-border/50 pt-4 mt-2">Past Wars</h4>
           {completedChallenges.map(c => {
             const isChallenger = c.challenger_id === user.id;
             const opponent = isChallenger ? c.challenged_profile : c.challenger_profile;
@@ -500,6 +522,10 @@ export default function Leaderboard() {
               </div>
             );
           })}
+        </div>
+      )}
+            </div>
+          )}
         </div>
       )}
 
@@ -533,11 +559,16 @@ export default function Leaderboard() {
                 onClick={() => setSelectedUser(entry)}
                 className={`relative flex items-center p-4 rounded-2xl border transition-all cursor-pointer hover:scale-[1.02] shadow-lg ${rankStyle} ${isTop3 ? 'bg-gradient-to-br' : ''}`}
               >
-                <div className="flex-shrink-0 w-12 text-center font-black flex justify-center">
-                  {index === 0 ? <Medal className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]" size={32} /> : 
-                   index === 1 ? <Medal className="text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.8)]" size={28} /> : 
-                   index === 2 ? <Medal className="text-amber-600 drop-shadow-[0_0_8px_rgba(217,119,6,0.8)]" size={28} /> : 
-                   <span className="text-noir-text-muted text-xl">#{index + 1}</span>}
+                <div className="flex-shrink-0 w-12 text-center flex justify-center">
+                  {index === 0 ? (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-amber-900 font-black text-lg border-2 border-amber-200 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)] shadow-inner">1</div>
+                  ) : index === 1 ? (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-200 to-slate-400 flex items-center justify-center text-slate-800 font-black text-lg border-2 border-slate-100 drop-shadow-[0_0_8px_rgba(203,213,225,0.8)] shadow-inner">2</div>
+                  ) : index === 2 ? (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center text-amber-100 font-black text-lg border-2 border-amber-500 drop-shadow-[0_0_8px_rgba(217,119,6,0.8)] shadow-inner">3</div>
+                  ) : (
+                    <span className="text-noir-text-muted font-black text-xl">#{index + 1}</span>
+                  )}
                 </div>
                 
                 <div className="flex-1 ml-3 flex items-center gap-4 w-full">
