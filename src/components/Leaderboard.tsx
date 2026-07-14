@@ -72,6 +72,7 @@ export default function Leaderboard() {
   const [myProfile, setMyProfile] = useState<Profile | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<LeaderboardEntry | null>(null);
+  const [forfeitPrompt, setForfeitPrompt] = useState<{id: string, opponentName: string, opponentId: string} | null>(null);
 
   useEffect(() => {
     fetchLeaderboardData();
@@ -310,12 +311,13 @@ export default function Leaderboard() {
     setActionLoading(null);
   };
 
-  const forfeitChallenge = async (challengeId: string) => {
-    if (!confirm("Are you sure you want to forfeit this challenge?")) return;
-    setActionLoading(`forfeit-${challengeId}`);
-    await supabase.from('challenges').update({ status: 'declined' }).eq('id', challengeId);
+  const executeForfeit = async () => {
+    if (!forfeitPrompt) return;
+    setActionLoading(`forfeit-${forfeitPrompt.id}`);
+    await supabase.from('challenges').update({ status: 'completed', winner_id: forfeitPrompt.opponentId }).eq('id', forfeitPrompt.id);
     await fetchLeaderboardData(true);
     setActionLoading(null);
+    setForfeitPrompt(null);
   };
 
   if (loading) {
@@ -342,7 +344,8 @@ export default function Leaderboard() {
 
   const pendingReceived = challenges.filter(c => c.status === 'pending' && c.challenged_id === user.id);
   const pendingSent = challenges.filter(c => c.status === 'pending' && c.challenger_id === user.id);
-  const activeChallenges = challenges.filter(c => c.status === 'active');
+  const activeChallenges = challenges.filter(c => c.status === 'active' && (c.challenger_id === user.id || c.challenged_id === user.id));
+  const completedChallenges = challenges.filter(c => c.status === 'completed' && (c.challenger_id === user.id || c.challenged_id === user.id));
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-20">
@@ -435,7 +438,7 @@ export default function Leaderboard() {
                       {isStartingTomorrow ? 'Starting Tomorrow' : daysLeft > 0 ? `${daysLeft} Days Left` : 'Ending Soon'}
                     </div>
                     <button 
-                      onClick={() => forfeitChallenge(c.id)}
+                      onClick={() => setForfeitPrompt({id: c.id, opponentName: opponent?.username || "Opponent", opponentId: opponent?.id || ""})}
                       disabled={actionLoading === `forfeit-${c.id}`}
                       className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20 transition-colors"
                       title="Forfeit Challenge"
@@ -468,6 +471,32 @@ export default function Leaderboard() {
                     </div>
                   </>
                 )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Past Wars */}
+      {completedChallenges.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-black flex items-center gap-2 px-2"><Trophy size={20} className="text-noir-text-muted" /> Past Wars</h3>
+          {completedChallenges.map(c => {
+            const isChallenger = c.challenger_id === user.id;
+            const opponent = isChallenger ? c.challenged_profile : c.challenger_profile;
+            const iWon = c.winner_id === user.id;
+            
+            return (
+              <div key={c.id} className="bg-noir-surface border border-noir-border rounded-xl p-4 shadow-lg opacity-80 hover:opacity-100 transition-opacity">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="text-sm font-bold">vs {opponent?.username}</div>
+                  <div className={`text-[10px] uppercase font-black tracking-widest px-2 py-1 rounded ${iWon ? 'bg-amber-400/20 text-amber-400 border border-amber-400/50' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
+                    {iWon ? 'Victory' : 'Defeat'}
+                  </div>
+                </div>
+                <div className="text-xs text-noir-text-muted italic">
+                  {iWon ? 'You crushed them.' : `${opponent?.username} won this war.`}
+                </div>
               </div>
             );
           })}
@@ -623,6 +652,33 @@ export default function Leaderboard() {
                   <div className="text-xl font-black text-noir-accent">{selectedUser.totalVolume.toLocaleString()} kg</div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Forfeit Modal */}
+      {forfeitPrompt && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in" onClick={() => setForfeitPrompt(null)}>
+          <div className="bg-noir-surface border border-red-500/50 rounded-2xl p-6 shadow-2xl w-full max-w-sm relative" onClick={e => e.stopPropagation()}>
+            <h2 className="text-2xl font-black text-white mb-2">Forfeit War?</h2>
+            <p className="text-noir-text-muted mb-6">
+              Are you sure you want to surrender to <span className="font-bold text-white">{forfeitPrompt.opponentName}</span>? They will be declared the winner immediately and your shame will be recorded.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setForfeitPrompt(null)}
+                className="flex-1 bg-noir-bg border border-noir-border text-white font-bold py-3 rounded-lg hover:bg-noir-surface-light transition-colors"
+              >
+                Nevermind
+              </button>
+              <button 
+                onClick={executeForfeit}
+                disabled={actionLoading !== null}
+                className="flex-1 bg-red-900/40 border border-red-500 text-red-500 font-black uppercase tracking-widest py-3 rounded-lg hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center gap-2"
+              >
+                {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />} Surrender
+              </button>
             </div>
           </div>
         </div>
