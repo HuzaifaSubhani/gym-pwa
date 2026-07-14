@@ -130,8 +130,8 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-noir-bg overflow-y-auto">
-      <div className="max-w-3xl mx-auto min-h-screen p-4 sm:p-6 pb-24">
+    <div className="fixed inset-0 z-[100] bg-noir-bg overflow-y-auto">
+      <div className="max-w-3xl mx-auto min-h-screen p-4 sm:p-6 pb-32">
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-black">Program Forge</h1>
           <button onClick={onClose} className="p-2 bg-noir-surface rounded-full text-noir-text hover:text-red-500">

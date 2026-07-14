@@ -122,27 +122,44 @@ export default function Leaderboard() {
         userStats[p.id] = { workouts: new Set(), volume: 0, logs: [] };
       });
 
+      const todayStr = (() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      })();
+
       logs.forEach((log: WorkoutLog) => {
         if (!userStats[log.user_id]) return;
         
-        userStats[log.user_id].workouts.add(log.date_str);
-        userStats[log.user_id].logs.push(log);
+        // Don't count future workouts for stats
+        if (log.date_str > todayStr) return;
         
-        // Calculate volume for this log
         let logVolume = 0;
+        let hasValidSets = false;
+        
         log.logs.forEach((set: any) => {
           const weight = parseFloat(set.weight) || 0;
           const reps = parseInt(set.reps) || 0;
+          
+          if (weight > 0 || reps > 0) hasValidSets = true;
+          
           logVolume += weight * reps;
           if (set.drops) {
             set.drops.forEach((drop: any) => {
               const dropWeight = parseFloat(drop.weight) || 0;
               const dropReps = parseInt(drop.reps) || 0;
+              
+              if (dropWeight > 0 || dropReps > 0) hasValidSets = true;
+              
               logVolume += dropWeight * dropReps;
             });
           }
         });
         
+        if (hasValidSets) {
+          userStats[log.user_id].workouts.add(log.date_str);
+        }
+        
+        userStats[log.user_id].logs.push(log);
         userStats[log.user_id].volume += logVolume;
       });
 
@@ -287,7 +304,8 @@ export default function Leaderboard() {
 
   const revokeChallenge = async (challengeId: string) => {
     setActionLoading(`revoke-${challengeId}`);
-    await supabase.from('challenges').delete().eq('id', challengeId);
+    // Instead of deleting (which may hit RLS), we decline/revoke it
+    await supabase.from('challenges').update({ status: 'declined' }).eq('id', challengeId);
     await fetchLeaderboardData(true);
     setActionLoading(null);
   };
@@ -471,59 +489,71 @@ export default function Leaderboard() {
               (c.status === 'pending' || c.status === 'active')
             );
             
+            const isTop3 = index < 3;
+            const rankColors = [
+              "from-amber-400/20 to-amber-600/5 border-amber-400/50 text-amber-400", // 1st
+              "from-slate-300/20 to-slate-500/5 border-slate-300/50 text-slate-300", // 2nd
+              "from-amber-700/20 to-amber-900/5 border-amber-700/50 text-amber-600"  // 3rd
+            ];
+            
+            const rankStyle = isTop3 ? rankColors[index] : (isCurrentUser ? "bg-noir-accent/10 border-noir-accent/50" : "bg-noir-surface border-noir-border/50");
+
             return (
               <div 
                 key={entry.id} 
                 onClick={() => setSelectedUser(entry)}
-                className={`relative flex items-center p-4 rounded-xl border transition-all cursor-pointer hover:bg-noir-surface-light ${
-                  isCurrentUser 
-                    ? "bg-noir-accent/10 border-noir-accent shadow-lg" 
-                    : "bg-noir-surface border-noir-border"
-                }`}
+                className={`relative flex items-center p-4 rounded-2xl border transition-all cursor-pointer hover:scale-[1.02] shadow-lg ${rankStyle} ${isTop3 ? 'bg-gradient-to-br' : ''}`}
               >
-                <div className="flex-shrink-0 w-10 text-center font-black text-xl">
-                  {index === 0 ? <Medal className="mx-auto text-amber-400" size={24} /> : 
-                   index === 1 ? <Medal className="mx-auto text-slate-300" size={24} /> : 
-                   index === 2 ? <Medal className="mx-auto text-amber-700" size={24} /> : 
-                   <span className="text-noir-text-muted">#{index + 1}</span>}
+                <div className="flex-shrink-0 w-12 text-center font-black flex justify-center">
+                  {index === 0 ? <Medal className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]" size={32} /> : 
+                   index === 1 ? <Medal className="text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.8)]" size={28} /> : 
+                   index === 2 ? <Medal className="text-amber-600 drop-shadow-[0_0_8px_rgba(217,119,6,0.8)]" size={28} /> : 
+                   <span className="text-noir-text-muted text-xl">#{index + 1}</span>}
                 </div>
                 
-                <div className="flex-1 ml-2 flex items-center gap-3 w-full">
-                  {entry.avatar_url ? (
-                    <img 
-                      src={entry.avatar_url} 
-                      alt="DP" 
-                      style={{ objectPosition: `50% ${entry.avatar_position}%` }}
-                      className="w-12 h-12 rounded-full border-2 border-noir-border object-cover flex-shrink-0" 
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-noir-bg border-2 border-noir-border flex items-center justify-center text-sm font-bold text-noir-text-muted flex-shrink-0">
-                      {entry.username.substring(0, 2).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-1">
-                      <h3 className={`font-bold text-base md:text-lg leading-tight truncate pr-2 ${isCurrentUser ? "text-noir-accent" : ""}`}>
-                        {entry.username} {isCurrentUser && "(You)"}
+                <div className="flex-1 ml-3 flex items-center gap-4 w-full">
+                  <div className="relative">
+                    {entry.avatar_url ? (
+                      <img 
+                        src={entry.avatar_url} 
+                        alt="DP" 
+                        style={{ objectPosition: `50% ${entry.avatar_position}%` }}
+                        className={`w-14 h-14 rounded-full border-2 object-cover flex-shrink-0 shadow-inner ${isTop3 ? 'border-transparent' : 'border-noir-border'}`} 
+                      />
+                    ) : (
+                      <div className={`w-14 h-14 rounded-full flex items-center justify-center text-lg font-black flex-shrink-0 shadow-inner border-2 ${isTop3 ? 'border-transparent bg-black/40 text-white' : 'bg-noir-bg border-noir-border text-noir-text-muted'}`}>
+                        {entry.username.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    {isTop3 && (
+                      <div className="absolute inset-0 rounded-full border-2 border-current opacity-50" style={{ color: 'inherit' }}></div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0 py-1">
+                    <div className="flex justify-between items-end mb-1.5">
+                      <h3 className={`font-black text-lg truncate tracking-tight ${isCurrentUser ? "text-noir-accent" : "text-white"}`}>
+                        {entry.username} {isCurrentUser && <span className="text-[10px] font-bold uppercase tracking-widest text-noir-text-muted ml-1">(You)</span>}
                       </h3>
-                      <div className="text-right flex-shrink-0">
-                        <div className="text-lg md:text-xl font-black text-noir-accent">Lvl {entry.level}</div>
+                      <div className="text-right flex-shrink-0 flex items-baseline gap-1">
+                        <span className="text-[10px] text-noir-text-muted font-bold uppercase tracking-widest">Lvl</span>
+                        <span className="text-xl font-black text-white">{entry.level}</span>
                       </div>
                     </div>
                     
                     {/* Progress Bar */}
-                    <div className="w-full h-1.5 bg-noir-bg rounded-full overflow-hidden border border-noir-border/50 mb-1">
+                    <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5 mb-1.5 shadow-inner">
                       <div 
-                        className="h-full bg-noir-accent transition-all duration-1000 ease-out relative" 
+                        className={`h-full transition-all duration-1000 ease-out relative ${isTop3 ? 'bg-current' : 'bg-noir-accent'}`} 
                         style={{ width: `${entry.progress}%` }}
                       >
                         <div className="absolute top-0 right-0 bottom-0 left-0 bg-gradient-to-r from-transparent to-white/30"></div>
                       </div>
                     </div>
                     
-                    <div className="flex justify-between items-center text-[9px] md:text-[10px] uppercase font-bold text-noir-text-muted tracking-wider mt-1">
-                      <span className="flex items-center gap-1"><Dumbbell size={10} /> {entry.workouts} WOs</span>
-                      <span>{entry.score.toLocaleString()} SCORE</span>
+                    <div className="flex justify-between items-center text-[10px] uppercase font-bold text-noir-text-muted tracking-widest mt-0.5">
+                      <span className="flex items-center gap-1.5"><Dumbbell size={12} className={isTop3 ? 'text-current opacity-70' : ''} /> {entry.workouts} WOs</span>
+                      <span className="flex items-center gap-1">SCORE: <span className="text-white">{entry.score.toLocaleString()}</span></span>
                     </div>
                   </div>
                 </div>
