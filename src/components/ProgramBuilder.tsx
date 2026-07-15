@@ -7,6 +7,8 @@ import exercisesData from "@/data/exercises.json";
 import { Plus, Trash2, Save, X, Search, Check, Globe, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
+const MUSCLE_GROUPS = ["chest", "back", "legs", "shoulders", "arms", "core", "cardio"];
+
 export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
   const { saveProgram, setActiveProgram } = useProtocol();
   const [name, setName] = useState("My Custom Protocol");
@@ -16,13 +18,26 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
   
   const [activeDayEdit, setActiveDayEdit] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [muscleFilter, setMuscleFilter] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const filteredExercises = exercisesData.filter((ex: any) => 
-    (ex.name && ex.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (ex.t && ex.t.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (ex.b && ex.b.toLowerCase().includes(searchQuery.toLowerCase()))
-  ).slice(0, 50);
+  const searchTerms = searchQuery.toLowerCase().split(" ").filter(t => t.trim().length > 0);
+
+  const filteredExercises = exercisesData.filter((ex: any) => {
+    // 1. Muscle Filter Match
+    if (muscleFilter) {
+      if (ex.t !== muscleFilter && ex.b !== muscleFilter) return false;
+    }
+    
+    // 2. Text Search Match (fuzzy - all terms must match something in the exercise)
+    if (searchTerms.length > 0) {
+      const exString = `${ex.name} ${ex.t} ${ex.b}`.toLowerCase();
+      const matchesAllTerms = searchTerms.every(term => exString.includes(term));
+      if (!matchesAllTerms) return false;
+    }
+    
+    return true;
+  }).slice(0, 50);
 
   const handleAddDay = (dayNum: number) => {
     setRoutine(prev => ({
@@ -228,7 +243,26 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 text-noir-text-muted" size={16} />
+                  {/* Muscle Filter Chips */}
+                  <div className="flex gap-2 overflow-x-auto pb-3 mb-2 custom-scrollbar">
+                    <button 
+                      onClick={() => setMuscleFilter(null)}
+                      className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest transition-colors ${muscleFilter === null ? 'bg-white text-black' : 'bg-noir-bg border border-noir-border text-noir-text-muted hover:text-white'}`}
+                    >
+                      All
+                    </button>
+                    {MUSCLE_GROUPS.map(m => (
+                      <button 
+                        key={m}
+                        onClick={() => setMuscleFilter(m)}
+                        className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest transition-colors ${muscleFilter === m ? 'bg-noir-accent text-black' : 'bg-noir-bg border border-noir-border text-noir-text-muted hover:text-white hover:border-zinc-700'}`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+
+                  <Search className="absolute left-3 top-14 text-noir-text-muted" size={16} />
                   <input 
                     type="text" 
                     placeholder="Search exercises to add..." 
@@ -236,18 +270,22 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-noir-bg border border-noir-border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-noir-accent mb-2"
                   />
-                  {searchQuery && (
-                    <div className="absolute bottom-full left-0 right-0 max-h-48 overflow-y-auto bg-noir-bg border border-noir-border rounded-lg mb-1 z-10 shadow-2xl custom-scrollbar">
-                      {filteredExercises.map(ex => (
+                  {(searchQuery || muscleFilter) && (
+                    <div className="absolute bottom-full left-0 right-0 max-h-56 overflow-y-auto bg-zinc-900 border border-zinc-700 rounded-xl mb-2 z-20 shadow-2xl custom-scrollbar animate-in fade-in slide-in-from-bottom-2">
+                      {filteredExercises.length > 0 ? filteredExercises.map(ex => (
                         <button 
                           key={ex.id}
-                          onClick={() => { handleAddExercise(activeDayEdit, ex); setSearchQuery(""); }}
-                          className="w-full text-left p-3 hover:bg-noir-surface-light border-b border-noir-border/50 last:border-0 flex justify-between items-center"
+                          onClick={() => { handleAddExercise(activeDayEdit, ex); setSearchQuery(""); setMuscleFilter(null); }}
+                          className="w-full text-left p-3 hover:bg-zinc-800 border-b border-zinc-800/50 last:border-0 flex justify-between items-center group transition-colors"
                         >
-                          <span className="text-sm font-bold">{ex.name}</span>
-                          <span className="text-xs text-noir-text-muted uppercase tracking-widest">{(ex as any).t}</span>
+                          <span className="text-sm font-bold text-zinc-300 group-hover:text-white">{ex.name}</span>
+                          <span className="text-[9px] font-bold text-noir-accent bg-noir-accent/10 px-2 py-0.5 rounded-full uppercase tracking-widest">{(ex as any).t}</span>
                         </button>
-                      ))}
+                      )) : (
+                        <div className="p-4 text-center text-xs text-zinc-500 font-bold uppercase tracking-widest">
+                          No exercises found.
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

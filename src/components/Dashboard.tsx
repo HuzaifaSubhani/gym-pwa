@@ -69,21 +69,21 @@ export default function Dashboard({
   return (
     <div className="flex flex-col h-full space-y-6">
       {/* Main Focus Card */}
-      <div className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+      <div className="bg-noir-bg border border-noir-border rounded-3xl p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-noir-accent/30 to-transparent"></div>
         
         <div className="w-full flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-semibold text-white tracking-tight">
               {username ? `Ready, ${username}?` : "Ready to train?"}
             </h1>
-            <p className="text-sm text-zinc-400 mt-1">Let's crush today's goals.</p>
+            <p className="text-sm text-noir-text-muted mt-1">Let's crush today's goals.</p>
           </div>
           {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full object-cover shadow-sm border border-zinc-800" />
+            <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full object-cover shadow-sm border border-noir-border" />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-sm">
-              <span className="text-zinc-500 font-medium">{username?.charAt(0)?.toUpperCase() || "U"}</span>
+            <div className="w-12 h-12 rounded-full bg-noir-bg border border-noir-border flex items-center justify-center shadow-sm">
+              <span className="text-noir-text-muted font-medium">{username?.charAt(0)?.toUpperCase() || "U"}</span>
             </div>
           )}
         </div>
@@ -100,7 +100,8 @@ export default function Dashboard({
               cy={radius}
             />
             <circle
-              stroke="white"
+              stroke="currentColor"
+              className="text-noir-accent"
               fill="transparent"
               strokeWidth={stroke}
               strokeDasharray={circumference + ' ' + circumference}
@@ -112,28 +113,28 @@ export default function Dashboard({
             />
           </svg>
           <div className="absolute flex flex-col items-center justify-center">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-500 mb-0.5">LVL</span>
-            <span className="text-4xl font-light text-white tracking-tighter leading-none">{level}</span>
+            <span className="text-[10px] uppercase font-bold tracking-widest text-noir-text-muted mb-0.5">LVL</span>
+            <span className="text-4xl font-black text-white tracking-tighter leading-none">{level}</span>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 w-full mb-8 pt-6 border-t border-white/5">
           <div className="flex flex-col items-center text-center">
-            <Activity className="text-zinc-500 mb-1" size={18} />
+            <Activity className="text-noir-text-muted mb-1" size={18} />
             <span className="text-xl font-bold text-white">{totalWorkouts}</span>
-            <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-widest mt-1">Workouts</span>
+            <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest mt-1">Workouts</span>
           </div>
           <div className="flex flex-col items-center text-center border-l border-white/5 px-2">
-            <Flame className="text-zinc-500 mb-1" size={18} />
+            <Flame className="text-noir-text-muted mb-1" size={18} />
             <span className="text-xl font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</span>
-            <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-widest mt-1">Volume (kg)</span>
+            <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest mt-1">Volume (kg)</span>
           </div>
         </div>
 
         {/* Big Start Button */}
         <button 
           onClick={onStartWorkout}
-          className="w-full bg-white text-black hover:bg-zinc-200 transition-colors py-4 rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 shadow-[0_0_40px_rgba(255,255,255,0.1)] active:scale-[0.98]"
+          className="w-full bg-noir-accent text-black hover:bg-[#d4ff00] transition-colors py-4 rounded-2xl font-black text-lg flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(225,255,0,0.15)] active:scale-[0.98]"
         >
           <Play size={20} className="fill-black" />
           Start Training
@@ -142,8 +143,8 @@ export default function Dashboard({
 
 
       {/* Recent PRs Widget */}
-      <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl p-4">
-        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">Recent PRs</h3>
+      <div className="bg-noir-bg border border-noir-border rounded-2xl p-4">
+        <h3 className="text-xs font-bold text-noir-text-muted uppercase tracking-widest mb-3">Recent PRs</h3>
         <PersonalRecords limit={4} horizontal={true} />
       </div>
     </div>

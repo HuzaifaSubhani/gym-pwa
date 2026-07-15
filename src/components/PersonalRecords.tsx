@@ -3,9 +3,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { DEFAULT_IRONCORE_PROGRAM } from "@/data/protocol";
-import { Medal, Trophy, Pin, Globe, Loader2, Check, Plus, Trash2, X } from "lucide-react";
+import { Medal, Trophy, Pin, Globe, Loader2, Check, Plus, Trash2, X, Search, Filter } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import exercisesData from "@/data/exercises.json";
+
+const MUSCLE_GROUPS = ["chest", "back", "legs", "shoulders", "arms", "core", "cardio"];
 
 export default function PersonalRecords({ limit, horizontal = false }: { limit?: number, horizontal?: boolean }) {
   const { state, addTrackedLift, removeTrackedLift } = useProtocol();
@@ -14,6 +16,7 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [muscleFilter, setMuscleFilter] = useState<string | null>(null);
 
   // Load which PR is currently pinned from the user's profile
   useEffect(() => {
@@ -56,11 +59,17 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
     }
   
     // Only include exercises that the user has actually logged
-    const loggedExercises = new Map<string, { id: string, name: string }>();
+    const loggedExercises = new Map<string, any>();
     Object.values(state.workoutLogs).forEach(dayLogs => {
       Object.keys(dayLogs).forEach(exId => {
         if (!loggedExercises.has(exId)) {
-          loggedExercises.set(exId, { id: exId, name: nameLookup.get(exId) || "Unknown Lift" });
+          const exFullData = exercisesData.find(e => e.id === exId);
+          loggedExercises.set(exId, { 
+            id: exId, 
+            name: nameLookup.get(exId) || "Unknown Lift",
+            t: exFullData?.t || "Unknown",
+            b: exFullData?.b || "Unknown"
+          });
         }
       });
     });
@@ -160,6 +169,24 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
   const containerClasses = horizontal 
     ? "flex gap-4 overflow-x-auto pb-4 [scrollbar-width:none] snap-x mt-4" 
     : "grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4";
+
+  const searchTerms = searchQuery.toLowerCase().split(" ").filter(t => t.trim().length > 0);
+
+  const filteredExercisesToTrack = availableExercisesToTrack.filter((ex: any) => {
+    // 1. Muscle Filter Match
+    if (muscleFilter) {
+      if (ex.t !== muscleFilter && ex.b !== muscleFilter) return false;
+    }
+    
+    // 2. Text Search Match (fuzzy - all terms must match something in the exercise)
+    if (searchTerms.length > 0) {
+      const exString = `${ex.name} ${ex.t} ${ex.b}`.toLowerCase();
+      const matchesAllTerms = searchTerms.every(term => exString.includes(term));
+      if (!matchesAllTerms) return false;
+    }
+    
+    return true;
+  });
 
   return (
     <>
@@ -289,23 +316,43 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
           <h2 className="text-xl font-black mb-2 text-white">Add PR</h2>
           <p className="text-xs text-noir-text-muted mb-4 leading-relaxed">Select any exercise. Your best lift will automatically be calculated and displayed.</p>
           
-          <div className="mb-4 flex-shrink-0">
+          {/* Muscle Filter Chips */}
+          <div className="flex gap-2 overflow-x-auto pb-3 mb-2 custom-scrollbar flex-shrink-0">
+            <button 
+              onClick={() => setMuscleFilter(null)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-colors ${muscleFilter === null ? 'bg-white text-black' : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white'}`}
+            >
+              All
+            </button>
+            {MUSCLE_GROUPS.map(m => (
+              <button 
+                key={m}
+                onClick={() => setMuscleFilter(m)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-colors ${muscleFilter === m ? 'bg-noir-accent text-black' : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500'}`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+
+          <div className="mb-4 flex-shrink-0 relative">
+            <Search className="absolute left-4 top-3.5 text-zinc-500" size={16} />
             <input 
               type="text"
               placeholder="Search logged exercises..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-noir-bg border border-noir-border rounded-xl px-4 py-2.5 text-sm font-bold text-white placeholder-zinc-600 focus:outline-none focus:border-noir-accent transition-colors"
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-11 pr-4 py-3 text-sm font-bold text-white placeholder-zinc-600 focus:outline-none focus:border-noir-accent transition-colors"
             />
           </div>
           
-          <div className="flex-1 overflow-y-auto space-y-2 mb-2 pr-2 [scrollbar-width:thin] min-h-0">
+          <div className="flex-1 overflow-y-auto space-y-2 mb-2 pr-2 custom-scrollbar min-h-0">
             {availableExercisesToTrack.length === 0 ? (
               <p className="text-xs text-noir-text-muted italic text-center py-4">All your exercises are already added.</p>
+            ) : filteredExercisesToTrack.length === 0 ? (
+              <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest text-center py-4">No exercises found.</p>
             ) : (
-              availableExercisesToTrack
-                .filter(ex => ex.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                .map(ex => (
+              filteredExercisesToTrack.map(ex => (
                 <button
                   key={ex.id}
                   onClick={() => {
@@ -317,12 +364,16 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
                     });
                     setIsAddModalOpen(false);
                     setSearchQuery("");
+                    setMuscleFilter(null);
                     showToast("PR Added!");
                   }}
-                  className="w-full text-left px-4 py-3 rounded-xl border border-noir-border hover:bg-noir-bg hover:border-noir-accent transition-colors group flex justify-between items-center"
+                  className="w-full text-left px-4 py-3 rounded-xl border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-600 transition-colors group flex justify-between items-center"
                 >
-                  <p className="font-bold text-sm text-zinc-300 group-hover:text-white">{ex.name}</p>
-                  <Plus size={14} className="text-zinc-600 group-hover:text-noir-accent" />
+                  <div>
+                    <p className="font-bold text-sm text-zinc-300 group-hover:text-white">{ex.name}</p>
+                    <span className="text-[9px] font-bold text-noir-accent bg-noir-accent/10 px-2 py-0.5 rounded-full uppercase tracking-widest mt-1 inline-block">{(ex as any).t}</span>
+                  </div>
+                  <Plus size={16} className="text-zinc-600 group-hover:text-noir-accent" />
                 </button>
               ))
             )}
