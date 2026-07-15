@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Loader2, Heart, Share2, Medal, User as UserIcon } from "lucide-react";
+import { Loader2, Heart, Share2, Medal, User as UserIcon, Trash2 } from "lucide-react";
 
 type FeedPost = {
   id: string;
@@ -22,6 +22,7 @@ export default function SocialFeed({ currentUser }: { currentUser: any }) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [likingPost, setLikingPost] = useState<string | null>(null);
+  const [deletingPost, setDeletingPost] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFeed();
@@ -61,6 +62,19 @@ export default function SocialFeed({ currentUser }: { currentUser: any }) {
     
     setPosts(enhancedPosts);
     setLoading(false);
+  };
+
+  const deletePost = async (postId: string) => {
+    setDeletingPost(postId);
+    const { error } = await supabase
+      .from("community_feed")
+      .delete()
+      .eq("id", postId);
+      
+    if (!error) {
+      setPosts(posts.filter(p => p.id !== postId));
+    }
+    setDeletingPost(null);
   };
 
   const toggleLike = async (postId: string, currentLikes: string[]) => {
@@ -161,7 +175,7 @@ export default function SocialFeed({ currentUser }: { currentUser: any }) {
             )}
 
             {/* Actions */}
-            <div className="flex items-center gap-4 pt-3 border-t border-noir-border/50">
+            <div className="flex items-center justify-between pt-3 border-t border-noir-border/50">
               <button 
                 onClick={() => toggleLike(post.id, post.likes || [])}
                 disabled={likingPost === post.id || !currentUser}
@@ -176,6 +190,21 @@ export default function SocialFeed({ currentUser }: { currentUser: any }) {
                 )}
                 <span>{(post.likes || []).length}</span>
               </button>
+              
+              {currentUser && currentUser.id === post.user_id && (
+                <button
+                  onClick={() => deletePost(post.id)}
+                  disabled={deletingPost === post.id}
+                  className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-noir-text-muted hover:text-red-500 transition-colors"
+                >
+                  {deletingPost === post.id ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={14} />
+                  )}
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         );

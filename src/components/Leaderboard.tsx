@@ -421,7 +421,7 @@ export default function Leaderboard() {
         </div>
       </header>
 
-      {user && !user.avatar_url && (
+      {user && myProfile && !myProfile.avatar_url && (
         <div className="mx-2 mb-4 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex gap-3 shadow-lg animate-in fade-in">
           <AlertTriangle className="text-amber-500 flex-shrink-0" size={20} />
           <p className="text-xs text-amber-100/90 leading-relaxed">
