@@ -663,15 +663,15 @@ export default function Leaderboard() {
                     )}
                   </div>
 
-                  <div className="flex-1 min-w-0 py-1">
-                    <div className="flex justify-between items-end mb-1.5">
-                      <div className="flex flex-col gap-0.5">
+                  <div className="flex-1 min-w-0 py-1 flex flex-col justify-center">
+                    <div className="flex justify-between items-end mb-1.5 gap-2">
+                      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                         <h3 className={`font-black text-lg truncate tracking-tight ${isCurrentUser ? "text-noir-accent" : "text-white"}`}>
                           {entry.username} {isCurrentUser && <span className="text-[10px] font-bold uppercase tracking-widest text-noir-text-muted ml-1">(You)</span>}
                         </h3>
                         {entry.pinned_pr && (
-                          <div className="flex items-center gap-1 bg-noir-accent/10 border border-noir-accent/30 text-noir-accent px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest w-fit">
-                            <Trophy size={10} /> {entry.pinned_pr.name}: {entry.pinned_pr.weight}kg
+                          <div className="flex items-center gap-1 bg-noir-accent/10 border border-noir-accent/30 text-noir-accent px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest w-fit max-w-full truncate">
+                            <Trophy size={10} className="flex-shrink-0" /> <span className="truncate">{entry.pinned_pr.name}: {entry.pinned_pr.weight}kg</span>
                           </div>
                         )}
                       </div>
@@ -692,8 +692,8 @@ export default function Leaderboard() {
                     </div>
                     
                     <div className="flex justify-between items-center text-[10px] uppercase font-bold text-noir-text-muted tracking-widest mt-0.5">
-                      <span className="flex items-center gap-1.5"><Dumbbell size={12} className={isTop3 ? 'text-current opacity-70' : ''} /> {entry.workouts} WOs</span>
-                      <span className="flex items-center gap-1">SCORE: <span className="text-white">{entry.score.toLocaleString()}</span></span>
+                      <span className="flex items-center gap-1 whitespace-nowrap"><Dumbbell size={12} className={`flex-shrink-0 ${isTop3 ? 'text-current opacity-70' : ''}`} /> {entry.workouts} WOs</span>
+                      <span className="flex items-center gap-1 whitespace-nowrap ml-2">SCORE: <span className="text-white">{entry.score.toLocaleString()}</span></span>
                     </div>
                   </div>
                 </div>
@@ -702,7 +702,7 @@ export default function Leaderboard() {
                 {!isCurrentUser && (
                   <div className="ml-3 flex-shrink-0 flex items-center">
                     {existingChallenge ? (
-                      <div className="text-[9px] uppercase font-bold text-noir-text-muted bg-noir-bg px-2 py-1 rounded border border-noir-border text-center leading-tight">
+                      <div className="text-[9px] uppercase font-bold text-noir-text-muted bg-noir-bg px-2 py-1 rounded border border-noir-border text-center whitespace-nowrap shadow-inner">
                         {existingChallenge.status === 'active' ? 'At War' : 'Pending'}
                       </div>
                     ) : (
