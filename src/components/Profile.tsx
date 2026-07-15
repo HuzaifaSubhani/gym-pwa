@@ -420,10 +420,9 @@ export default function Profile() {
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 ml-1 mt-4">Physique Goal</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 ml-1 mt-4">Physique Class</label>
+              <div className="grid grid-cols-3 gap-2">
                 {[
-                  { id: 'overall', label: 'Overall (XP)' },
                   { id: 'classic', label: 'Classic' },
                   { id: 'aesthetic', label: 'Aesthetic' },
                   { id: 'powerlifting', label: 'Powerlifting' }
@@ -442,7 +441,7 @@ export default function Profile() {
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-noir-text-muted mt-1 ml-1">Choose your primary goal to compete in specific Leaderboard brackets.</p>
+              <p className="text-[10px] text-noir-text-muted mt-1 ml-1">Compete in a specific Leaderboard bracket. You're always ranked in Overall too.</p>
             </div>
           </div>
         </div>
