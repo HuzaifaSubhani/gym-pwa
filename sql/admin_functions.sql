@@ -88,7 +88,10 @@ BEGIN
     EXECUTE 'DELETE FROM public.feed_comments WHERE user_id = $1' USING target_user_id;
   END IF;
 
-  -- Delete from auth.users (cascades to profiles)
+  -- Delete from public.profiles manually since there is no ON DELETE CASCADE set up
+  DELETE FROM public.profiles WHERE id = target_user_id;
+
+  -- Delete from auth.users
   DELETE FROM auth.users WHERE auth.users.id = target_user_id;
 END;
 $$;
