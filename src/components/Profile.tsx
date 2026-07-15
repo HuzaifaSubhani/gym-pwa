@@ -377,21 +377,16 @@ export default function Profile() {
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-3 gap-1 relative z-10 bg-noir-bg/50 border-t border-noir-border backdrop-blur-md p-4">
+        <div className="grid grid-cols-2 gap-1 relative z-10 bg-noir-bg/50 border-t border-noir-border backdrop-blur-md p-4">
           <div className="flex flex-col items-center text-center">
             <Activity className="text-noir-accent mb-1 drop-shadow-lg" size={20} />
             <span className="text-xl font-bold text-white">{totalWorkouts}</span>
             <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Workouts</span>
           </div>
-          <div className="flex flex-col items-center text-center border-l border-r border-noir-border/50">
+          <div className="flex flex-col items-center text-center border-l border-noir-border/50">
             <Flame className="text-noir-accent mb-1 drop-shadow-lg" size={20} />
             <span className="text-xl font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</span>
             <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Volume (kg)</span>
-          </div>
-          <div className="flex flex-col items-center text-center">
-            <Medal className="text-noir-accent mb-1 drop-shadow-lg" size={20} />
-            <span className="text-xl font-bold text-white">{totalWorkouts >= 50 ? '3' : totalWorkouts >= 10 ? '2' : '1'}</span>
-            <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Tier</span>
           </div>
         </div>
       </div>

@@ -117,21 +117,16 @@ export default function Dashboard({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 w-full mb-8 pt-6 border-t border-white/5">
+        <div className="grid grid-cols-2 gap-4 w-full mb-8 pt-6 border-t border-white/5">
           <div className="flex flex-col items-center text-center">
             <Activity className="text-zinc-500 mb-1" size={18} />
             <span className="text-xl font-bold text-white">{totalWorkouts}</span>
             <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-widest mt-1">Workouts</span>
           </div>
-          <div className="flex flex-col items-center text-center border-l border-r border-white/5 px-2">
+          <div className="flex flex-col items-center text-center border-l border-white/5 px-2">
             <Flame className="text-zinc-500 mb-1" size={18} />
             <span className="text-xl font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</span>
             <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-widest mt-1">Volume (kg)</span>
-          </div>
-          <div className="flex flex-col items-center text-center">
-            <Medal className="text-zinc-500 mb-1" size={18} />
-            <span className="text-xl font-bold text-white">{level}</span>
-            <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-widest mt-1">Level</span>
           </div>
         </div>
 

@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Trophy, Dumbbell, Medal, Loader2, ArrowRight, Swords, Check, X, Flame, ChevronDown, ChevronUp } from "lucide-react";
+import { Trophy, Dumbbell, Medal, Loader2, ArrowRight, Swords, Check, X, Flame, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { useProtocol } from "@/hooks/useProtocolStore";
 
 type Profile = {
   id: string;
@@ -77,6 +78,7 @@ export default function Leaderboard() {
   const [forfeitPrompt, setForfeitPrompt] = useState<{id: string, opponentName: string, opponentId: string} | null>(null);
   const [isWarsExpanded, setIsWarsExpanded] = useState(false);
   const [activeFilter, setActiveFilter] = useState("overall");
+  const { state } = useProtocol();
 
   useEffect(() => {
     fetchLeaderboardData();
@@ -353,8 +355,44 @@ export default function Leaderboard() {
   const activeChallenges = challenges.filter(c => c.status === 'active' && (c.challenger_id === user.id || c.challenged_id === user.id));
   const completedChallenges = challenges.filter(c => c.status === 'completed' && (c.challenger_id === user.id || c.challenged_id === user.id));
 
+  let localWorkouts = 0;
+  let localVolume = 0;
+  if (state && state.workoutLogs) {
+    Object.keys(state.workoutLogs).forEach(date => {
+      const dayLogs = state.workoutLogs[date];
+      let hasValid = false;
+      Object.values(dayLogs).forEach((exLogs: any) => {
+        exLogs.forEach((log: any) => {
+          const w = parseFloat(log.weight) || 0;
+          const r = parseInt(log.reps) || 0;
+          if (w > 0 || r > 0) hasValid = true;
+          localVolume += (w * r);
+        });
+      });
+      if (hasValid) localWorkouts++;
+    });
+  }
+
+  const displayEntries = [...entries].map(entry => {
+    if (user && entry.id === user.id) {
+      if (localVolume > entry.totalVolume || localWorkouts > entry.workouts) {
+        const { xp, level, progress } = getLevelInfo(localVolume);
+        return {
+          ...entry,
+          workouts: Math.max(localWorkouts, entry.workouts),
+          totalVolume: Math.max(localVolume, entry.totalVolume),
+          score: xp + (Math.max(localWorkouts, entry.workouts) * 50),
+          xp,
+          level,
+          progress
+        };
+      }
+    }
+    return entry;
+  }).sort((a, b) => b.score - a.score);
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-20 relative">
       <header className="mb-4 px-2">
         <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">Competition</h2>
         <h1 className="text-3xl font-black flex items-center gap-3 mb-4">
@@ -382,6 +420,15 @@ export default function Leaderboard() {
           ))}
         </div>
       </header>
+
+      {user && !user.avatar_url && (
+        <div className="mx-2 mb-4 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex gap-3 shadow-lg animate-in fade-in">
+          <AlertTriangle className="text-amber-500 flex-shrink-0" size={20} />
+          <p className="text-xs text-amber-100/90 leading-relaxed">
+            <span className="font-bold text-amber-500">Missing Display Picture.</span> You need to upload an avatar in your Profile to remain ranked on the Leaderboard. Unverified accounts will be hidden soon.
+          </p>
+        </div>
+      )}
 
       {/* Challenges Section */}
       {(pendingReceived.length > 0 || pendingSent.length > 0 || activeChallenges.length > 0 || completedChallenges.length > 0) && (
@@ -475,11 +522,11 @@ export default function Leaderboard() {
               <div key={c.id} className="bg-noir-surface border border-noir-accent/30 rounded-xl p-4 shadow-lg overflow-hidden relative">
                 
                 <div className="flex justify-between items-center mb-4 relative z-10">
-                  <div className="flex items-center gap-2">
-                    <Swords size={18} className="text-noir-accent" />
-                    <span className="font-bold">vs {opponent?.username}</span>
+                  <div className="flex items-center gap-2 min-w-0 pr-2">
+                    <Swords size={18} className="text-noir-accent flex-shrink-0" />
+                    <span className="font-bold truncate">vs {opponent?.username}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-noir-text-muted bg-noir-bg px-2 py-1 rounded-md border border-noir-border">
                       {isStartingTomorrow ? 'Starting Tomorrow' : daysLeft > 0 ? `${daysLeft} Days Left` : 'Ending Soon'}
                     </div>
@@ -560,10 +607,10 @@ export default function Leaderboard() {
           <span>Score</span>
         </div>
         <div className="space-y-2">
-          {entries
+          {displayEntries
             .filter(entry => activeFilter === "overall" || entry.physique_tag === activeFilter)
             .map((entry, index) => {
-            const isCurrentUser = entry.id === user?.id;
+              const isCurrentUser = entry.id === user?.id;
             // Check if there's an existing challenge with this user
             const existingChallenge = challenges.find(c => 
               (c.challenger_id === entry.id || c.challenged_id === entry.id) && 
@@ -672,8 +719,7 @@ export default function Leaderboard() {
                 )}
               </div>
             );
-          })
-        }
+          })}
         </div>
       </div>
       
