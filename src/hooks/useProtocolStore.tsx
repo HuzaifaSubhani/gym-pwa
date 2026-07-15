@@ -84,6 +84,10 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
           const { currentWeek, currentDayOfWeek } = getCurrentProtocolDateInfo();
           setState({
             ...parsed,
+            programs: {
+              ...parsed.programs,
+              [DEFAULT_IRONCORE_PROGRAM.id]: DEFAULT_IRONCORE_PROGRAM
+            },
             activeWeek: currentWeek,
             activeDayOfWeek: currentDayOfWeek,
           });

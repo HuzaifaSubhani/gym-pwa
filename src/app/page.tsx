@@ -76,16 +76,22 @@ export default function Home() {
         
 
 
-        {activeTab === "dashboard" && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-            <Dashboard avatarUrl={avatarUrl} username={username} onStartWorkout={() => setActiveTab("workout")} />
-            <ProgressAnalytics />
-          </div>
-        )}
-        {activeTab === "workout" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><WorkoutLogger /></div>}
-        {activeTab === "leaderboard" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><Leaderboard /></div>}
-        {activeTab === "explore" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><CommunityPrograms /></div>}
-        {activeTab === "profile" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out"><Profile /></div>}
+        <div className={activeTab === "dashboard" ? "space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out block" : "hidden"}>
+          <Dashboard avatarUrl={avatarUrl} username={username} onStartWorkout={() => setActiveTab("workout")} />
+          <ProgressAnalytics />
+        </div>
+        <div className={activeTab === "workout" ? "animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out block" : "hidden"}>
+          <WorkoutLogger />
+        </div>
+        <div className={activeTab === "leaderboard" ? "animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out block" : "hidden"}>
+          <Leaderboard />
+        </div>
+        <div className={activeTab === "explore" ? "animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out block" : "hidden"}>
+          <CommunityPrograms />
+        </div>
+        <div className={activeTab === "profile" ? "animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out block" : "hidden"}>
+          <Profile />
+        </div>
       </div>
 
       {/* Bottom Navigation for mobile-first usage */}

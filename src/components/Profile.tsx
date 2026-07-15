@@ -98,6 +98,7 @@ export default function Profile() {
           if (data.weight_kg) setWeightKg(data.weight_kg);
           if (data.activity_level) setActivityLevel(data.activity_level);
           if (data.nutrition_goal) setNutritionGoal(data.nutrition_goal);
+          if (data.physique_tag) setPhysiqueTag(data.physique_tag);
           
           cachedProfileData = {
             user,
@@ -359,10 +360,10 @@ export default function Profile() {
           <h2 className="text-3xl font-black mb-1">{myProfile.username}</h2>
           
           {myProfile.pinned_pr && (
-            <div className="mb-4 inline-flex items-center gap-2 bg-noir-bg border border-noir-accent/30 text-noir-accent px-3 py-1.5 rounded-full shadow-lg">
-              <Trophy size={14} className="animate-pulse" />
-              <span className="text-xs font-bold uppercase tracking-widest">
-                {myProfile.pinned_pr.name}: <span className="text-white">{myProfile.pinned_pr.weight}kg × {myProfile.pinned_pr.reps}</span>
+            <div className="mb-4 inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 text-zinc-300 px-3.5 py-1.5 rounded-full shadow-lg">
+              <Trophy size={14} className="text-yellow-500" />
+              <span className="text-xs font-bold tracking-wide">
+                {myProfile.pinned_pr.name} • <span className="text-white font-black">{myProfile.pinned_pr.weight}kg × {myProfile.pinned_pr.reps}</span>
               </span>
             </div>
           )}
@@ -587,7 +588,8 @@ export default function Profile() {
                 heightCm === (myProfile.height_cm || "") &&
                 weightKg === (myProfile.weight_kg || "") &&
                 activityLevel === (myProfile.activity_level || "1.55") &&
-                nutritionGoal === (myProfile.nutrition_goal || "maintain")
+                nutritionGoal === (myProfile.nutrition_goal || "maintain") &&
+                physiqueTag === (myProfile.physique_tag || "overall")
               )
             }
             className="w-full px-4 py-4 rounded-xl bg-noir-accent text-noir-bg hover:opacity-90 font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-lg flex justify-center items-center gap-2"

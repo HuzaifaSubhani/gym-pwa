@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Program } from "@/data/protocol";
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { Download, Loader2, User, Globe, Search, Plus, Activity } from "lucide-react";
+import { Download, Loader2, User, Globe, Search, Plus, Activity, BookOpen, Play, Check } from "lucide-react";
 import ProgramBuilder from "./ProgramBuilder";
 import SocialFeed from "./SocialFeed";
 
@@ -14,7 +14,7 @@ export default function CommunityPrograms() {
   const [programs, setPrograms] = useState<(Program & { profiles: { username: string, avatar_url: string } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const { saveProgram, setActiveProgram } = useProtocol();
+  const { state, saveProgram, setActiveProgram } = useProtocol();
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [showBuilder, setShowBuilder] = useState(false);
 
@@ -139,6 +139,45 @@ export default function CommunityPrograms() {
               <Plus size={14} /> Create
             </button>
           </div>
+
+          {/* My Library Section */}
+          <div className="space-y-3 px-2">
+            <h3 className="text-sm font-black text-noir-accent uppercase tracking-widest flex items-center gap-2">
+              <BookOpen size={16} /> My Library
+            </h3>
+            <div className="grid gap-3">
+              {Object.values(state.programs || {}).map((prog: any) => {
+                const isActive = state.activeProgramId === prog.id;
+                return (
+                  <div key={prog.id} className={`bg-noir-surface border rounded-xl p-4 flex justify-between items-center transition-all ${isActive ? 'border-noir-accent/50 shadow-[0_0_15px_rgba(204,255,0,0.05)]' : 'border-noir-border'}`}>
+                    <div className="min-w-0 pr-4">
+                      <h4 className="font-bold text-sm text-white truncate">{prog.name}</h4>
+                      <p className="text-[10px] text-noir-text-muted uppercase tracking-wider font-semibold">
+                        {prog.duration_weeks} Weeks {prog.id === 'ironcore' ? '• Default' : ''}
+                      </p>
+                    </div>
+                    {isActive ? (
+                      <span className="flex items-center gap-1 text-[10px] font-black tracking-widest text-noir-accent bg-noir-accent/10 px-3 py-1.5 rounded-lg border border-noir-accent/30 uppercase">
+                        <Check size={12} /> Active
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setActiveProgram(prog.id);
+                          alert(`${prog.name} is now active!`);
+                        }}
+                        className="flex items-center gap-1 text-[10px] font-black tracking-widest text-black bg-noir-accent hover:opacity-90 px-3 py-1.5 rounded-lg transition-opacity uppercase"
+                      >
+                        <Play size={10} className="fill-current" /> Activate
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="border-t border-noir-border/30 my-6 mx-2"></div>
 
           <div className="relative px-2">
             <Search className="absolute left-6 top-4 text-noir-text-muted" size={20} />

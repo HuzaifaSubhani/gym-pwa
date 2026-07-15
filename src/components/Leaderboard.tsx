@@ -644,7 +644,7 @@ export default function Leaderboard() {
                   )}
                 </div>
                 
-                <div className="flex-1 ml-3 flex items-center gap-4 w-full">
+                <div className="flex-1 ml-3 flex items-center gap-3 min-w-0">
                   <div className="relative">
                     {entry.avatar_url ? (
                       <img 
@@ -664,14 +664,15 @@ export default function Leaderboard() {
                   </div>
 
                   <div className="flex-1 min-w-0 py-1 flex flex-col justify-center">
-                    <div className="flex justify-between items-end mb-1.5 gap-2">
+                    <div className="flex justify-between items-start mb-1.5 gap-2">
                       <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                         <h3 className={`font-black text-lg truncate tracking-tight ${isCurrentUser ? "text-noir-accent" : "text-white"}`}>
                           {entry.username} {isCurrentUser && <span className="text-[10px] font-bold uppercase tracking-widest text-noir-text-muted ml-1">(You)</span>}
                         </h3>
                         {entry.pinned_pr && (
-                          <div className="flex items-center gap-1 bg-noir-accent/10 border border-noir-accent/30 text-noir-accent px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest w-fit max-w-full truncate">
-                            <Trophy size={10} className="flex-shrink-0" /> <span className="truncate">{entry.pinned_pr.name}: {entry.pinned_pr.weight}kg</span>
+                          <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide w-fit max-w-[150px] sm:max-w-[200px] truncate mt-1">
+                            <Trophy size={10} className="text-yellow-500 flex-shrink-0" />
+                            <span className="truncate">{entry.pinned_pr.name} • <span className="font-extrabold text-white">{entry.pinned_pr.weight}kg</span></span>
                           </div>
                         )}
                       </div>
@@ -749,10 +750,10 @@ export default function Leaderboard() {
               <h2 className="text-2xl font-black mb-1 text-white">{selectedUser.username}</h2>
               
               {selectedUser.pinned_pr && (
-                <div className="mt-2 mb-4 inline-flex items-center gap-2 bg-noir-bg border border-noir-accent/30 text-noir-accent px-3 py-1.5 rounded-full shadow-lg">
-                  <Trophy size={14} className="animate-pulse" />
-                  <span className="text-xs font-bold uppercase tracking-widest">
-                    {selectedUser.pinned_pr.name}: <span className="text-white">{selectedUser.pinned_pr.weight}kg × {selectedUser.pinned_pr.reps}</span>
+                <div className="mt-2 mb-4 inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 text-zinc-300 px-3.5 py-1.5 rounded-full shadow-lg max-w-full truncate">
+                  <Trophy size={14} className="text-yellow-500 flex-shrink-0" />
+                  <span className="text-xs font-bold tracking-wide truncate">
+                    {selectedUser.pinned_pr.name} • <span className="text-white font-black">{selectedUser.pinned_pr.weight}kg × {selectedUser.pinned_pr.reps}</span>
                   </span>
                 </div>
               )}

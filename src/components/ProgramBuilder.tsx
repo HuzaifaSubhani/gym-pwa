@@ -18,10 +18,10 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const filteredExercises = exercisesData.filter(ex => 
-    ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ex.target.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    ex.bodyPart.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredExercises = exercisesData.filter((ex: any) => 
+    (ex.name && ex.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (ex.t && ex.t.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (ex.b && ex.b.toLowerCase().includes(searchQuery.toLowerCase()))
   ).slice(0, 50);
 
   const handleAddDay = (dayNum: number) => {
@@ -41,7 +41,7 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
     if (activeDayEdit === dayNum) setActiveDayEdit(null);
   };
 
-  const handleAddExercise = (dayNum: number, exercise: typeof exercisesData[0]) => {
+  const handleAddExercise = (dayNum: number, exercise: any) => {
     setRoutine(prev => {
       const day = prev[dayNum];
       if (!day) return prev;
@@ -55,7 +55,7 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
             sets: 3,
             reps: "8-12",
             rest: 60,
-            gif_url: exercise.gifUrl
+            gif_url: exercise.g
           }]
         }
       };
@@ -237,7 +237,7 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
                     className="w-full bg-noir-bg border border-noir-border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-noir-accent mb-2"
                   />
                   {searchQuery && (
-                    <div className="absolute top-full left-0 right-0 max-h-60 overflow-y-auto bg-noir-bg border border-noir-border rounded-lg mt-1 z-10 shadow-2xl custom-scrollbar">
+                    <div className="absolute bottom-full left-0 right-0 max-h-48 overflow-y-auto bg-noir-bg border border-noir-border rounded-lg mb-1 z-10 shadow-2xl custom-scrollbar">
                       {filteredExercises.map(ex => (
                         <button 
                           key={ex.id}
@@ -245,7 +245,7 @@ export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
                           className="w-full text-left p-3 hover:bg-noir-surface-light border-b border-noir-border/50 last:border-0 flex justify-between items-center"
                         >
                           <span className="text-sm font-bold">{ex.name}</span>
-                          <span className="text-xs text-noir-text-muted uppercase tracking-widest">{ex.target}</span>
+                          <span className="text-xs text-noir-text-muted uppercase tracking-widest">{(ex as any).t}</span>
                         </button>
                       ))}
                     </div>

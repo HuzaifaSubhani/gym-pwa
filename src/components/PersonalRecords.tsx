@@ -278,7 +278,7 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
     {/* Add Tracker Modal */}
     {isAddModalOpen && (
       <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-        <div className="bg-noir-surface border border-noir-border rounded-2xl p-6 shadow-2xl w-full max-w-sm animate-in zoom-in-95 relative">
+        <div className="bg-noir-surface border border-noir-border rounded-2xl p-5 md:p-6 shadow-2xl w-full max-w-[340px] md:max-w-sm animate-in zoom-in-95 relative max-h-[85vh] flex flex-col">
           <button 
             onClick={() => { setIsAddModalOpen(false); setSearchQuery(""); }}
             className="absolute top-4 right-4 text-noir-text-muted hover:text-white transition-colors bg-noir-bg p-1.5 rounded-full border border-noir-border"
@@ -289,7 +289,7 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
           <h2 className="text-xl font-black mb-2 text-white">Add PR</h2>
           <p className="text-xs text-noir-text-muted mb-4 leading-relaxed">Select any exercise. Your best lift will automatically be calculated and displayed.</p>
           
-          <div className="mb-4">
+          <div className="mb-4 flex-shrink-0">
             <input 
               type="text"
               placeholder="Search logged exercises..."
@@ -299,7 +299,7 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
             />
           </div>
           
-          <div className="max-h-56 overflow-y-auto space-y-2 mb-2 pr-2 [scrollbar-width:thin]">
+          <div className="flex-1 overflow-y-auto space-y-2 mb-2 pr-2 [scrollbar-width:thin] min-h-0">
             {availableExercisesToTrack.length === 0 ? (
               <p className="text-xs text-noir-text-muted italic text-center py-4">All your exercises are already added.</p>
             ) : (
