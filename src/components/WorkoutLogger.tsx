@@ -710,8 +710,16 @@ export default function WorkoutLogger() {
     });
   }
 
-  const prevIsCompleteRef = useRef(false);
+  const prevDateRef = useRef(dateStr);
+  const prevIsCompleteRef = useRef(isComplete);
+  
   useEffect(() => {
+    if (prevDateRef.current !== dateStr) {
+      prevDateRef.current = dateStr;
+      prevIsCompleteRef.current = isComplete;
+      return;
+    }
+
     if (isComplete && !prevIsCompleteRef.current) {
       confetti({
         particleCount: 150,
@@ -722,7 +730,7 @@ export default function WorkoutLogger() {
       if ('vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 200]);
     }
     prevIsCompleteRef.current = isComplete;
-  }, [isComplete]);
+  }, [isComplete, dateStr]);
 
   return (
     <>

@@ -52,7 +52,6 @@ export default function Profile() {
 
   const [openSection, setOpenSection] = useState<string>("account");
   const { state } = useProtocol();
-  const totalWorkouts = Object.keys(state.workoutLogs).length;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -287,15 +286,20 @@ export default function Profile() {
     );
   }
 
+  let totalWorkouts = 0;
   let totalVolume = 0;
-  Object.values(state.workoutLogs).forEach((dayLogs: any) => {
+  Object.keys(state.workoutLogs).forEach(date => {
+    const dayLogs = state.workoutLogs[date];
+    let hasValid = false;
     Object.values(dayLogs).forEach((exLogs: any) => {
       exLogs.forEach((log: any) => {
-        if (log && log.weight && log.reps) {
-          totalVolume += (Number(log.weight) * Number(log.reps));
-        }
+        const w = parseFloat(log.weight) || 0;
+        const r = parseInt(log.reps) || 0;
+        if (w > 0 || r > 0) hasValid = true;
+        totalVolume += (w * r);
       });
     });
+    if (hasValid) totalWorkouts++;
   });
 
   const xp = Math.round(totalVolume / 10);
