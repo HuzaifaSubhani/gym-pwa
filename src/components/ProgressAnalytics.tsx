@@ -98,7 +98,14 @@ export default function ProgressAnalytics() {
 
   // Generate chart data series
   const chartData = useMemo(() => {
-    const sortedDates = Object.keys(state.workoutLogs).sort();
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const todayMs = today.getTime();
+
+    const sortedDates = Object.keys(state.workoutLogs).sort().filter(dateStr => {
+      const d = new Date(dateStr);
+      return d.getTime() <= todayMs;
+    });
     
     // Group by week (using the state.activeWeek is not historical, we need to map dateStr to week/day)
     // For simplicity, we will just use dateStr as the X-axis for each lift, 

@@ -91,61 +91,39 @@ export default function Home() {
       {/* Bottom Navigation for mobile-first usage */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
         <div className="max-w-3xl mx-auto bg-noir-surface/80 backdrop-blur-xl border-t border-noir-border pb-safe pointer-events-auto shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-          <div className="flex">
-          <button
-            onClick={() => setActiveTab("dashboard")}
-            className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
-              activeTab === "dashboard" ? "text-noir-accent" : "text-noir-text-muted"
-            }`}
-          >
-            <HomeIcon size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">Home</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab("workout")}
-            className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
-              activeTab === "workout" ? "text-noir-accent" : "text-noir-text-muted"
-            }`}
-          >
-            <Dumbbell size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">Train</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab("leaderboard")}
-            className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
-              activeTab === "leaderboard" ? "text-noir-accent" : "text-noir-text-muted"
-            }`}
-          >
-            <Trophy size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">Ranks</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab("explore")}
-            className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
-              activeTab === "explore" ? "text-noir-accent" : "text-noir-text-muted"
-            }`}
-          >
-            <Globe size={24} />
-            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">Explore</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab("profile")}
-            className={`flex-1 flex flex-col items-center py-4 gap-1 transition-colors ${
-              activeTab === "profile" ? "text-noir-accent" : "text-noir-text-muted"
-            }`}
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="You" className={`w-6 h-6 rounded-full border border-noir-border object-cover ${activeTab === "profile" ? "border-noir-accent shadow-lg" : ""}`} />
-            ) : (
-              <User size={24} />
-            )}
-            <span className="text-[10px] uppercase font-bold tracking-wider hidden sm:block">You</span>
-          </button>
-        </div>
+          <div className="flex relative">
+            {/* Animated Glow Indicator */}
+            <div
+              className="absolute top-0 h-[2px] bg-noir-accent transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] rounded-full shadow-[0_0_12px_2px_rgba(204,255,0,0.5)]"
+              style={{
+                width: '20%',
+                left: `${["dashboard", "workout", "leaderboard", "explore", "profile"].indexOf(activeTab) * 20}%`,
+              }}
+            />
+
+          {[
+            { id: "dashboard" as const, icon: <HomeIcon size={22} />, label: "Home" },
+            { id: "workout" as const, icon: <Dumbbell size={22} />, label: "Train" },
+            { id: "leaderboard" as const, icon: <Trophy size={22} />, label: "Ranks" },
+            { id: "explore" as const, icon: <Globe size={22} />, label: "Explore" },
+            { id: "profile" as const, icon: avatarUrl ? <img src={avatarUrl} alt="You" className={`w-6 h-6 rounded-full border object-cover transition-all duration-300 ${activeTab === "profile" ? "border-noir-accent shadow-[0_0_8px_rgba(204,255,0,0.5)]" : "border-noir-border"}`} /> : <User size={22} />, label: "You" },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex flex-col items-center py-3.5 gap-1 transition-all duration-300 ease-out relative ${
+                activeTab === tab.id 
+                  ? "text-noir-accent scale-110" 
+                  : "text-noir-text-muted hover:text-zinc-300 scale-100"
+              }`}
+            >
+              <div className={`transition-all duration-300 ${activeTab === tab.id ? "drop-shadow-[0_0_6px_rgba(204,255,0,0.6)]" : ""}`}>
+                {tab.icon}
+              </div>
+              <span className={`text-[9px] uppercase font-bold tracking-wider transition-all duration-300 ${activeTab === tab.id ? "opacity-100" : "opacity-0 h-0 overflow-hidden"}`}>{tab.label}</span>
+            </button>
+          ))}
+          </div>
         </div>
       </nav>
     </main>
