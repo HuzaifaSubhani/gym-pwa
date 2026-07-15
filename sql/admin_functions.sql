@@ -67,7 +67,28 @@ BEGIN
     RAISE EXCEPTION 'Cannot delete your own admin account.';
   END IF;
 
-  -- Delete from auth.users (cascades to profiles, logs, etc)
+  -- Dynamic deletion of dependent records to avoid FK constraint errors
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'workout_logs') THEN
+    EXECUTE 'DELETE FROM public.workout_logs WHERE user_id = $1' USING target_user_id;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'programs') THEN
+    EXECUTE 'DELETE FROM public.programs WHERE creator_id = $1' USING target_user_id;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'challenges') THEN
+    EXECUTE 'DELETE FROM public.challenges WHERE challenger_id = $1 OR challenged_id = $1' USING target_user_id;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'community_feed') THEN
+    EXECUTE 'DELETE FROM public.community_feed WHERE user_id = $1' USING target_user_id;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'feed_comments') THEN
+    EXECUTE 'DELETE FROM public.feed_comments WHERE user_id = $1' USING target_user_id;
+  END IF;
+
+  -- Delete from auth.users (cascades to profiles)
   DELETE FROM auth.users WHERE auth.users.id = target_user_id;
 END;
 $$;
