@@ -391,10 +391,10 @@ export default function Leaderboard() {
             className="w-full flex items-center justify-between p-4 bg-noir-surface hover:bg-noir-surface-light transition-colors"
           >
             <div className="flex items-center gap-2">
-              <Swords size={20} className={activeChallenges.length > 0 ? "text-red-500" : "text-noir-text-muted"} /> 
-              <h3 className="text-lg font-black text-white">Wars Overview</h3>
+              <Swords size={20} className={activeChallenges.length > 0 ? "text-noir-accent" : "text-noir-text-muted"} /> 
+              <h3 className="text-lg font-black text-white">Duels</h3>
               {(pendingReceived.length > 0 || activeChallenges.length > 0) && (
-                <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">
+                <span className="bg-noir-accent text-black text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">
                   {pendingReceived.length + activeChallenges.length} Active
                 </span>
               )}
@@ -407,15 +407,15 @@ export default function Leaderboard() {
               {/* Active & Pending Section */}
               {(pendingReceived.length > 0 || activeChallenges.length > 0 || pendingSent.length > 0) && (
                 <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-noir-text-muted uppercase tracking-widest px-1">Current Battles</h4>
+                  <h4 className="text-sm font-bold text-noir-text-muted uppercase tracking-widest px-1">Current Duels</h4>
           
           {/* Incoming Challenges */}
           {pendingReceived.map(c => (
             <div key={c.id} className="bg-noir-surface border border-noir-accent/50 rounded-xl p-4 shadow-lg">
               <div className="flex justify-between items-center mb-3">
                 <div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-noir-accent animate-pulse">Incoming Challenge!</span>
-                  <p className="text-sm"><span className="font-bold">{c.challenger_profile?.username}</span> has challenged you to a 7-day Volume War.</p>
+                  <span className="text-xs font-bold uppercase tracking-widest text-noir-accent animate-pulse">Incoming Duel!</span>
+                  <p className="text-sm"><span className="font-bold">{c.challenger_profile?.username}</span> has challenged you to a 7-day Volume Duel.</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -472,11 +472,11 @@ export default function Leaderboard() {
             const isStartingTomorrow = c.start_date ? new Date().getTime() < new Date(c.start_date).getTime() : false;
 
             return (
-              <div key={c.id} className="bg-noir-surface border border-red-500/30 rounded-xl p-4 shadow-lg overflow-hidden relative">
+              <div key={c.id} className="bg-noir-surface border border-noir-accent/30 rounded-xl p-4 shadow-lg overflow-hidden relative">
                 
                 <div className="flex justify-between items-center mb-4 relative z-10">
                   <div className="flex items-center gap-2">
-                    <Swords size={18} className="text-red-500" />
+                    <Swords size={18} className="text-noir-accent" />
                     <span className="font-bold">vs {opponent?.username}</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -496,14 +496,14 @@ export default function Leaderboard() {
 
                 {isStartingTomorrow ? (
                   <div className="text-center py-2 text-sm text-noir-text-muted italic">
-                    Rest up. War begins tomorrow.
+                    Rest up. Duel begins tomorrow.
                   </div>
                 ) : (
                   <>
                     {/* VS Bar */}
                     <div className="relative h-6 bg-noir-bg rounded-lg overflow-hidden border border-noir-border flex mb-2">
                       <div className="h-full bg-noir-accent transition-all duration-1000" style={{ width: `${myPercent}%` }}></div>
-                  <div className="h-full bg-red-500 transition-all duration-1000" style={{ width: `${100 - myPercent}%` }}></div>
+                  <div className="h-full bg-white transition-all duration-1000" style={{ width: `${100 - myPercent}%` }}></div>
                   
                   {/* Lightning overlay */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -513,7 +513,7 @@ export default function Leaderboard() {
                 
                     <div className="flex justify-between text-xs font-bold">
                       <span className="text-noir-accent">You: {myVol.toLocaleString()} kg</span>
-                      <span className="text-red-500">{opponent?.username}: {theirVol.toLocaleString()} kg</span>
+                      <span className="text-white">{opponent?.username}: {theirVol.toLocaleString()} kg</span>
                     </div>
                   </>
                 )}
@@ -526,7 +526,7 @@ export default function Leaderboard() {
       {/* Past Wars */}
       {completedChallenges.length > 0 && (
         <div className="space-y-4">
-          <h4 className="text-sm font-bold text-noir-text-muted uppercase tracking-widest px-1 border-t border-noir-border/50 pt-4 mt-2">Past Wars</h4>
+          <h4 className="text-sm font-bold text-noir-text-muted uppercase tracking-widest px-1 border-t border-noir-border/50 pt-4 mt-2">Past Duels</h4>
           {completedChallenges.map(c => {
             const isChallenger = c.challenger_id === user.id;
             const opponent = isChallenger ? c.challenged_profile : c.challenger_profile;
@@ -541,7 +541,7 @@ export default function Leaderboard() {
                   </div>
                 </div>
                 <div className="text-xs text-noir-text-muted italic">
-                  {iWon ? 'You crushed them.' : `${opponent?.username} won this war.`}
+                  {iWon ? 'You crushed them.' : `${opponent?.username} won this duel.`}
                 </div>
               </div>
             );

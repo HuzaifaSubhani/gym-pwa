@@ -10,7 +10,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "IronCore",
-  description: "IronCore 7-Week Protocol Tracker",
+  description: "IronCore Protocol Tracker",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

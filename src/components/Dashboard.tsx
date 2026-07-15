@@ -1,8 +1,8 @@
 "use client";
 
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { PROTOCOL_START_DATE, DEFAULT_IRONCORE_PROGRAM } from "@/data/protocol";
-import { Play, CheckCircle2, Activity, Flame, Medal } from "lucide-react";
+import { PROTOCOL_START_DATE } from "@/data/protocol";
+import { Play, Activity, Flame, Medal } from "lucide-react";
 import PersonalRecords from "./PersonalRecords";
 
 function getProtocolDateString(week: number, dayNum: number) {
@@ -59,7 +59,7 @@ export default function Dashboard({
     progressPercentage = ((xp - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100;
   }
   
-  const activeProgram = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
+  
   const radius = 60;
   const stroke = 8;
   const normalizedRadius = radius - stroke * 2;
@@ -68,32 +68,24 @@ export default function Dashboard({
 
   return (
     <div className="flex flex-col h-full space-y-6">
-      {/* Header Profile Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight">
-            {username ? `Ready, ${username}?` : "Ready to train?"}
-          </h1>
-          <p className="text-sm text-zinc-400 mt-1">Let's crush today's goals.</p>
-        </div>
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full object-cover shadow-sm border border-zinc-800" />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-sm">
-            <span className="text-zinc-500 font-medium">{username?.charAt(0)?.toUpperCase() || "U"}</span>
-          </div>
-        )}
-      </div>
-
       {/* Main Focus Card */}
       <div className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
         
-        <div className="w-full flex justify-between items-start mb-6">
+        <div className="w-full flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-zinc-300 text-xs font-semibold uppercase tracking-widest mb-1">Active Plan</h2>
-            <p className="text-white font-medium text-lg truncate max-w-[180px]">{activeProgram.name}</p>
+            <h1 className="text-2xl font-semibold text-white tracking-tight">
+              {username ? `Ready, ${username}?` : "Ready to train?"}
+            </h1>
+            <p className="text-sm text-zinc-400 mt-1">Let's crush today's goals.</p>
           </div>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full object-cover shadow-sm border border-zinc-800" />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-sm">
+              <span className="text-zinc-500 font-medium">{username?.charAt(0)?.toUpperCase() || "U"}</span>
+            </div>
+          )}
         </div>
 
         {/* Circular Progress */}

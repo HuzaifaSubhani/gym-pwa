@@ -31,8 +31,8 @@ export const PROTOCOL_WEEKS = 7;
 
 export const DEFAULT_IRONCORE_PROGRAM: Program = {
   id: "default-ironcore",
-  name: "IronCore 7-Week Protocol",
-  description: "The original metabolic conditioning and aesthetic mass protocol.",
+  name: "IronCore Protocol",
+  description: "The classic IronCore training protocol.",
   duration_weeks: 7,
   routine_schema: {
   1: {
