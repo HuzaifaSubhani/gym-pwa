@@ -1,3 +1,5 @@
+export type SetType = 'normal' | 'drop' | 'superset' | 'compound';
+
 export type Exercise = {
   id: string;
   name: string;
@@ -7,12 +9,32 @@ export type Exercise = {
   notes?: string;
   isSpecialization?: boolean;
   gif_url?: string;
+  setType?: SetType;              // Type of set (default: 'normal')
+  supersetPartner?: string;       // Exercise ID this is paired with for supersets
+  dropConfig?: { drops: number }; // Number of drops per set (1-3, default 2)
 };
+
+/** A group of exercises performed as a circuit (giant set). */
+export type CompoundGroup = {
+  id: string;
+  type: 'compound_group';
+  name: string;         // e.g. "Chest & Tri Combo"
+  exercises: Exercise[];
+  rest: number;         // rest BETWEEN rounds (seconds)
+  rounds: number;       // how many rounds of the circuit
+};
+
+export type DayRoutineItem = Exercise | CompoundGroup;
+
+export function isCompoundGroup(item: DayRoutineItem): item is CompoundGroup {
+  return 'type' in item && item.type === 'compound_group';
+}
 
 export type DayRoutine = {
   dayName: string;
   focus: string;
-  exercises: Exercise[];
+  exercises: Exercise[];  // kept for backward compat — flat exercise list
+  items?: DayRoutineItem[]; // NEW: supports both exercises and compound groups
 };
 
 export type Program = {

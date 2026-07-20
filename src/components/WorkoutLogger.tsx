@@ -1,27 +1,16 @@
 "use client";
 
-import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
-import { DEFAULT_IRONCORE_PROGRAM, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTOCOL_START_DATE } from "@/data/protocol";
-import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search, ArrowRight, X, Activity, Dumbbell, Shield, Mountain, Crosshair, Footprints, Target, HeartPulse } from "lucide-react";
-import { GiMuscularTorso, GiBiceps, GiArm, GiLeg, GiHeartBeats, GiShoulderArmor, GiAbdominalArmor, GiSpineArrow } from "react-icons/gi";
+import { useProtocol } from "@/hooks/useProtocolStore";
+import { DEFAULT_IRONCORE_PROGRAM, getIntensityDirectives, Exercise, CompoundGroup } from "@/data/protocol";
+import { Check, ChevronLeft, ChevronRight, Trash2, Shield, Plus } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
 import TourGuide from "./TourGuide";
-import ExerciseVideoModal from "./ExerciseVideoModal";
-
-function getProtocolDateString(week: number, dayNum: number) {
-  const date = new Date(PROTOCOL_START_DATE);
-  date.setDate(date.getDate() + ((week - 1) * 7 + (dayNum - 1)));
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function getShortDateLabel(dateStr: string) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
+import ExerciseCard from "./ExerciseCard";
+import CompoundSetCard from "./CompoundSetCard";
+import AddExerciseModal from "./AddExerciseModal";
+import CreateGiantSetModal from "./CreateGiantSetModal";
+import { getProtocolDateString, getShortDateLabel, getTodayDateString } from "@/lib/dateUtils";
 
 function DaySelector() {
   const { state, setActiveWeekDay } = useProtocol();
@@ -107,581 +96,17 @@ function DaySelector() {
   );
 }
 
-function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr, isFuture }: {
-  exercise: Exercise; activeWeek: number; activeDayOfWeek: number; isFinal: boolean; dateStr: string; isFuture: boolean;
-}) {
-  const { state, setFullExerciseLogs, removeExercise, startTimer } = useProtocol();
-  const dayLogs = state.workoutLogs[dateStr] || {};
-  const globalExLogs = dayLogs[exercise.id] || [];
-
-  const prevDateStr = activeWeek > 1 ? getProtocolDateString(activeWeek - 1, activeDayOfWeek) : null;
-  const prevLogs = prevDateStr ? state.workoutLogs[prevDateStr]?.[exercise.id] || [] : [];
-
-  // Local state for inputs
-  const [localLogs, setLocalLogs] = useState<SetLog[]>([]);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Auto-save status
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
-  // To track if changes were made by user (to avoid saving on mount)
-  const [isDirty, setIsDirty] = useState(false);
-
-  const isExerciseComplete = localLogs.length > 0 && localLogs.length === exercise.sets && localLogs.every(log => log.weight !== "" && log.reps !== "");
-
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-
-  // Sync local state when global state or date changes
-  useEffect(() => {
-    if (isDirty) return;
-    // Fill up to the required sets
-    const synced = Array.from({ length: exercise.sets }).map((_, i) => {
-      if (globalExLogs[i]) {
-        return {
-          weight: globalExLogs[i].weight,
-          reps: globalExLogs[i].reps,
-          drops: globalExLogs[i].drops ? [...globalExLogs[i].drops] : [],
-          rating: globalExLogs[i].rating
-        };
-      }
-      return { weight: "", reps: "", drops: [] };
-    });
-    setLocalLogs(synced);
-    setIsDirty(false); // Reset dirty flag when syncing from global
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(globalExLogs), exercise.sets, dateStr]);
-
-  // Auto-save effect
-  useEffect(() => {
-    if (!isDirty) return;
-
-    const timeout = setTimeout(() => {
-      setFullExerciseLogs(dateStr, exercise.id, localLogs);
-      setIsDirty(false);
-    }, 500); // 500ms debounce
-
-    return () => clearTimeout(timeout);
-  }, [localLogs, isDirty, dateStr, exercise.id, setFullExerciseLogs]);
-
-  const { note, restMod } = getIntensityDirectives(
-    activeWeek, activeDayOfWeek,
-    !!exercise.isSpecialization || exercise.name.includes("Lateral") || exercise.name.includes("Curls") || exercise.name.includes("Pushdowns") || exercise.name.includes("Extensions") || exercise.name.includes("Raises"),
-    isFinal
-  );
-
-  const effectiveRest = exercise.rest + (restMod || 0);
-  const fullNote = ((note || "") + " " + (exercise.notes || "")).toLowerCase();
-  const isDropSetNote = fullNote.includes("drop set");
-
-  const handleUpdateLocalLog = (setIndex: number, field: "weight" | "reps" | "rating", value: string) => {
-    const newLogs = [...localLogs];
-    newLogs[setIndex] = { ...newLogs[setIndex], [field]: value };
-    setLocalLogs(newLogs);
-    setIsDirty(true);
-
-    if (field !== "rating" && value !== "") {
-      const isCompleteNow = newLogs[setIndex].weight !== "" && newLogs[setIndex].reps !== "";
-      const wasComplete = localLogs[setIndex].weight !== "" && localLogs[setIndex].reps !== "";
-      if (isCompleteNow && !wasComplete) {
-        if ('vibrate' in navigator) navigator.vibrate(50);
-      }
-    }
-  };
-
-  const handleUpdateDropLog = (setIndex: number, dropIndex: number, field: "weight" | "reps", value: string) => {
-    const newLogs = [...localLogs];
-    const drops = [...(newLogs[setIndex].drops || [])];
-
-    // Ensure array is large enough
-    while (drops.length <= dropIndex) {
-      drops.push({ weight: "", reps: "" });
-    }
-
-    drops[dropIndex] = { ...drops[dropIndex], [field]: value };
-    newLogs[setIndex] = { ...newLogs[setIndex], drops };
-    setLocalLogs(newLogs);
-    setIsDirty(true);
-  };
-
-  const handleClear = () => {
-    setFullExerciseLogs(dateStr, exercise.id, []);
-    setShowClearConfirm(false);
-  };
-
-  const handleDeleteExercise = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm(`Are you sure you want to remove ${exercise.name}?`)) {
-      removeExercise(activeDayOfWeek, dateStr, exercise.id);
-    }
-  };
-
-  const handleCompare = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (activeWeek <= 1) return;
-
-    const prevDateStr = getProtocolDateString(activeWeek - 1, activeDayOfWeek);
-    const prevLogs = state.workoutLogs[prevDateStr]?.[exercise.id] || [];
-    if (prevLogs.length === 0) return;
-
-    const mergedLogs = localLogs.map((log, i) => {
-      if (prevLogs[i]) {
-        return {
-          weight: prevLogs[i].weight || log.weight,
-          reps: prevLogs[i].reps || log.reps,
-          drops: prevLogs[i].drops ? [...prevLogs[i].drops] : (log.drops ? [...log.drops] : [])
-        };
-      }
-      return log;
-    });
-
-    setLocalLogs(mergedLogs);
-    setIsDirty(true);
-    setIsExpanded(true); // Open to show the pulled data
-  };
-
-  return (
-    <div id="tour-exercise-card" className={`bg-noir-surface rounded-xl border p-4 shadow-lg overflow-hidden relative transition-all duration-300 ${
-      isExerciseComplete ? "border-noir-accent/70 shadow-[0_0_15px_rgba(208,56,243,0.15)] bg-noir-surface/90"
-      : saveStatus === "saved" ? "border-noir-accent/50 shadow-[0_0_15px_rgba(57,255,20,0.1)]" 
-      : "border-noir-border"
-    }`}>
-      {showClearConfirm && (
-        <div className="absolute inset-0 bg-noir-bg/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="text-center">
-            <h3 className="text-lg font-bold mb-2">Clear {exercise.name}?</h3>
-            <p className="text-sm text-noir-text-muted mb-4">This cannot be undone.</p>
-            <div className="flex gap-2 justify-center">
-              <button onClick={(e) => { e.stopPropagation(); setShowClearConfirm(false); }} className="px-4 py-2 rounded-lg border border-noir-border hover:bg-noir-surface-light min-h-[44px]">Cancel</button>
-              <button onClick={(e) => { e.stopPropagation(); handleClear(); }} className="px-4 py-2 rounded-lg bg-red-600/20 text-red-500 border border-red-900 font-bold hover:bg-red-600/30 min-h-[44px]">Yes, Clear</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {(note || exercise.notes) && (
-        <div className="absolute top-0 right-0 bg-noir-surface-light border-b border-l border-noir-border px-3 py-1 text-[10px] uppercase font-bold text-noir-accent tracking-widest rounded-bl-lg max-w-[70%] text-right z-10">
-          {note || exercise.notes}
-        </div>
-      )}
-
-      {/* Header - Clickable to toggle expansion */}
-      <div 
-        className="mb-2 pr-12 mt-2 cursor-pointer group flex items-start justify-between"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div>
-          <h3 className="text-lg md:text-xl font-bold leading-tight group-hover:text-noir-accent transition-colors flex items-center gap-2">
-            {exercise.name}
-            {isExerciseComplete && <Check size={18} className="text-noir-accent stroke-[3px]" />}
-          </h3>
-          <p className="text-xs md:text-sm text-noir-text-muted mt-1 flex items-center gap-2">
-            {exercise.sets} Sets × {exercise.reps}
-            <span className="inline-block w-1 h-1 rounded-full bg-noir-border"></span>
-            {effectiveRest}s Rest
-            {exercise.gif_url && (
-              <>
-                <span className="inline-block w-1 h-1 rounded-full bg-noir-border"></span>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setIsVideoModalOpen(true); }}
-                  className="flex items-center gap-1 text-white hover:opacity-80 transition-colors bg-white/10 px-2 py-0.5 rounded border border-white/30"
-                >
-                  <Play size={12} className="fill-current" /> <span className="uppercase font-bold tracking-wider text-[9px]">Demo</span>
-                </button>
-              </>
-            )}
-          </p>
-        </div>
-        <div className="text-noir-text-muted group-hover:text-noir-accent transition-colors self-center p-2">
-          {isExpanded ? <ChevronLeft size={20} className="-rotate-90 transition-transform" /> : <ChevronLeft size={20} className="rotate-180 transition-transform" />}
-        </div>
-      </div>
-
-      {/* Collapsible Content */}
-      <div className={`transition-all duration-300 ease-in-out origin-top ${isExpanded ? "max-h-[1000px] opacity-100 mt-4" : "max-h-0 opacity-0 overflow-hidden"}`}>
-        <div className="space-y-3 mb-4">
-          {localLogs.map((log, i) => {
-            const isFinalSet = i === exercise.sets - 1;
-            const showDropSets = isFinalSet && isDropSetNote;
-
-            return (
-              <div key={i} className="flex flex-col gap-2 p-2 rounded-lg bg-noir-bg border border-transparent focus-within:border-noir-border transition-colors">
-                <div className="flex gap-2 items-center">
-                  <span className="w-6 text-center text-xs font-bold text-noir-text-muted">S{i + 1}</span>
-                  <input
-                    type="number"
-                    placeholder="kg"
-                    disabled={isFuture}
-                    className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
-                    value={log.weight}
-                    onChange={(e) => handleUpdateLocalLog(i, "weight", e.target.value)}
-                  />
-                  <span className="text-noir-text-muted">×</span>
-                  <input
-                    type="number"
-                    placeholder="reps"
-                    disabled={isFuture}
-                    className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
-                    value={log.reps}
-                    onChange={(e) => handleUpdateLocalLog(i, "reps", e.target.value)}
-                  />
-                  <div className="flex gap-1 ml-auto">
-                    <button 
-                      onClick={() => handleUpdateLocalLog(i, "rating", "easy")} 
-                      disabled={isFuture}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${log.rating === 'easy' ? 'bg-green-500/20 text-green-500 border border-green-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-green-500'}`}
-                    >E</button>
-                    <button 
-                      onClick={() => handleUpdateLocalLog(i, "rating", "hard")} 
-                      disabled={isFuture}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${log.rating === 'hard' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-yellow-500'}`}
-                    >M</button>
-                    <button 
-                      onClick={() => handleUpdateLocalLog(i, "rating", "extreme")} 
-                      disabled={isFuture}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${log.rating === 'extreme' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-red-500'}`}
-                    >H</button>
-                  </div>
-                </div>
-
-                {prevLogs[i] && prevLogs[i].weight && (
-                  <div className="text-[10px] text-noir-text-muted ml-10">
-                    Last Week: {prevLogs[i].weight}kg × {prevLogs[i].reps} 
-                    {prevLogs[i].rating === 'easy' && ' 🟢 Easy'}
-                    {prevLogs[i].rating === 'hard' && ' 🟡 Med'}
-                    {prevLogs[i].rating === 'extreme' && ' 🔴 Hard'}
-                  </div>
-                )}
-
-                {/* Render 2 additional drop inputs for the final drop set */}
-                {showDropSets && (
-                  <div className="mt-2 ml-4 pl-3 border-l-2 border-noir-accent/30 space-y-2 relative">
-                    <div className="absolute -left-[14px] top-[-10px] w-3 h-4 border-b-2 border-l-2 border-noir-accent/30 rounded-bl-md"></div>
-                    <div className="flex gap-2 items-center">
-                      <span className="w-12 text-[10px] uppercase font-bold text-noir-accent tracking-widest text-right">Drop 1</span>
-                      <input
-                        type="number"
-                        placeholder="kg"
-                        disabled={isFuture}
-                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
-                        value={log.drops?.[0]?.weight || ""}
-                        onChange={(e) => handleUpdateDropLog(i, 0, "weight", e.target.value)}
-                      />
-                      <span className="text-noir-text-muted">×</span>
-                      <input
-                        type="number"
-                        placeholder="reps"
-                        disabled={isFuture}
-                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
-                        value={log.drops?.[0]?.reps || ""}
-                        onChange={(e) => handleUpdateDropLog(i, 0, "reps", e.target.value)}
-                      />
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <span className="w-12 text-[10px] uppercase font-bold text-noir-accent tracking-widest text-right">Drop 2</span>
-                      <input
-                        type="number"
-                        placeholder="kg"
-                        disabled={isFuture}
-                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
-                        value={log.drops?.[1]?.weight || ""}
-                        onChange={(e) => handleUpdateDropLog(i, 1, "weight", e.target.value)}
-                      />
-                      <span className="text-noir-text-muted">×</span>
-                      <input
-                        type="number"
-                        placeholder="reps"
-                        disabled={isFuture}
-                        className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50"
-                        value={log.drops?.[1]?.reps || ""}
-                        onChange={(e) => handleUpdateDropLog(i, 1, "reps", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Actions row */}
-        <div className="flex gap-2 items-center pt-3 border-t border-noir-border justify-between">
-          <div className="flex items-center gap-2 px-2 text-sm">
-            <button 
-              onClick={(e) => { e.stopPropagation(); startTimer(effectiveRest); }} 
-              className="flex items-center gap-1 text-xs font-bold text-noir-accent uppercase tracking-wider hover:opacity-80 transition-colors bg-noir-accent/10 px-3 py-1.5 rounded-lg border border-noir-accent/30"
-            >
-              Start {effectiveRest}s Rest
-            </button>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={handleDeleteExercise} className="px-3 py-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text-muted hover:text-red-500 hover:border-red-500 transition-colors min-h-[44px] text-xs font-bold uppercase tracking-wider">Remove</button>
-            <button onClick={handleCompare} disabled={isFuture || activeWeek <= 1} className="flex items-center gap-1 p-2 rounded-lg text-noir-text-muted hover:text-noir-accent hover:bg-noir-accent/10 transition-colors disabled:opacity-50 text-xs font-bold uppercase tracking-wider"><History size={16} /> Pull</button>
-            <button onClick={(e) => { e.stopPropagation(); setShowClearConfirm(true); }} className="p-2 rounded-lg text-noir-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"><Trash2 size={18} /></button>
-          </div>
-        </div>
-      </div>
-
-      {exercise.gif_url && (
-        <ExerciseVideoModal
-          isOpen={isVideoModalOpen}
-          onClose={() => setIsVideoModalOpen(false)}
-          videoUrl={exercise.gif_url}
-          exerciseName={exercise.name}
-        />
-      )}
-    </div>
-  );
-}
-
-const CATEGORIES = [
-  { id: "chest", name: "Chest", parts: ["pectorals", "serratus anterior"], IconFallback: GiMuscularTorso },
-  { id: "back", name: "Back", parts: ["lats", "upper back", "traps", "levator scapulae"], iconUrl: "/back.png", IconFallback: GiSpineArrow },
-  { id: "shoulders", name: "Shoulders", parts: ["delts"], iconUrl: "/Shoulder.png", IconFallback: GiShoulderArmor },
-  { id: "biceps", name: "Biceps", parts: ["biceps"], iconUrl: "/bicep.png", IconFallback: GiBiceps },
-  { id: "triceps", name: "Triceps", parts: ["triceps"], iconUrl: "/Tricep.png", IconFallback: GiArm },
-  { id: "legs", name: "Legs", parts: ["quads", "glutes", "hamstrings", "calves", "adductors", "abductors"], iconUrl: "/legs.png", IconFallback: GiLeg },
-  { id: "core", name: "Core", parts: ["abs", "spine"], iconUrl: "/core.png", IconFallback: GiAbdominalArmor },
-  { id: "cardio", name: "Cardio", parts: ["cardiovascular system"], IconFallback: GiHeartBeats },
-];
-
-function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: () => void; onAdd: (ex: any, scope: "today" | "every_week") => void }) {
-  const [view, setView] = useState<"categories" | "list" | "setup">("categories");
-  const [selectedCategory, setSelectedCategory] = useState<typeof CATEGORIES[0] | null>(null);
-  const [selectedExercise, setSelectedExercise] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  
-  // Setup state
-  const [sets, setSets] = useState("3");
-  const [reps, setReps] = useState("8-10");
-  const [rest, setRest] = useState("60");
-  const [scope, setScope] = useState<"today" | "every_week">("today");
-  
-  const [dbExercises, setDbExercises] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (isOpen && dbExercises.length === 0) {
-      fetch('/data/exercises.json')
-        .then(res => res.json())
-        .then(data => setDbExercises(data))
-        .catch(err => console.error("Failed to load exercise db:", err));
-    }
-    if (isOpen) {
-      // Reset state on open
-      setView("categories");
-      setSearchTerm("");
-      setSelectedCategory(null);
-      setSelectedExercise(null);
-    }
-  }, [isOpen, dbExercises.length]);
-
-  if (!isOpen) return null;
-
-  const handleAdd = () => {
-    onAdd({
-      id: `custom_${Date.now()}`,
-      name: selectedExercise.name,
-      sets: parseInt(sets, 10) || 3,
-      reps,
-      rest: parseInt(rest, 10) || 60,
-      gif_url: selectedExercise.g
-    }, scope);
-    onClose();
-  };
-
-  // Filter exercises based on view
-  let displayedExercises: any[] = [];
-  if (searchTerm.length >= 2) {
-    displayedExercises = dbExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  } else if (selectedCategory) {
-    displayedExercises = dbExercises.filter(ex => selectedCategory.parts.includes(ex.t));
-  }
-
-  return (
-    <div className="fixed inset-0 z-[100] flex justify-center md:items-center md:p-4 bg-noir-bg animate-in fade-in">
-      <div className="bg-noir-surface border-0 md:border md:border-noir-border md:rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col h-[100dvh] md:h-auto md:max-h-[90vh]">
-        
-        {/* Header */}
-        <div className="p-4 border-b border-noir-border flex items-center gap-3 relative bg-noir-surface/50">
-          {(view === "list" || view === "setup" || searchTerm) && (
-            <button 
-              onClick={() => {
-                if (view === "setup") {
-                  setView(searchTerm ? "categories" : "list");
-                  if (searchTerm) setSearchTerm("");
-                } else {
-                  setView("categories");
-                  setSearchTerm("");
-                  setSelectedCategory(null);
-                }
-              }}
-              className="p-2 rounded-full hover:bg-noir-bg text-noir-text-muted hover:text-noir-accent transition-colors"
-            >
-              <ArrowRight size={18} className="rotate-180" />
-            </button>
-          )}
-          <h2 className="text-xl font-bold flex-1">
-            {view === "setup" ? "Configure Set" : selectedCategory && !searchTerm ? selectedCategory.name : "Add Exercise"}
-          </h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-noir-bg text-noir-text-muted hover:text-white transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 pb-32 flex flex-col gap-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          
-          {/* Search Bar */}
-          {view !== "setup" && (
-            <div className="relative shrink-0">
-              <input 
-                type="text" 
-                value={searchTerm} 
-                onChange={e => setSearchTerm(e.target.value)} 
-                className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 pl-10 text-noir-text focus:outline-none focus:border-noir-accent placeholder:text-noir-text-muted/50" 
-                placeholder="Search 1,300+ exercises..." 
-              />
-              <Search className="absolute left-3 top-3.5 text-noir-text-muted" size={18} />
-            </div>
-          )}
-
-          {/* Categories Grid */}
-          {view === "categories" && !searchTerm && (
-            <div className="grid grid-cols-2 gap-3 mt-2">
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => {
-                    setSelectedCategory(cat);
-                    setView("list");
-                  }}
-                  className="bg-noir-bg border border-noir-border hover:border-noir-accent p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-lg group"
-                >
-                  <div className="text-noir-text-muted group-hover:text-noir-accent transition-colors duration-300">
-                    {cat.iconUrl ? (
-                      <img src={cat.iconUrl} alt={cat.name} className="w-12 h-12 object-contain brightness-0 invert opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
-                    ) : (
-                      <cat.IconFallback size={32} strokeWidth={1.5} />
-                    )}
-                  </div>
-                  <span className="font-bold text-sm tracking-wide text-noir-text-muted group-hover:text-white transition-colors">{cat.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Exercise List */}
-          {(view === "list" || searchTerm.length >= 2) && view !== "setup" && (
-            <div className="flex flex-col gap-2 mt-2 pb-10">
-              {displayedExercises.slice(0, 50).map(ex => (
-                <div 
-                  key={ex.id}
-                  onClick={() => {
-                    setSelectedExercise({ name: ex.name, g: ex.g });
-                    setView("setup");
-                  }}
-                  className="flex items-center gap-4 p-3 bg-noir-bg border border-noir-border rounded-xl cursor-pointer hover:border-noir-accent hover:shadow-lg transition-all group"
-                >
-                  {ex.g ? (
-                    <img 
-                      src={ex.g} 
-                      alt={ex.name}
-                      loading="lazy"
-                      className="w-16 h-16 rounded-lg object-cover bg-noir-surface flex-shrink-0 opacity-80 group-hover:opacity-100 transition-opacity"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-lg bg-noir-surface border border-noir-border/50 flex items-center justify-center flex-shrink-0 text-noir-text-muted group-hover:text-noir-accent group-hover:border-noir-accent/50 transition-colors">
-                      <Dumbbell size={20} />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm truncate group-hover:text-noir-accent transition-colors capitalize">{ex.name}</h3>
-                    <p className="text-[10px] text-noir-text-muted uppercase tracking-wider mt-1">{ex.b} • {ex.t}</p>
-                  </div>
-                  <ChevronRight size={16} className="text-noir-text-muted group-hover:text-noir-accent flex-shrink-0" />
-                </div>
-              ))}
-              {displayedExercises.length === 0 && (
-                <div className="text-center py-10 text-noir-text-muted">No exercises found.</div>
-              )}
-            </div>
-          )}
-
-          {/* Setup View */}
-          {view === "setup" && selectedExercise && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="flex flex-col items-center text-center mb-2">
-                {selectedExercise.g ? (
-                  <div className="relative w-full h-32 rounded-xl border border-noir-border mb-3 overflow-hidden bg-white shadow-xl flex items-center justify-center p-2">
-                    <img src={selectedExercise.g} alt={selectedExercise.name} className="w-full h-full object-contain" />
-                  </div>
-                ) : (
-                  <div className="w-full aspect-video rounded-xl border border-noir-border mb-4 bg-noir-bg flex items-center justify-center shadow-xl text-noir-text-muted">
-                    <Dumbbell size={48} className="opacity-20" />
-                  </div>
-                )}
-                <h3 className="text-xl font-black capitalize text-white">{selectedExercise.name}</h3>
-              </div>
-              
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Sets</label>
-                  <input type="number" value={sets} onChange={e => setSets(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-lg transition-all" />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Reps</label>
-                  <input type="text" value={reps} onChange={e => setReps(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-lg transition-all" placeholder="8-10" />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Rest (s)</label>
-                  <input type="number" value={rest} onChange={e => setRest(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-lg transition-all" />
-                </div>
-              </div>
-              
-              <div className="pt-2">
-                <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-3 tracking-widest">Frequency</label>
-                <div className="flex gap-4">
-                  <label className="flex-1 flex flex-col items-center gap-2 cursor-pointer relative">
-                    <input type="radio" checked={scope === "today"} onChange={() => setScope("today")} className="peer sr-only" />
-                    <div className="w-full p-3 rounded-xl border border-noir-border text-center peer-checked:bg-noir-accent/10 peer-checked:border-noir-accent peer-checked:text-noir-accent transition-all">
-                      <span className="text-sm font-bold">Today Only</span>
-                    </div>
-                  </label>
-                  <label className="flex-1 flex flex-col items-center gap-2 cursor-pointer relative">
-                    <input type="radio" checked={scope === "every_week"} onChange={() => setScope("every_week")} className="peer sr-only" />
-                    <div className="w-full p-3 rounded-xl border border-noir-border text-center peer-checked:bg-noir-accent/10 peer-checked:border-noir-accent peer-checked:text-noir-accent transition-all">
-                      <span className="text-sm font-bold">Every Week</span>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <button 
-                onClick={handleAdd}
-                className="w-full bg-noir-accent text-noir-bg font-black py-4 rounded-xl hover:opacity-90 transition-opacity mt-4 flex items-center justify-center gap-2 shadow-lg"
-              >
-                <Check size={20} /> ADD TO ROUTINE
-              </button>
-            </div>
-          )}
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function WorkoutLogger() {
-  const { state, addCustomExercise, setCustomDayRoutine } = useProtocol();
+  const { state, addCustomExercise, setCustomDayRoutine, addCompoundGroup } = useProtocol();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isGiantSetModalOpen, setIsGiantSetModalOpen] = useState(false);
   const [isEditRoutineModalOpen, setIsEditRoutineModalOpen] = useState(false);
   const [routineNameEdit, setRoutineNameEdit] = useState("");
   const [routineFocusEdit, setRoutineFocusEdit] = useState("");
   
   const activeProgram = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
   const dateStr = getProtocolDateString(state.activeWeek, state.activeDayOfWeek);
-
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayStr = getTodayDateString();
   const isFuture = dateStr > todayStr;
 
   // Merge custom routines
@@ -698,16 +123,29 @@ export default function WorkoutLogger() {
   }
 
   const dailyExtras = state.customDailyExercises?.[dateStr] || [];
-  const finalExercises = mergedRoutine ? [...mergedRoutine.exercises, ...dailyExtras] : [...dailyExtras];
+  const compoundGroups = state.compoundGroups?.[dateStr] || [];
+  const finalExercises: Exercise[] = mergedRoutine ? [...mergedRoutine.exercises, ...dailyExtras] : [...dailyExtras];
 
+  // Filter out exercises that are part of a superset pair (show superset partner inline in the card)
+  // Don't filter — both exercises render their own card, and the card shows the link
+  
   const logsForDay = state.workoutLogs[dateStr] || {};
   let isComplete = false;
-  if (finalExercises.length > 0) {
-    isComplete = finalExercises.every(ex => {
+  if (finalExercises.length > 0 || compoundGroups.length > 0) {
+    const exercisesComplete = finalExercises.length === 0 || finalExercises.every(ex => {
       const exLogs = logsForDay[ex.id] || [];
       if (exLogs.length < ex.sets) return false;
       return exLogs.slice(0, ex.sets).every(log => log && log.weight !== "" && log.reps !== "");
     });
+
+    const groupsComplete = compoundGroups.length === 0 || compoundGroups.every(group => {
+      return group.exercises.every(ex => {
+        const exLogs = logsForDay[ex.id] || [];
+        return exLogs.length >= group.rounds && exLogs.every(l => l.weight !== "" && l.reps !== "");
+      });
+    });
+
+    isComplete = exercisesComplete && groupsComplete;
   }
 
   const prevDateRef = useRef(dateStr);
@@ -732,21 +170,31 @@ export default function WorkoutLogger() {
     prevIsCompleteRef.current = isComplete;
   }, [isComplete, dateStr]);
 
+  const hasContent = finalExercises.length > 0 || compoundGroups.length > 0;
+
   return (
     <>
       <div className="space-y-6 animate-in fade-in duration-500 pb-20">
         <DaySelector />
 
-      {finalExercises.length === 0 ? (
+      {!hasContent ? (
         <div className="p-8 text-center bg-noir-surface rounded-xl border border-noir-border shadow-lg">
           <h2 className="text-2xl font-bold mb-2">Rest Day</h2>
           <p className="text-noir-text-muted mb-6">Recovery is where growth happens. Focus on hydration, nutrition, and sleep.</p>
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="px-6 py-3 border-2 border-dashed border-noir-border rounded-xl text-noir-text-muted hover:text-noir-accent hover:border-noir-accent hover:bg-noir-accent/5 transition-all inline-flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-sm"
-          >
-            + Add Exercise Anyway
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="px-6 py-3 border-2 border-dashed border-noir-border rounded-xl text-noir-text-muted hover:text-noir-accent hover:border-noir-accent hover:bg-noir-accent/5 transition-all inline-flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-sm"
+            >
+              + Add Exercise
+            </button>
+            <button 
+              onClick={() => setIsGiantSetModalOpen(true)}
+              className="px-6 py-3 border-2 border-dashed border-purple-500/30 rounded-xl text-noir-text-muted hover:text-purple-400 hover:border-purple-400 hover:bg-purple-400/5 transition-all inline-flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-sm"
+            >
+              🔄 Create Giant Set
+            </button>
+          </div>
         </div>
       ) : (
         <>
@@ -775,6 +223,7 @@ export default function WorkoutLogger() {
           )}
 
           <div className="space-y-4">
+            {/* Regular Exercises */}
             {finalExercises.map((ex, index) => (
               <ExerciseCard
                 key={ex.id}
@@ -784,15 +233,35 @@ export default function WorkoutLogger() {
                 isFinal={index === finalExercises.length - 1}
                 dateStr={dateStr}
                 isFuture={isFuture}
+                allExercises={finalExercises}
+              />
+            ))}
+
+            {/* Compound/Giant Sets */}
+            {compoundGroups.map(group => (
+              <CompoundSetCard
+                key={group.id}
+                group={group}
+                dateStr={dateStr}
+                isFuture={isFuture}
               />
             ))}
             
-            <button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="w-full py-4 border-2 border-dashed border-noir-border rounded-xl text-noir-text-muted hover:text-noir-accent hover:border-noir-accent hover:bg-noir-accent/5 transition-all flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-sm"
-            >
-              + Add Exercise
-            </button>
+            {/* Add buttons */}
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex-1 py-4 border-2 border-dashed border-noir-border rounded-xl text-noir-text-muted hover:text-noir-accent hover:border-noir-accent hover:bg-noir-accent/5 transition-all flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-sm"
+              >
+                <Plus size={16} /> Add Exercise
+              </button>
+              <button 
+                onClick={() => setIsGiantSetModalOpen(true)}
+                className="py-4 px-4 border-2 border-dashed border-purple-500/30 rounded-xl text-noir-text-muted hover:text-purple-400 hover:border-purple-400 hover:bg-purple-400/5 transition-all flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-sm"
+              >
+                🔄 Giant Set
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -802,6 +271,12 @@ export default function WorkoutLogger() {
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onAdd={(ex, scope) => addCustomExercise(ex, scope, state.activeDayOfWeek, dateStr)} 
+      />
+
+      <CreateGiantSetModal
+        isOpen={isGiantSetModalOpen}
+        onClose={() => setIsGiantSetModalOpen(false)}
+        onAdd={(group) => addCompoundGroup(dateStr, group)}
       />
 
       <TourGuide />

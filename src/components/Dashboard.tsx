@@ -1,18 +1,9 @@
 "use client";
 
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { PROTOCOL_START_DATE } from "@/data/protocol";
-import { Play, Activity, Flame, Medal } from "lucide-react";
+import { Play, Activity, Flame } from "lucide-react";
 import PersonalRecords from "./PersonalRecords";
-
-function getProtocolDateString(week: number, dayNum: number) {
-  const date = new Date(PROTOCOL_START_DATE);
-  date.setDate(date.getDate() + ((week - 1) * 7 + (dayNum - 1)));
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+import { getProtocolDateString, calculateVolume } from "@/lib/dateUtils";
 
 export default function Dashboard({ 
   avatarUrl, 
@@ -33,19 +24,16 @@ export default function Dashboard({
     }
   }
 
-  // Calculate overall stats
+  // Calculate overall stats — now includes drop set volume via shared utility
   let totalWorkouts = 0;
   let totalVolume = 0;
   Object.keys(state.workoutLogs).forEach(date => {
     const dayLogs = state.workoutLogs[date];
     let hasValid = false;
-    Object.values(dayLogs).forEach((logs: any) => {
-      logs.forEach((log: any) => {
-        const w = parseFloat(log.weight) || 0;
-        const r = parseInt(log.reps) || 0;
-        if (w > 0 || r > 0) hasValid = true;
-        totalVolume += w * r;
-      });
+    Object.values(dayLogs).forEach((logs) => {
+      const vol = calculateVolume(logs);
+      if (vol > 0) hasValid = true;
+      totalVolume += vol;
     });
     if (hasValid) totalWorkouts++;
   });
