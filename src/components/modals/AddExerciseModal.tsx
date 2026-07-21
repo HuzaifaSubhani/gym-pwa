@@ -68,6 +68,16 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
     }
   }, [isOpen, dbExercises.length]);
 
+  // Auto-switch view based on search
+  useEffect(() => {
+    if (deferredSearchTerm.trim().length > 0 && view === "categories") {
+      setView("list");
+      setSelectedCategory(null);
+    } else if (deferredSearchTerm.trim().length === 0 && view === "list" && !selectedCategory) {
+      setView("categories");
+    }
+  }, [deferredSearchTerm, view, selectedCategory]);
+
   if (!isOpen) return null;
 
   const handleAdd = () => {
@@ -106,16 +116,6 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
   } else if (selectedCategory) {
     displayedExercises = dbExercises.filter(ex => selectedCategory.parts.includes(ex.t));
   }
-
-  // Auto-switch view based on search
-  useEffect(() => {
-    if (deferredSearchTerm.trim().length > 0 && view === "categories") {
-      setView("list");
-      setSelectedCategory(null);
-    } else if (deferredSearchTerm.trim().length === 0 && view === "list" && !selectedCategory) {
-      setView("categories");
-    }
-  }, [deferredSearchTerm, view, selectedCategory]);
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-center md:items-center md:p-4 bg-noir-bg animate-in fade-in">
