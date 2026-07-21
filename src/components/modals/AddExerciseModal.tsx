@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Check, ChevronRight, ArrowRight, X, Search, Dumbbell } from "lucide-react";
+import { useState, useEffect, useDeferredValue } from "react";
+import { Check, ChevronRight, ArrowRight, X, Search, Dumbbell, Plus, Flame, Activity } from "lucide-react";
+import Image from "next/image";
 import { Exercise, SetType } from "@/data/protocol";
 import { GiMuscularTorso, GiBiceps, GiArm, GiLeg, GiHeartBeats, GiShoulderArmor, GiAbdominalArmor, GiSpineArrow } from "react-icons/gi";
 
@@ -11,9 +12,12 @@ const CATEGORIES = [
   { id: "shoulders", name: "Shoulders", parts: ["delts"], iconUrl: "/Shoulder.png", IconFallback: GiShoulderArmor },
   { id: "biceps", name: "Biceps", parts: ["biceps"], iconUrl: "/bicep.png", IconFallback: GiBiceps },
   { id: "triceps", name: "Triceps", parts: ["triceps"], iconUrl: "/Tricep.png", IconFallback: GiArm },
+  { id: "forearms", name: "Forearms", parts: ["forearms"], IconFallback: GiArm },
   { id: "legs", name: "Legs", parts: ["quads", "glutes", "hamstrings", "calves", "adductors", "abductors"], iconUrl: "/legs.png", IconFallback: GiLeg },
   { id: "core", name: "Core", parts: ["abs", "spine"], iconUrl: "/core.png", IconFallback: GiAbdominalArmor },
   { id: "cardio", name: "Cardio", parts: ["cardiovascular system"], IconFallback: GiHeartBeats },
+  { id: "stretching", name: "Stretching", parts: ["stretching", "flexibility"], IconFallback: Activity },
+  { id: "warmup", name: "Warmup", parts: ["warmup", "mobility"], IconFallback: Flame },
 ];
 
 type ExerciseDBEntry = {
@@ -33,6 +37,7 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
   const [selectedCategory, setSelectedCategory] = useState<typeof CATEGORIES[0] | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<ExerciseDBEntry | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   
   // Setup state
   const [sets, setSets] = useState("3");
@@ -80,13 +85,34 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
     onClose();
   };
 
+  const handleCustomExerciseSubmit = () => {
+    if (!searchTerm.trim()) return;
+    setSelectedExercise({
+      id: `custom_db_${Date.now()}`,
+      name: searchTerm,
+      t: "custom",
+      b: "custom",
+    });
+    setView("setup");
+  };
+
   // Filter exercises based on view
   let displayedExercises: ExerciseDBEntry[] = [];
-  if (searchTerm.length >= 2) {
-    displayedExercises = dbExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  if (deferredSearchTerm.trim().length > 0) {
+    displayedExercises = dbExercises.filter(ex => ex.name.toLowerCase().includes(deferredSearchTerm.toLowerCase()));
   } else if (selectedCategory) {
     displayedExercises = dbExercises.filter(ex => selectedCategory.parts.includes(ex.t));
   }
+
+  // Auto-switch view based on search
+  useEffect(() => {
+    if (deferredSearchTerm.trim().length > 0 && view === "categories") {
+      setView("list");
+      setSelectedCategory(null);
+    } else if (deferredSearchTerm.trim().length === 0 && view === "list" && !selectedCategory) {
+      setView("categories");
+    }
+  }, [deferredSearchTerm, view, selectedCategory]);
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-center md:items-center md:p-4 bg-noir-bg animate-in fade-in">
@@ -98,8 +124,7 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
             <button 
               onClick={() => {
                 if (view === "setup") {
-                  setView(searchTerm ? "categories" : "list");
-                  if (searchTerm) setSearchTerm("");
+                  setView(searchTerm ? "list" : (selectedCategory ? "list" : "categories"));
                 } else {
                   setView("categories");
                   setSearchTerm("");
@@ -120,16 +145,16 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 pb-32 flex flex-col gap-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           
-          {/* Search Bar */}
+          {/* Always visible Search Bar (except setup) */}
           {view !== "setup" && (
-            <div className="relative shrink-0">
+            <div className="relative shrink-0 sticky top-0 z-10 bg-noir-surface pb-2">
               <input 
                 type="text" 
                 value={searchTerm} 
                 onChange={e => setSearchTerm(e.target.value)} 
-                className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 pl-10 text-noir-text focus:outline-none focus:border-noir-accent placeholder:text-noir-text-muted/50" 
+                className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 pl-10 text-noir-text focus:outline-none focus:border-noir-accent placeholder:text-noir-text-muted/50 shadow-sm" 
                 placeholder="Search 1,300+ exercises..." 
               />
               <Search className="absolute left-3 top-3.5 text-noir-text-muted" size={18} />
@@ -138,7 +163,7 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
 
           {/* Categories Grid */}
           {view === "categories" && !searchTerm && (
-            <div className="grid grid-cols-2 gap-3 mt-2">
+            <div className="grid grid-cols-2 gap-3 mt-2 pb-10">
               {CATEGORIES.map(cat => (
                 <button
                   key={cat.id}
@@ -148,9 +173,9 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
                   }}
                   className="bg-noir-bg border border-noir-border hover:border-noir-accent p-4 rounded-xl flex flex-col items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:shadow-lg group"
                 >
-                  <div className="text-noir-text-muted group-hover:text-noir-accent transition-colors duration-300">
+                  <div className="text-noir-text-muted group-hover:text-noir-accent transition-colors duration-300 relative w-12 h-12">
                     {cat.iconUrl ? (
-                      <img src={cat.iconUrl} alt={cat.name} className="w-12 h-12 object-contain brightness-0 invert opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
+                      <Image src={cat.iconUrl} alt={cat.name} fill className="object-contain brightness-0 invert opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
                     ) : (
                       <cat.IconFallback size={32} strokeWidth={1.5} />
                     )}
@@ -162,7 +187,7 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
           )}
 
           {/* Exercise List */}
-          {(view === "list" || searchTerm.length >= 2) && view !== "setup" && (
+          {view === "list" && (
             <div className="flex flex-col gap-2 mt-2 pb-10">
               {displayedExercises.slice(0, 50).map(ex => (
                 <div 
@@ -174,15 +199,18 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
                   className="flex items-center gap-4 p-3 bg-noir-bg border border-noir-border rounded-xl cursor-pointer hover:border-noir-accent hover:shadow-lg transition-all group"
                 >
                   {ex.g ? (
-                    <img 
-                      src={ex.g} 
-                      alt={ex.name}
-                      loading="lazy"
-                      className="w-16 h-16 rounded-lg object-cover bg-noir-surface flex-shrink-0 opacity-80 group-hover:opacity-100 transition-opacity"
-                    />
+                    <div className="w-12 h-12 rounded-lg bg-noir-surface flex-shrink-0 relative overflow-hidden opacity-80 group-hover:opacity-100 transition-opacity">
+                      <Image 
+                        src={ex.g} 
+                        alt={ex.name}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    </div>
                   ) : (
-                    <div className="w-16 h-16 rounded-lg bg-noir-surface border border-noir-border/50 flex items-center justify-center flex-shrink-0 text-noir-text-muted group-hover:text-noir-accent group-hover:border-noir-accent/50 transition-colors">
-                      <Dumbbell size={20} />
+                    <div className="w-12 h-12 rounded-lg bg-noir-surface border border-noir-border/50 flex items-center justify-center flex-shrink-0 text-noir-text-muted group-hover:text-noir-accent group-hover:border-noir-accent/50 transition-colors">
+                      <Dumbbell size={16} />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
@@ -192,39 +220,50 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
                   <ChevronRight size={16} className="text-noir-text-muted group-hover:text-noir-accent flex-shrink-0" />
                 </div>
               ))}
-              {displayedExercises.length === 0 && (
-                <div className="text-center py-10 text-noir-text-muted">No exercises found.</div>
+              
+              {/* Create Custom fallback */}
+              {searchTerm.trim().length > 0 && (
+                <button 
+                  onClick={handleCustomExerciseSubmit}
+                  className="flex items-center justify-center gap-2 p-4 mt-2 bg-noir-bg border border-dashed border-noir-accent/50 text-noir-accent rounded-xl hover:bg-noir-accent/10 transition-colors font-bold text-sm"
+                >
+                  <Plus size={16} /> Use "{searchTerm}" as Custom Exercise
+                </button>
+              )}
+
+              {displayedExercises.length === 0 && searchTerm.trim().length === 0 && (
+                <div className="text-center py-10 text-noir-text-muted">No exercises found for this category.</div>
               )}
             </div>
           )}
 
           {/* Setup View */}
           {view === "setup" && selectedExercise && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 pb-10">
               <div className="flex flex-col items-center text-center mb-2">
                 {selectedExercise.g ? (
                   <div className="relative w-full h-32 rounded-xl border border-noir-border mb-3 overflow-hidden bg-white shadow-xl flex items-center justify-center p-2">
-                    <img src={selectedExercise.g} alt={selectedExercise.name} className="w-full h-full object-contain" />
+                    <Image src={selectedExercise.g} alt={selectedExercise.name} fill sizes="(max-width: 768px) 100vw, 400px" className="object-contain" />
                   </div>
                 ) : (
-                  <div className="w-full aspect-video rounded-xl border border-noir-border mb-4 bg-noir-bg flex items-center justify-center shadow-xl text-noir-text-muted">
-                    <Dumbbell size={48} className="opacity-20" />
+                  <div className="w-full aspect-video max-h-32 rounded-xl border border-noir-border mb-4 bg-noir-bg flex items-center justify-center shadow-xl text-noir-text-muted">
+                    <Dumbbell size={32} className="opacity-20" />
                   </div>
                 )}
                 <h3 className="text-xl font-black capitalize text-white">{selectedExercise.name}</h3>
               </div>
               
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Sets</label>
+                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest text-center">Sets</label>
                   <input type="number" value={sets} onChange={e => setSets(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-lg transition-all" />
                 </div>
-                <div className="flex-1">
-                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Reps</label>
+                <div className="flex-[1.5]">
+                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest text-center">Reps</label>
                   <input type="text" value={reps} onChange={e => setReps(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-lg transition-all" placeholder="8-10" />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Rest (s)</label>
+                  <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest text-center">Rest (s)</label>
                   <input type="number" value={rest} onChange={e => setRest(e.target.value)} className="w-full bg-noir-bg border border-noir-border rounded-xl p-3 text-center font-bold text-lg text-white focus:outline-none focus:border-noir-accent focus:shadow-lg transition-all" />
                 </div>
               </div>
@@ -294,16 +333,23 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
                 </div>
               </div>
 
-              <button 
-                onClick={handleAdd}
-                className="w-full bg-noir-accent text-noir-bg font-black py-4 rounded-xl hover:opacity-90 transition-opacity mt-4 flex items-center justify-center gap-2 shadow-lg"
-              >
-                <Check size={20} /> ADD TO ROUTINE
-              </button>
             </div>
           )}
 
         </div>
+        
+        {/* Floating action button for Setup view */}
+        {view === "setup" && (
+           <div className="p-4 border-t border-noir-border bg-noir-surface">
+            <button 
+              onClick={handleAdd}
+              className="w-full bg-noir-accent text-noir-bg font-black py-4 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg"
+            >
+              <Check size={20} /> ADD TO ROUTINE
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   );

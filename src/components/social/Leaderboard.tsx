@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Trophy, Dumbbell, Medal, Loader2, ArrowRight, Swords, Check, X, Flame, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useProtocol } from "@/hooks/useProtocolStore";
 
 type Profile = {
@@ -608,6 +609,7 @@ export default function Leaderboard() {
         </div>
         <div className="space-y-2">
           {displayEntries
+            .filter(entry => entry.workouts > 0)
             .filter(entry => activeFilter === "overall" || entry.physique_tag === activeFilter)
             .map((entry, index) => {
               const isCurrentUser = entry.id === user?.id;
@@ -647,9 +649,11 @@ export default function Leaderboard() {
                 <div className="flex-1 ml-3 flex items-center gap-3 min-w-0">
                   <div className="relative">
                     {entry.avatar_url ? (
-                      <img 
+                      <Image 
                         src={entry.avatar_url} 
                         alt="DP" 
+                        width={56}
+                        height={56}
                         style={{ objectPosition: `50% ${entry.avatar_position}%` }}
                         className={`w-14 h-14 rounded-full border-2 object-cover flex-shrink-0 shadow-inner ${isTop3 ? 'border-transparent' : 'border-noir-border'}`} 
                       />
@@ -736,9 +740,11 @@ export default function Leaderboard() {
             </button>
             <div className="flex flex-col items-center mt-2">
               {selectedUser.avatar_url ? (
-                <img 
+                <Image 
                   src={selectedUser.avatar_url} 
-                  alt="Avatar" 
+                  alt="Avatar"
+                  width={96}
+                  height={96}
                   className="w-24 h-24 rounded-full border-2 border-noir-accent object-cover shadow-lg mb-4"
                   style={{ objectPosition: `50% ${selectedUser.avatar_position}%` }}
                 />

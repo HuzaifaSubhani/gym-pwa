@@ -1,8 +1,9 @@
 "use client";
 
 import { useProtocol } from "@/hooks/useProtocolStore";
+import Image from "next/image";
 import { Play, Activity, Flame } from "lucide-react";
-import PersonalRecords from "./PersonalRecords";
+import PersonalRecords from "@/components/social/PersonalRecords";
 import { getProtocolDateString, calculateVolume } from "@/lib/dateUtils";
 
 export default function Dashboard({ 
@@ -68,7 +69,7 @@ export default function Dashboard({
             <p className="text-sm text-noir-text-muted mt-1">Let's crush today's goals.</p>
           </div>
           {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="w-12 h-12 rounded-full object-cover shadow-sm border border-noir-border" />
+            <Image src={avatarUrl} alt="Avatar" width={48} height={48} className="w-12 h-12 rounded-full object-cover shadow-sm border border-noir-border" />
           ) : (
             <div className="w-12 h-12 rounded-full bg-noir-bg border border-noir-border flex items-center justify-center shadow-sm">
               <span className="text-noir-text-muted font-medium">{username?.charAt(0)?.toUpperCase() || "U"}</span>

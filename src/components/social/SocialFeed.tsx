@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Image from "next/image";
 import { Loader2, Heart, Share2, Medal, User as UserIcon, Trash2, MessageCircle, Send, Edit2, X, CornerDownRight } from "lucide-react";
 
 type FeedComment = {
@@ -257,9 +258,11 @@ export default function SocialFeed({ currentUser }: { currentUser: any }) {
             {/* Header */}
             <div className="flex items-center gap-3 mb-4">
               {post.profile.avatar_url ? (
-                <img 
+                <Image 
                   src={post.profile.avatar_url} 
                   alt="DP" 
+                  width={40}
+                  height={40}
                   className="w-10 h-10 rounded-full border border-noir-border object-cover"
                   style={{ objectPosition: `50% ${post.profile.avatar_position ?? 50}%` }}
                 />
@@ -357,7 +360,7 @@ export default function SocialFeed({ currentUser }: { currentUser: any }) {
                           
                           <div className="flex gap-3">
                             {c.profile.avatar_url ? (
-                              <img src={c.profile.avatar_url} alt="DP" className="w-8 h-8 rounded-full border border-noir-border object-cover flex-shrink-0" style={{ objectPosition: `50% ${c.profile.avatar_position ?? 50}%` }} />
+                              <Image src={c.profile.avatar_url} alt="DP" width={32} height={32} className="w-8 h-8 rounded-full border border-noir-border object-cover flex-shrink-0" style={{ objectPosition: `50% ${c.profile.avatar_position ?? 50}%` }} />
                             ) : (
                               <div className="w-8 h-8 rounded-full bg-noir-bg border border-noir-border flex items-center justify-center text-noir-text-muted text-xs flex-shrink-0"><UserIcon size={14} /></div>
                             )}

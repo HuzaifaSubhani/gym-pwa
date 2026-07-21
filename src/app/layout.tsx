@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ProtocolProvider } from "@/hooks/useProtocolStore";
-import RestTimer from "@/components/RestTimer";
+import RestTimer from "@/components/workouts/RestTimer";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -27,7 +27,7 @@ export const viewport: Viewport = {
   userScalable: false, // Prevents zooming on inputs for native feel
 };
 
-import ErrorBoundary from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/shared/ErrorBoundary";
 
 export default function RootLayout({
   children,

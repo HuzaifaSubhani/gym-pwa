@@ -2,9 +2,9 @@
 
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { Exercise, getIntensityDirectives } from "@/data/protocol";
-import { Check, ChevronLeft, Trash2, History, Play, Info, ChevronDown, Link, Unlink } from "lucide-react";
+import { Check, ChevronLeft, Trash2, History, Play, Info, Link, Unlink, Plus, Minus } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import ExerciseVideoModal from "./ExerciseVideoModal";
+import ExerciseVideoModal from "@/components/modals/ExerciseVideoModal";
 import { getProtocolDateString } from "@/lib/dateUtils";
 
 export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr, isFuture, allExercises }: {
@@ -73,7 +73,7 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
     setLocalLogs(synced);
     setIsDirty(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(globalExLogs), exercise.sets, dateStr]);
+  }, [globalExLogs?.map(l => `${l?.weight}-${l?.reps}-${l?.isCompleted}-${l?.isPulled}-${l?.drops?.length}`).join('|'), exercise.sets, dateStr]);
 
   // Auto-save effect
   useEffect(() => {
@@ -100,12 +100,10 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
     newLogs[setIndex] = { 
       ...newLogs[setIndex], 
       [field]: value,
-      // When user modifies a pulled set, claim it
       isPulled: false,
       isCompleted: (field !== "rating") ? (newLogs[setIndex].weight !== "" && newLogs[setIndex].reps !== "") || value !== "" : newLogs[setIndex].isCompleted,
     };
 
-    // Mark as completed when both weight and reps have values
     if (field !== "rating") {
       const w = field === "weight" ? value : newLogs[setIndex].weight;
       const r = field === "reps" ? value : newLogs[setIndex].reps;
@@ -150,6 +148,37 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
     setIsDirty(true);
   };
 
+  const handleAddDrop = (setIndex: number) => {
+    const newLogs = [...localLogs];
+    const drops = [...(newLogs[setIndex].drops || [])];
+    
+    // Fill to default drop count if empty, then add one more
+    const defaultDrops = exercise.dropConfig?.drops || 2;
+    while (drops.length < defaultDrops && !newLogs[setIndex].hasDrops && exercise.setType !== 'drop') {
+        drops.push({ weight: "", reps: "" });
+    }
+    
+    drops.push({ weight: "", reps: "" });
+    newLogs[setIndex] = { ...newLogs[setIndex], drops, hasDrops: true, isPulled: false };
+    setLocalLogs(newLogs);
+    setIsDirty(true);
+  };
+
+  const handleRemoveDrop = (setIndex: number) => {
+    const newLogs = [...localLogs];
+    const drops = [...(newLogs[setIndex].drops || [])];
+    if (drops.length > 1) {
+      drops.pop();
+      newLogs[setIndex] = { ...newLogs[setIndex], drops, hasDrops: true, isPulled: false };
+      setLocalLogs(newLogs);
+      setIsDirty(true);
+    } else if (drops.length === 1) {
+      newLogs[setIndex] = { ...newLogs[setIndex], drops: [], hasDrops: false, isPulled: false };
+      setLocalLogs(newLogs);
+      setIsDirty(true);
+    }
+  };
+
   const handleClear = () => {
     setFullExerciseLogs(dateStr, exercise.id, []);
     setShowClearConfirm(false);
@@ -173,17 +202,16 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
 
     const mergedLogs = localLogs.map((log, i) => {
       if (prevLogs[i] && log.weight === "" && log.reps === "") {
-        // Only pre-fill empty sets, and mark them as pulled (ghost data)
         return {
           weight: prevLogs[i].weight || "",
           reps: prevLogs[i].reps || "",
           drops: prevLogs[i].drops ? [...prevLogs[i].drops] : (log.drops ? [...log.drops] : []),
           hasDrops: prevLogs[i].hasDrops || log.hasDrops,
-          isPulled: true,     // Mark as ghost data from last week
-          isCompleted: false, // NOT completed yet — user needs to claim
+          isPulled: true,
+          isCompleted: false,
         };
       }
-      return log; // Don't overwrite sets that already have data
+      return log;
     });
 
     setLocalLogs(mergedLogs);
@@ -202,11 +230,9 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
     setIsDirty(true);
   };
 
-  // Determine if exercise has per-exercise drop set config
   const isDropSetExercise = exercise.setType === 'drop';
   const defaultDropCount = exercise.dropConfig?.drops || 2;
 
-  // Scroll to active set when expanded
   const activeSetRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (isExpanded && activeSetRef.current) {
@@ -240,12 +266,12 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
               ? 'bg-orange-500/20 text-orange-400 border-b border-l border-orange-500/30' 
               : 'bg-blue-500/20 text-blue-400 border-b border-l border-blue-500/30'
           }`}>
-            {exercise.setType === 'drop' ? '⬇️ Drop Set' : '🔗 Superset'}
+            {exercise.setType === 'drop' ? 'DS' : '🔗 SUPERSET'}
           </span>
         )}
         {(note || exercise.notes) && (
-          <div className="bg-noir-surface-light border-b border-l border-noir-border px-3 py-1 text-[10px] uppercase font-bold text-noir-accent tracking-widest rounded-bl-lg max-w-[70%] text-right">
-            {note || exercise.notes}
+          <div className="bg-noir-surface-light border-b border-l border-noir-border px-3 py-1 text-[10px] uppercase font-bold text-noir-accent tracking-widest rounded-bl-lg max-w-[70%] text-right whitespace-nowrap">
+            {((note || exercise.notes)?.toUpperCase() === 'PROGRESSIVE OVERLOAD DRIVER') ? 'PO' : (note || exercise.notes)}
           </div>
         )}
       </div>
@@ -262,8 +288,6 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
           </h3>
           <p className="text-xs md:text-sm text-noir-text-muted mt-1 flex items-center gap-2">
             {exercise.sets} Sets × {exercise.reps}
-            <span className="inline-block w-1 h-1 rounded-full bg-noir-border"></span>
-            {effectiveRest}s Rest
             {supersetPartner && (
               <>
                 <span className="inline-block w-1 h-1 rounded-full bg-noir-border"></span>
@@ -282,19 +306,22 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
               </>
             )}
           </p>
-          {/* Compact progress indicator when collapsed */}
+          {/* Compact progress indicator when collapsed (Hollow when empty) */}
           {!isExpanded && hasAnyData && (
             <div className="flex gap-1.5 mt-2">
-              {localLogs.map((log, i) => (
-                <div
-                  key={i}
-                  className={`w-6 h-1.5 rounded-full transition-all ${
-                    log.isPulled ? 'bg-yellow-500/40 border border-dashed border-yellow-500/50' 
-                    : (log.weight !== "" && log.reps !== "") ? 'bg-noir-accent' 
-                    : 'bg-noir-border'
-                  }`}
-                />
-              ))}
+              {localLogs.map((log, i) => {
+                const isDone = log.weight !== "" && log.reps !== "";
+                return (
+                  <div
+                    key={i}
+                    className={`w-6 h-1.5 rounded-full transition-all ${
+                      log.isPulled ? 'bg-yellow-500/40 border border-dashed border-yellow-500/50' 
+                      : isDone ? 'bg-noir-accent border border-noir-accent' 
+                      : 'bg-transparent border border-noir-border'
+                    }`}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
@@ -306,30 +333,19 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
       {/* Collapsible Content */}
       <div className={`transition-all duration-300 ease-in-out origin-top ${isExpanded ? "max-h-[2000px] opacity-100 mt-4" : "max-h-0 opacity-0 overflow-hidden"}`}>
         
-        {/* Weight Convention Banner */}
-        <div className="flex items-start gap-2 bg-noir-surface-light/50 border border-noir-border/50 rounded-lg p-2.5 mb-3 text-[10px] text-noir-text-muted">
-          <Info size={14} className="text-noir-accent shrink-0 mt-0.5" />
-          <p className="leading-tight">
-            <strong className="text-white font-bold">Rule of Iron:</strong> For barbells & machines, log the <strong className="text-noir-accent">Total Weight</strong> (inc. the bar). For dumbbells, log the weight of a <strong className="text-white">Single DB</strong>.
-          </p>
-        </div>
-
-        {/* Pulled Data Banner */}
+        {/* Pulled Data Banner (Condsensed) */}
         {localLogs.some(l => l.isPulled) && (
-          <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-2.5 mb-3 text-[10px] text-yellow-400 animate-in fade-in slide-in-from-top-2">
-            <span className="text-sm">📋</span>
-            <p className="leading-tight flex-1">
-              <strong className="font-bold">Last week&apos;s data</strong> shown as ghost values. Tap a set to claim it as today&apos;s, or modify the values.
-            </p>
+          <div className="flex items-center justify-between gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-2 mb-3 text-xs text-yellow-400 animate-in fade-in slide-in-from-top-2">
+            <span className="flex items-center gap-2 font-bold"><History size={14}/> Last week's data pulled.</span>
             <button
               onClick={() => {
                 const cleared = localLogs.map(log => log.isPulled ? { weight: "", reps: "", drops: [] } : log);
                 setLocalLogs(cleared);
                 setIsDirty(true);
               }}
-              className="shrink-0 text-[9px] uppercase font-bold tracking-widest text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded border border-yellow-500/30 hover:bg-yellow-500/20 transition-colors"
+              className="text-[10px] uppercase font-bold tracking-widest text-yellow-500 hover:text-yellow-300 transition-colors"
             >
-              Clear Pulled
+              Clear
             </button>
           </div>
         )}
@@ -339,7 +355,7 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
             const isActiveSet = i === activeSetIndex && !isFuture;
             const isPulled = !!log.isPulled;
             const showDropInputs = isDropSetExercise || log.hasDrops;
-            const dropCount = exercise.dropConfig?.drops || (log.drops?.length || defaultDropCount);
+            const dropCount = log.drops?.length || (isDropSetExercise ? defaultDropCount : 0);
 
             return (
               <div 
@@ -349,7 +365,7 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
                   isPulled 
                     ? 'bg-yellow-500/5 border-dashed border-yellow-500/30' 
                     : isActiveSet 
-                      ? 'bg-noir-accent/5 border-noir-accent/40 shadow-[inset_0_0_12px_rgba(204,255,0,0.05)]' 
+                      ? 'bg-noir-accent/5 border-noir-accent' 
                       : 'bg-noir-bg border-transparent focus-within:border-noir-border'
                 }`}
               >
@@ -365,34 +381,34 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
                     {isPulled && (
                       <button
                         onClick={() => handleClaimSet(i)}
-                        className="flex items-center gap-1 text-[9px] uppercase font-bold tracking-widest text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/30 hover:bg-yellow-500/20 transition-colors"
+                        className="flex items-center gap-1 text-[9px] uppercase font-bold tracking-widest text-yellow-400 hover:text-yellow-300 transition-colors"
                       >
-                        📋 Last Week — Tap to Claim
+                        Tap to Claim
                       </button>
                     )}
                   </div>
                 )}
 
-                <div className="flex gap-2 items-center">
-                  <span className={`w-6 text-center text-xs font-bold ${
+                <div className="flex gap-1.5 sm:gap-2 items-center">
+                  <span className={`w-5 text-center text-xs font-bold ${
                     isPulled ? 'text-yellow-500/60' : isActiveSet ? 'text-noir-accent' : 'text-noir-text-muted'
                   }`}>S{i + 1}</span>
                   <input
                     type="number"
                     placeholder="kg"
                     disabled={isFuture}
-                    className={`w-16 flex-shrink-0 bg-transparent border-b py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50 transition-colors ${
+                    className={`w-12 sm:w-14 flex-shrink-0 bg-transparent border-b py-2 px-0.5 sm:px-1 text-center font-mono text-sm focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50 transition-colors ${
                       isPulled ? 'border-yellow-500/30 text-yellow-400/70' : 'border-noir-border'
                     }`}
                     value={log.weight}
                     onChange={(e) => handleUpdateLocalLog(i, "weight", e.target.value)}
                   />
-                  <span className="text-noir-text-muted">×</span>
+                  <span className="text-noir-text-muted text-xs">×</span>
                   <input
                     type="number"
                     placeholder="reps"
                     disabled={isFuture}
-                    className={`w-16 flex-shrink-0 bg-transparent border-b py-2 px-1 text-center font-mono focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50 transition-colors ${
+                    className={`w-12 sm:w-14 flex-shrink-0 bg-transparent border-b py-2 px-0.5 sm:px-1 text-center font-mono text-sm focus:outline-none focus:border-noir-accent min-h-[44px] disabled:opacity-50 transition-colors ${
                       isPulled ? 'border-yellow-500/30 text-yellow-400/70' : 'border-noir-border'
                     }`}
                     value={log.reps}
@@ -433,40 +449,46 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
                 </div>
 
                 {prevLogs[i] && prevLogs[i].weight && !isPulled && (
-                  <div className="text-[10px] text-noir-text-muted ml-10">
-                    Last Week: {prevLogs[i].weight}kg × {prevLogs[i].reps} 
-                    {prevLogs[i].rating === 'easy' && ' 🟢 Easy'}
-                    {prevLogs[i].rating === 'hard' && ' 🟡 Med'}
-                    {prevLogs[i].rating === 'extreme' && ' 🔴 Hard'}
+                  <div className="text-[10px] text-noir-text-muted ml-8 truncate">
+                    Prev: {prevLogs[i].weight}kg × {prevLogs[i].reps} 
                   </div>
                 )}
 
-                {/* Drop set inputs — shown when exercise is drop type OR when user toggled per-set */}
+                {/* Drop set inputs */}
                 {showDropInputs && (
-                  <div className="mt-2 ml-4 pl-3 border-l-2 border-orange-500/30 space-y-2 relative animate-in fade-in slide-in-from-top-2">
+                  <div className="mt-2 ml-3 sm:ml-4 pl-3 border-l-2 border-orange-500/30 space-y-2 relative animate-in fade-in slide-in-from-top-2">
                     <div className="absolute -left-[14px] top-[-10px] w-3 h-4 border-b-2 border-l-2 border-orange-500/30 rounded-bl-md"></div>
                     {Array.from({ length: dropCount }).map((_, di) => (
                       <div key={di} className="flex gap-2 items-center">
-                        <span className="w-12 text-[10px] uppercase font-bold text-orange-400 tracking-widest text-right">Drop {di + 1}</span>
+                        <span className="w-10 text-[9px] sm:text-[10px] uppercase font-bold text-orange-400 tracking-widest text-right">Drop {di + 1}</span>
                         <input
                           type="number"
                           placeholder="kg"
                           disabled={isFuture}
-                          className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-orange-400 min-h-[44px] disabled:opacity-50"
+                          className="w-12 sm:w-14 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono text-sm focus:outline-none focus:border-orange-400 min-h-[44px] disabled:opacity-50"
                           value={log.drops?.[di]?.weight || ""}
                           onChange={(e) => handleUpdateDropLog(i, di, "weight", e.target.value)}
                         />
-                        <span className="text-noir-text-muted">×</span>
+                        <span className="text-noir-text-muted text-xs">×</span>
                         <input
                           type="number"
                           placeholder="reps"
                           disabled={isFuture}
-                          className="w-16 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono focus:outline-none focus:border-orange-400 min-h-[44px] disabled:opacity-50"
+                          className="w-12 sm:w-14 flex-shrink-0 bg-transparent border-b border-noir-border py-2 px-1 text-center font-mono text-sm focus:outline-none focus:border-orange-400 min-h-[44px] disabled:opacity-50"
                           value={log.drops?.[di]?.reps || ""}
                           onChange={(e) => handleUpdateDropLog(i, di, "reps", e.target.value)}
                         />
                       </div>
                     ))}
+                    {/* Add / Remove Drops Dynamically */}
+                    <div className="flex gap-2 mt-1">
+                      <button onClick={() => handleAddDrop(i)} disabled={isFuture} className="p-1 px-2 rounded bg-orange-500/10 text-orange-400 text-[10px] font-bold border border-orange-500/30 flex items-center gap-1 hover:bg-orange-500/20 transition-colors disabled:opacity-50">
+                        <Plus size={10} /> Drop
+                      </button>
+                      <button onClick={() => handleRemoveDrop(i)} disabled={isFuture || dropCount === 0} className="p-1 px-2 rounded bg-noir-surface text-noir-text-muted text-[10px] font-bold border border-noir-border flex items-center gap-1 hover:text-white transition-colors disabled:opacity-50">
+                        <Minus size={10} /> Drop
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -475,37 +497,39 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
         </div>
 
         {/* Actions row */}
-        <div className="flex gap-2 items-center pt-3 border-t border-noir-border justify-between">
-          <div className="flex items-center gap-2 px-2 text-sm">
-            <button 
-              onClick={(e) => { e.stopPropagation(); startTimer(effectiveRest); }} 
-              className="flex items-center gap-1 text-xs font-bold text-noir-accent uppercase tracking-wider hover:opacity-80 transition-colors bg-noir-accent/10 px-3 py-1.5 rounded-lg border border-noir-accent/30"
-            >
-              Start {effectiveRest}s Rest
-            </button>
-          </div>
-          <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center pt-3 border-t border-noir-border justify-between">
+          <button 
+            onClick={(e) => { e.stopPropagation(); startTimer(effectiveRest); }} 
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1 text-[10px] font-bold text-noir-accent uppercase tracking-wider hover:opacity-80 transition-colors bg-noir-accent/10 px-3 py-2 rounded-lg border border-noir-accent/30"
+          >
+            Rest {effectiveRest}s
+          </button>
+          <div className="flex gap-2 items-center flex-1 justify-end">
             {/* Superset button */}
             {supersetPartnerId ? (
               <button 
                 onClick={(e) => { e.stopPropagation(); unlinkSuperset(exercise.id); }}
-                className="flex items-center gap-1 p-2 rounded-lg text-blue-400 hover:text-red-400 hover:bg-red-400/10 transition-colors text-xs font-bold uppercase tracking-wider"
-                title="Remove superset link"
+                className="flex items-center justify-center p-2 rounded-lg text-blue-400 hover:text-red-400 hover:bg-red-400/10 transition-colors text-[10px] font-bold uppercase tracking-wider bg-noir-bg border border-noir-border"
+                title="Remove superset"
               >
-                <Unlink size={14} /> Unlink
+                <Unlink size={14} className="mr-1" /> <span>Unlink</span>
               </button>
             ) : (
               <button 
                 onClick={(e) => { e.stopPropagation(); setShowSupersetPicker(!showSupersetPicker); }}
-                className="flex items-center gap-1 p-2 rounded-lg text-noir-text-muted hover:text-blue-400 hover:bg-blue-400/10 transition-colors text-xs font-bold uppercase tracking-wider"
+                className="flex items-center justify-center p-2 rounded-lg text-noir-text-muted hover:text-blue-400 hover:bg-blue-400/10 transition-colors text-[10px] font-bold uppercase tracking-wider bg-noir-bg border border-noir-border"
                 title="Make superset"
               >
-                <Link size={14} /> Superset
+                <Link size={14} className="mr-1" /> <span>Superset</span>
               </button>
             )}
-            <button onClick={handleDeleteExercise} className="px-3 py-2 rounded-lg bg-noir-bg border border-noir-border text-noir-text-muted hover:text-red-500 hover:border-red-500 transition-colors min-h-[44px] text-xs font-bold uppercase tracking-wider">Remove</button>
-            <button onClick={handleCompare} disabled={isFuture || activeWeek <= 1} className="flex items-center gap-1 p-2 rounded-lg text-noir-text-muted hover:text-noir-accent hover:bg-noir-accent/10 transition-colors disabled:opacity-50 text-xs font-bold uppercase tracking-wider"><History size={16} /> Pull</button>
-            <button onClick={(e) => { e.stopPropagation(); setShowClearConfirm(true); }} className="p-2 rounded-lg text-noir-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"><Trash2 size={18} /></button>
+            
+            <button onClick={handleCompare} disabled={isFuture || activeWeek <= 1} className="flex items-center justify-center p-2 rounded-lg text-noir-text-muted hover:text-noir-accent hover:bg-noir-accent/10 transition-colors disabled:opacity-50 text-[10px] font-bold uppercase tracking-wider bg-noir-bg border border-noir-border" title="Pull last week">
+              <History size={14} className="sm:mr-1" /> <span className="hidden sm:inline">Pull</span>
+            </button>
+            <button onClick={handleDeleteExercise} className="flex items-center justify-center p-2 rounded-lg text-noir-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors min-h-[36px] text-[10px] font-bold uppercase tracking-wider bg-noir-bg border border-noir-border" title="Remove exercise">
+              <Trash2 size={14} />
+            </button>
           </div>
         </div>
 
@@ -529,8 +553,10 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
                   </button>
                 ))
               }
-              {allExercises.filter(ex => ex.id !== exercise.id && !state.supersetLinks?.[ex.id]).length === 0 && (
-                <p className="text-xs text-noir-text-muted italic py-2">No other exercises available to pair.</p>
+              {allExercises.filter(ex => ex.id !== exercise.id && !state.supersetLinks?.[ex.id]).length === 0 ? (
+                <p className="text-xs text-noir-text-muted italic py-2">To superset, add another exercise to today's workout first.</p>
+              ) : (
+                <p className="text-[10px] text-noir-text-muted italic py-1 border-t border-noir-border mt-2 pt-2">Don't see your exercise? Add it to today's workout first.</p>
               )}
             </div>
             <button

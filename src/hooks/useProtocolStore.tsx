@@ -145,7 +145,11 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isLoaded && userId) {
-      localStorage.setItem(`gym_pwa_${userId}`, JSON.stringify(state));
+      try {
+        localStorage.setItem(`gym_pwa_${userId}`, JSON.stringify(state));
+      } catch (e) {
+        console.error("Failed to save state to localStorage", e);
+      }
     }
   }, [state, isLoaded, userId]);
 

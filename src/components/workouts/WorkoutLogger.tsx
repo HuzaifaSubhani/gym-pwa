@@ -5,11 +5,11 @@ import { DEFAULT_IRONCORE_PROGRAM, getIntensityDirectives, Exercise, CompoundGro
 import { Check, ChevronLeft, ChevronRight, Trash2, Shield, Plus } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import confetti from "canvas-confetti";
-import TourGuide from "./TourGuide";
-import ExerciseCard from "./ExerciseCard";
-import CompoundSetCard from "./CompoundSetCard";
-import AddExerciseModal from "./AddExerciseModal";
-import CreateGiantSetModal from "./CreateGiantSetModal";
+import TourGuide from "@/components/shared/TourGuide";
+import ExerciseCard from "@/components/workouts/ExerciseCard";
+import CompoundSetCard from "@/components/workouts/CompoundSetCard";
+import AddExerciseModal from "@/components/modals/AddExerciseModal";
+import CreateGiantSetModal from "@/components/modals/CreateGiantSetModal";
 import { getProtocolDateString, getShortDateLabel, getTodayDateString } from "@/lib/dateUtils";
 
 function DaySelector() {

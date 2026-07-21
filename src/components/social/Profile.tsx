@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { Loader2, Camera, LogOut, Trash2, CheckCircle2, Save, ChevronDown, ChevronUp, User, Activity, Flame, Medal, Calendar, Settings, Trophy } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
-import PersonalRecords from "./PersonalRecords";
+import PersonalRecords from "@/components/social/PersonalRecords";
 
 type ProfileData = {
   id: string;
@@ -332,9 +333,11 @@ export default function Profile() {
           
           <div className="relative group cursor-pointer inline-block mb-4">
             {myProfile.avatar_url ? (
-              <img 
+              <Image 
                 src={myProfile.avatar_url} 
                 alt="DP" 
+                width={128}
+                height={128}
                 className="w-32 h-32 rounded-full border-4 border-noir-bg object-cover shadow-lg " 
                 style={{ objectPosition: `50% ${myProfile.avatar_position}%` }}
               />

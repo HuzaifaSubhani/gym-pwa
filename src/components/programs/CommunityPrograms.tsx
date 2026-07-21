@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Image from "next/image";
 import { Program } from "@/data/protocol";
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { Download, Loader2, User, Globe, Search, Plus, Activity, BookOpen, Play, Check } from "lucide-react";
-import ProgramBuilder from "./ProgramBuilder";
-import SocialFeed from "./SocialFeed";
+import ProgramBuilder from "@/components/programs/ProgramBuilder";
+import SocialFeed from "@/components/social/SocialFeed";
 
 export default function CommunityPrograms() {
   const [subTab, setSubTab] = useState<"feed" | "programs">("feed");
@@ -222,7 +223,7 @@ export default function CommunityPrograms() {
                   <div className="flex items-center justify-between mt-auto relative z-10">
                     <div className="flex items-center gap-2">
                       {program.profiles?.avatar_url ? (
-                        <img src={program.profiles.avatar_url} alt="author" className="w-6 h-6 rounded-full border border-noir-border object-cover" />
+                        <Image src={program.profiles.avatar_url} alt="author" width={24} height={24} className="w-6 h-6 rounded-full border border-noir-border object-cover" />
                       ) : (
                         <div className="w-6 h-6 rounded-full bg-noir-bg border border-noir-border flex items-center justify-center">
                           <User size={12} />

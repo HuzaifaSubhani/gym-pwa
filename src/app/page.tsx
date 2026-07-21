@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import WorkoutLogger from "@/components/WorkoutLogger";
-import ProgressAnalytics from "@/components/ProgressAnalytics";
-import Dashboard from "@/components/Dashboard";
-import Leaderboard from "@/components/Leaderboard";
-import Profile from "@/components/Profile";
-import CommunityPrograms from "@/components/CommunityPrograms";
+import WorkoutLogger from "@/components/workouts/WorkoutLogger";
+import ProgressAnalytics from "@/components/dashboard/ProgressAnalytics";
+import Dashboard from "@/components/dashboard/Dashboard";
+import Leaderboard from "@/components/social/Leaderboard";
+import Profile from "@/components/social/Profile";
+import CommunityPrograms from "@/components/programs/CommunityPrograms";
 import { Home as HomeIcon, Dumbbell, Trophy, User, CalendarDays, Loader2, Globe } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
 import { getCurrentProtocolDateInfo } from "@/data/protocol";
