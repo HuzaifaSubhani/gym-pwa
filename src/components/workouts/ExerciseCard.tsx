@@ -2,13 +2,13 @@
 
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { Exercise, getIntensityDirectives } from "@/data/protocol";
-import { Check, ChevronLeft, Trash2, History, Play, Info, Link, Unlink, Plus, Minus, Replace } from "lucide-react";
+import { Check, ChevronLeft, Trash2, History, Play, Info, Link, Unlink, Plus, Minus, Replace, Calculator } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ExerciseVideoModal from "@/components/modals/ExerciseVideoModal";
 import PlateCalculatorModal from "@/components/modals/PlateCalculatorModal";
 import { getProtocolDateString } from "@/lib/dateUtils";
 
-export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr, isFuture, allExercises }: {
+export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr, isFuture, allExercises, onRemove, onSwap, onSuperset }: {
   exercise: Exercise;
   activeWeek: number;
   activeDayOfWeek: number;
@@ -457,8 +457,9 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
                     onClick={() => setCalculatorSetIndex(i)}
                     disabled={isFuture}
                     className="w-8 h-8 flex items-center justify-center rounded-full text-noir-text-muted hover:text-noir-accent hover:bg-noir-surface-light transition-colors disabled:opacity-50"
+                    title="Open Plate Calculator"
                   >
-                    🧮
+                    <Calculator size={14} />
                   </button>
 
                   <div className="flex gap-1 ml-auto items-center">
