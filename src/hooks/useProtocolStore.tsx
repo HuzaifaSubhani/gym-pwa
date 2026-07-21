@@ -37,6 +37,7 @@ export type ProtocolState = {
   habits: Record<string, { morning: boolean; evening: boolean }>; // { dateStr: { ... } }
   customRoutine?: Record<number, CustomDayRoutine>; // { dayNum: DayRoutine }
   customDailyExercises?: Record<string, Exercise[]>; // { dateStr: Exercise[] }
+  ignoredDailyExercises?: Record<string, string[]>; // { dateStr: exerciseId[] }
   compoundGroups?: Record<string, CompoundGroup[]>;   // { dateStr: CompoundGroup[] }
   supersetLinks?: Record<string, string>;              // { exerciseId: partnerExerciseId }
   timer: { isActive: boolean; endTime: number; isPaused: boolean; duration: number };
@@ -307,6 +308,13 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         newCustomDaily[dateStr] = newCustomDaily[dateStr].filter(ex => ex.id !== exerciseId);
       }
 
+      // Add to ignored list so base program exercises are hidden
+      const newIgnored = { ...prev.ignoredDailyExercises };
+      const currentIgnored = newIgnored[dateStr] || [];
+      if (!currentIgnored.includes(exerciseId)) {
+        newIgnored[dateStr] = [...currentIgnored, exerciseId];
+      }
+
       const newCustomRoutine = { ...prev.customRoutine };
 
       // Also clean up superset links if this exercise was in one
@@ -320,6 +328,7 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
       return {
         ...prev,
         customDailyExercises: newCustomDaily,
+        ignoredDailyExercises: newIgnored,
         supersetLinks: newSupersetLinks,
         customRoutine: newCustomRoutine[dayNum] ? {
           ...newCustomRoutine,

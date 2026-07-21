@@ -2,7 +2,7 @@
 
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { Exercise, getIntensityDirectives } from "@/data/protocol";
-import { Check, ChevronLeft, Trash2, History, Play, Info, Link, Unlink, Plus, Minus } from "lucide-react";
+import { Check, ChevronLeft, Trash2, History, Play, Info, Link, Unlink, Plus, Minus, Replace } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import ExerciseVideoModal from "@/components/modals/ExerciseVideoModal";
 import { getProtocolDateString } from "@/lib/dateUtils";
@@ -15,6 +15,9 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
   dateStr: string;
   isFuture: boolean;
   allExercises: Exercise[]; // all exercises for superset partner picker
+  onRemove?: () => void;
+  onSwap?: () => void;
+  onSuperset?: (id: string) => void;
 }) {
   const { state, setFullExerciseLogs, removeExercise, startTimer, linkSuperset, unlinkSuperset } = useProtocol();
   const dayLogs = state.workoutLogs[dateStr] || {};
@@ -185,10 +188,10 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
     setIsDirty(false);
   };
 
-  const handleDeleteExercise = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteExercise = () => {
     if (confirm(`Are you sure you want to remove ${exercise.name}?`)) {
-      removeExercise(activeDayOfWeek, dateStr, exercise.id);
+      if (onRemove) onRemove();
+      else removeExercise(activeDayOfWeek, dateStr, exercise.id);
     }
   };
 
@@ -282,11 +285,23 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div>
-          <h3 className="text-lg md:text-xl font-bold leading-tight group-hover:text-noir-accent transition-colors flex items-center gap-2">
-            {exercise.name}
-            {isExerciseComplete && <Check size={18} className="text-noir-accent stroke-[3px]" />}
+          <h3 className="text-lg md:text-xl font-bold leading-tight group-hover:text-noir-accent transition-colors flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-2">
+              {exercise.name}
+              {isExerciseComplete && <Check size={18} className="text-noir-accent stroke-[3px]" />}
+            </div>
+            {exercise.targetMuscle && (
+              <div className="text-[10px] sm:ml-2 text-noir-text-muted font-normal tracking-wide uppercase mt-1 sm:mt-0 flex items-center flex-wrap gap-1 leading-tight">
+                Target: <span className="text-white bg-noir-bg px-1.5 py-0.5 rounded border border-noir-border/50">{exercise.targetMuscle}</span>
+                {exercise.secondaryMuscles && exercise.secondaryMuscles.length > 0 && (
+                  <span className="opacity-70 ml-1">
+                    (+ {exercise.secondaryMuscles.join(', ')})
+                  </span>
+                )}
+              </div>
+            )}
           </h3>
-          <p className="text-xs md:text-sm text-noir-text-muted mt-1 flex items-center gap-2">
+          <p className="text-xs md:text-sm text-noir-text-muted mt-2 sm:mt-1 flex items-center gap-2">
             {exercise.sets} Sets × {exercise.reps}
             {supersetPartner && (
               <>
@@ -526,6 +541,9 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
             
             <button onClick={handleCompare} disabled={isFuture || activeWeek <= 1} className="flex items-center justify-center p-2 rounded-lg text-noir-text-muted hover:text-noir-accent hover:bg-noir-accent/10 transition-colors disabled:opacity-50 text-[10px] font-bold uppercase tracking-wider bg-noir-bg border border-noir-border" title="Pull last week">
               <History size={14} className="sm:mr-1" /> <span className="hidden sm:inline">Pull</span>
+            </button>
+            <button onClick={onSwap} className="flex items-center justify-center p-2 rounded-lg text-noir-text-muted hover:text-amber-500 hover:bg-amber-500/10 transition-colors min-h-[36px] text-[10px] font-bold uppercase tracking-wider bg-noir-bg border border-noir-border" title="Swap exercise">
+              <Replace size={14} className="sm:mr-1" /> <span className="hidden sm:inline">Swap</span>
             </button>
             <button onClick={handleDeleteExercise} className="flex items-center justify-center p-2 rounded-lg text-noir-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors min-h-[36px] text-[10px] font-bold uppercase tracking-wider bg-noir-bg border border-noir-border" title="Remove exercise">
               <Trash2 size={14} />

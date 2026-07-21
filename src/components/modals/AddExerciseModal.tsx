@@ -26,6 +26,7 @@ type ExerciseDBEntry = {
   t: string; // target muscle
   b: string; // body part
   g?: string; // gif url
+  s?: string[]; // secondary muscles
 };
 
 export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
@@ -78,6 +79,8 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
       reps,
       rest: parseInt(rest, 10) || 60,
       gif_url: selectedExercise.g,
+      targetMuscle: selectedExercise.t,
+      secondaryMuscles: selectedExercise.s,
       setType: setType,
       dropConfig: setType === 'drop' ? { drops: dropCount } : undefined,
     };
@@ -215,7 +218,12 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
                   )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-sm truncate group-hover:text-noir-accent transition-colors capitalize">{ex.name}</h3>
-                    <p className="text-[10px] text-noir-text-muted uppercase tracking-wider mt-1">{ex.b} • {ex.t}</p>
+                    <p className="text-[10px] text-noir-text-muted uppercase tracking-wider mt-1">
+                      {ex.b} • <span className="text-white">{ex.t}</span>
+                      {ex.s && ex.s.length > 0 && (
+                        <span className="opacity-60 lowercase"> (+ {ex.s.join(', ')})</span>
+                      )}
+                    </p>
                   </div>
                   <ChevronRight size={16} className="text-noir-text-muted group-hover:text-noir-accent flex-shrink-0" />
                 </div>

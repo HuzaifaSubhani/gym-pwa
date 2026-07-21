@@ -5,6 +5,8 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { Loader2, Camera, LogOut, Trash2, CheckCircle2, Save, ChevronDown, ChevronUp, User, Activity, Flame, Medal, Calendar, Settings, Trophy } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
+import { getShortDateLabel, calculateTotalStats } from "@/lib/dateUtils";
+import { useRouter } from "next/navigation";
 import PersonalRecords from "@/components/social/PersonalRecords";
 
 type ProfileData = {
@@ -288,21 +290,7 @@ export default function Profile() {
     );
   }
 
-  let totalWorkouts = 0;
-  let totalVolume = 0;
-  Object.keys(state.workoutLogs).forEach(date => {
-    const dayLogs = state.workoutLogs[date];
-    let hasValid = false;
-    Object.values(dayLogs).forEach((exLogs: any) => {
-      exLogs.forEach((log: any) => {
-        const w = parseFloat(log.weight) || 0;
-        const r = parseInt(log.reps) || 0;
-        if (w > 0 || r > 0) hasValid = true;
-        totalVolume += (w * r);
-      });
-    });
-    if (hasValid) totalWorkouts++;
-  });
+  const { totalVolume, totalWorkouts } = calculateTotalStats(state.workoutLogs);
 
   const xp = Math.round(totalVolume / 10);
   const level = Math.floor(Math.sqrt(xp / 100)) + 1;

@@ -9,6 +9,8 @@ export type Exercise = {
   notes?: string;
   isSpecialization?: boolean;
   gif_url?: string;
+  targetMuscle?: string;
+  secondaryMuscles?: string[];
   setType?: SetType;              // Type of set (default: 'normal')
   supersetPartner?: string;       // Exercise ID this is paired with for supersets
   dropConfig?: { drops: number }; // Number of drops per set (1-3, default 2)

@@ -51,10 +51,12 @@ function DaySelector() {
           const logsForDay = state.workoutLogs[dateStr] || {};
           let isComplete = false;
           
+          const ignored = state.ignoredDailyExercises?.[dateStr] || [];
           const allExercises = dayRoutine ? [...dayRoutine.exercises, ...dailyExtras] : [...dailyExtras];
+          const visibleExercises = allExercises.filter(ex => !ignored.includes(ex.id));
           
-          if (allExercises.length > 0) {
-            isComplete = allExercises.every(ex => {
+          if (visibleExercises.length > 0) {
+            isComplete = visibleExercises.every(ex => {
               const exLogs = logsForDay[ex.id] || [];
               if (exLogs.length < ex.sets) return false;
               return exLogs.slice(0, ex.sets).every(log => log && log.weight !== "" && log.reps !== "");
@@ -97,8 +99,9 @@ function DaySelector() {
 }
 
 export default function WorkoutLogger() {
-  const { state, addCustomExercise, setCustomDayRoutine, addCompoundGroup } = useProtocol();
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const { state, addCustomExercise, setCustomDayRoutine, addCompoundGroup, removeExercise, linkSuperset } = useProtocol();
+  const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
+  const [swapTargetId, setSwapTargetId] = useState<string | null>(null);
   const [isGiantSetModalOpen, setIsGiantSetModalOpen] = useState(false);
   const [isEditRoutineModalOpen, setIsEditRoutineModalOpen] = useState(false);
   const [routineNameEdit, setRoutineNameEdit] = useState("");
@@ -123,8 +126,10 @@ export default function WorkoutLogger() {
   }
 
   const dailyExtras = state.customDailyExercises?.[dateStr] || [];
+  const ignoredDaily = state.ignoredDailyExercises?.[dateStr] || [];
   const compoundGroups = state.compoundGroups?.[dateStr] || [];
-  const finalExercises: Exercise[] = mergedRoutine ? [...mergedRoutine.exercises, ...dailyExtras] : [...dailyExtras];
+  const finalExercises: Exercise[] = (mergedRoutine ? [...mergedRoutine.exercises, ...dailyExtras] : [...dailyExtras])
+    .filter(ex => !ignoredDaily.includes(ex.id));
 
   // Filter out exercises that are part of a superset pair (show superset partner inline in the card)
   // Don't filter — both exercises render their own card, and the card shows the link
@@ -183,7 +188,7 @@ export default function WorkoutLogger() {
           <p className="text-noir-text-muted mb-6">Recovery is where growth happens. Focus on hydration, nutrition, and sleep.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button 
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => setIsAddExerciseOpen(true)}
               className="px-6 py-3 border-2 border-dashed border-noir-border rounded-xl text-noir-text-muted hover:text-noir-accent hover:border-noir-accent hover:bg-noir-accent/5 transition-all inline-flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-sm"
             >
               + Add Exercise
@@ -234,6 +239,12 @@ export default function WorkoutLogger() {
                 dateStr={dateStr}
                 isFuture={isFuture}
                 allExercises={finalExercises}
+                onRemove={() => removeExercise(state.activeDayOfWeek, dateStr, ex.id)}
+                onSwap={() => {
+                  setSwapTargetId(ex.id);
+                  setIsAddExerciseOpen(true);
+                }}
+                onSuperset={(partnerId) => linkSuperset(ex.id, partnerId)}
               />
             ))}
 
@@ -250,7 +261,7 @@ export default function WorkoutLogger() {
             {/* Add buttons */}
             <div className="flex gap-3">
               <button 
-                onClick={() => setIsAddModalOpen(true)}
+                onClick={() => setIsAddExerciseOpen(true)}
                 className="flex-1 py-4 border-2 border-dashed border-noir-border rounded-xl text-noir-text-muted hover:text-noir-accent hover:border-noir-accent hover:bg-noir-accent/5 transition-all flex items-center justify-center gap-2 font-bold uppercase tracking-wider text-sm"
               >
                 <Plus size={16} /> Add Exercise
@@ -268,9 +279,18 @@ export default function WorkoutLogger() {
       </div>
       
       <AddExerciseModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-        onAdd={(ex, scope) => addCustomExercise(ex, scope, state.activeDayOfWeek, dateStr)} 
+        isOpen={isAddExerciseOpen} 
+        onClose={() => {
+          setIsAddExerciseOpen(false);
+          setSwapTargetId(null);
+        }}
+        onAdd={(ex, scope) => {
+          if (swapTargetId) {
+            removeExercise(state.activeDayOfWeek, dateStr, swapTargetId);
+            setSwapTargetId(null);
+          }
+          addCustomExercise(ex, scope, state.activeDayOfWeek, dateStr);
+        }}
       />
 
       <CreateGiantSetModal

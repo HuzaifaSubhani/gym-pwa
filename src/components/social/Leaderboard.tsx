@@ -6,6 +6,7 @@ import { Trophy, Dumbbell, Medal, Loader2, ArrowRight, Swords, Check, X, Flame, 
 import Link from "next/link";
 import Image from "next/image";
 import { useProtocol } from "@/hooks/useProtocolStore";
+import { calculateTotalStats } from "@/lib/dateUtils";
 
 type Profile = {
   id: string;
@@ -95,7 +96,7 @@ export default function Leaderboard() {
       return;
     }
     
-    setLoading(true);
+    if (entries.length === 0) setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     const currentUser = session?.user ?? null;
     setUser(currentUser);
@@ -356,23 +357,7 @@ export default function Leaderboard() {
   const activeChallenges = challenges.filter(c => c.status === 'active' && (c.challenger_id === user.id || c.challenged_id === user.id));
   const completedChallenges = challenges.filter(c => c.status === 'completed' && (c.challenger_id === user.id || c.challenged_id === user.id));
 
-  let localWorkouts = 0;
-  let localVolume = 0;
-  if (state && state.workoutLogs) {
-    Object.keys(state.workoutLogs).forEach(date => {
-      const dayLogs = state.workoutLogs[date];
-      let hasValid = false;
-      Object.values(dayLogs).forEach((exLogs: any) => {
-        exLogs.forEach((log: any) => {
-          const w = parseFloat(log.weight) || 0;
-          const r = parseInt(log.reps) || 0;
-          if (w > 0 || r > 0) hasValid = true;
-          localVolume += (w * r);
-        });
-      });
-      if (hasValid) localWorkouts++;
-    });
-  }
+  const { totalVolume: localVolume, totalWorkouts: localWorkouts } = state?.workoutLogs ? calculateTotalStats(state.workoutLogs) : { totalVolume: 0, totalWorkouts: 0 };
 
   const displayEntries = [...entries].map(entry => {
     if (user && entry.id === user.id) {
