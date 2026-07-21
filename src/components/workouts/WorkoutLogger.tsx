@@ -4,7 +4,6 @@ import { useProtocol } from "@/hooks/useProtocolStore";
 import { DEFAULT_IRONCORE_PROGRAM, getIntensityDirectives, Exercise, CompoundGroup } from "@/data/protocol";
 import { Check, ChevronLeft, ChevronRight, Trash2, Shield, Plus } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import confetti from "canvas-confetti";
 import TourGuide from "@/components/shared/TourGuide";
 import ExerciseCard from "@/components/workouts/ExerciseCard";
 import CompoundSetCard from "@/components/workouts/CompoundSetCard";
@@ -99,7 +98,15 @@ function DaySelector() {
 }
 
 export default function WorkoutLogger() {
-  const { state, addCustomExercise, setCustomDayRoutine, addCompoundGroup, removeExercise, linkSuperset } = useProtocol();
+  const { 
+    state, 
+    addCustomExercise, 
+    setCustomDayRoutine, 
+    addCompoundGroup, 
+    removeExercise, 
+    linkSuperset,
+    swapExercise 
+  } = useProtocol();
   const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
   const [swapTargetId, setSwapTargetId] = useState<string | null>(null);
   const [isGiantSetModalOpen, setIsGiantSetModalOpen] = useState(false);
@@ -127,9 +134,11 @@ export default function WorkoutLogger() {
 
   const dailyExtras = state.customDailyExercises?.[dateStr] || [];
   const ignoredDaily = state.ignoredDailyExercises?.[dateStr] || [];
+  const swappedDaily = state.swappedDailyExercises?.[dateStr] || {};
   const compoundGroups = state.compoundGroups?.[dateStr] || [];
   const finalExercises: Exercise[] = (mergedRoutine ? [...mergedRoutine.exercises, ...dailyExtras] : [...dailyExtras])
-    .filter(ex => !ignoredDaily.includes(ex.id));
+    .filter(ex => !ignoredDaily.includes(ex.id))
+    .map(ex => swappedDaily[ex.id] || ex);
 
   // Filter out exercises that are part of a superset pair (show superset partner inline in the card)
   // Don't filter — both exercises render their own card, and the card shows the link
@@ -164,12 +173,6 @@ export default function WorkoutLogger() {
     }
 
     if (isComplete && !prevIsCompleteRef.current) {
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#CCFF00', '#FFFFFF', '#000000']
-      });
       if ('vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 200]);
     }
     prevIsCompleteRef.current = isComplete;
@@ -208,7 +211,7 @@ export default function WorkoutLogger() {
               <h2 className="text-xs text-noir-accent font-bold uppercase tracking-wider mb-1">{mergedRoutine?.dayName || "Custom Day"}</h2>
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-black">{mergedRoutine?.focus || "Custom Workout"}</h1>
-                <button id="tour-edit-routine" onClick={() => {
+                <button onClick={() => {
                   setRoutineNameEdit(mergedRoutine?.dayName || "Custom Day");
                   setRoutineFocusEdit(mergedRoutine?.focus || "Custom Workout");
                   setIsEditRoutineModalOpen(true);
@@ -286,10 +289,11 @@ export default function WorkoutLogger() {
         }}
         onAdd={(ex, scope) => {
           if (swapTargetId) {
-            removeExercise(state.activeDayOfWeek, dateStr, swapTargetId);
+            swapExercise(state.activeDayOfWeek, dateStr, swapTargetId, ex, scope);
             setSwapTargetId(null);
+          } else {
+            addCustomExercise(ex, scope, state.activeDayOfWeek, dateStr);
           }
-          addCustomExercise(ex, scope, state.activeDayOfWeek, dateStr);
         }}
       />
 

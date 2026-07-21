@@ -5,6 +5,7 @@ import { Exercise, getIntensityDirectives } from "@/data/protocol";
 import { Check, ChevronLeft, Trash2, History, Play, Info, Link, Unlink, Plus, Minus, Replace } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import ExerciseVideoModal from "@/components/modals/ExerciseVideoModal";
+import PlateCalculatorModal from "@/components/modals/PlateCalculatorModal";
 import { getProtocolDateString } from "@/lib/dateUtils";
 
 export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, isFinal, dateStr, isFuture, allExercises }: {
@@ -42,9 +43,26 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
   const isExerciseComplete = localLogs.length > 0 && localLogs.length === exercise.sets && localLogs.every(log => log.weight !== "" && log.reps !== "");
 
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [calculatorSetIndex, setCalculatorSetIndex] = useState<number | null>(null);
 
   // Find active set index (first incomplete set)
-  const activeSetIndex = localLogs.findIndex(log => log.weight === "" || log.reps === "");
+  const activeSetIndex = localLogs.findIndex(l => !l.isCompleted && !l.isPulled);
+  
+  // Calculate estimated 1RM based on Epley formula
+  const max1RM = useMemo(() => {
+    let max = 0;
+    localLogs.forEach(log => {
+      const w = parseFloat(log.weight);
+      const r = parseInt(log.reps);
+      if (!isNaN(w) && !isNaN(r) && w > 0 && r > 0) {
+        // Epley formula: 1RM = W * (1 + R/30)
+        const est = w * (1 + r / 30);
+        if (est > max) max = est;
+      }
+    });
+    return Math.round(max);
+  }, [localLogs]);
+
   const hasAnyData = localLogs.some(log => log.weight !== "" || log.reps !== "");
 
   // Auto-expand if this exercise has an active set in progress
@@ -300,6 +318,11 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
                 )}
               </div>
             )}
+            {max1RM > 0 && (
+              <div className="text-[10px] text-noir-accent font-bold tracking-wide mt-1">
+                EST 1RM: {max1RM} kg
+              </div>
+            )}
           </h3>
           <p className="text-xs md:text-sm text-noir-text-muted mt-2 sm:mt-1 flex items-center gap-2">
             {exercise.sets} Sets × {exercise.reps}
@@ -429,6 +452,15 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
                     value={log.reps}
                     onChange={(e) => handleUpdateLocalLog(i, "reps", e.target.value)}
                   />
+                  
+                  <button
+                    onClick={() => setCalculatorSetIndex(i)}
+                    disabled={isFuture}
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-noir-text-muted hover:text-noir-accent hover:bg-noir-surface-light transition-colors disabled:opacity-50"
+                  >
+                    🧮
+                  </button>
+
                   <div className="flex gap-1 ml-auto items-center">
                     {/* Per-set drop toggle */}
                     {!isDropSetExercise && (
@@ -595,6 +627,17 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
           exerciseName={exercise.name}
         />
       )}
+      
+      <PlateCalculatorModal
+        isOpen={calculatorSetIndex !== null}
+        onClose={() => setCalculatorSetIndex(null)}
+        initialWeight={calculatorSetIndex !== null ? localLogs[calculatorSetIndex].weight : ""}
+        onApplyWeight={(w) => {
+          if (calculatorSetIndex !== null) {
+            handleUpdateLocalLog(calculatorSetIndex, "weight", w);
+          }
+        }}
+      />
     </div>
   );
 }

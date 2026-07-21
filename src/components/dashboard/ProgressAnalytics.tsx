@@ -4,6 +4,7 @@ import { useProtocol } from "@/hooks/useProtocolStore";
 import { DEFAULT_IRONCORE_PROGRAM } from "@/data/protocol";
 import { Dumbbell, CalendarCheck, Plus, Trash2, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
+import { getProtocolDateString, calculateTotalStats } from "@/lib/dateUtils";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function ProgressAnalytics() {
@@ -47,26 +48,8 @@ export default function ProgressAnalytics() {
     return Array.from(exMap.values()).filter(ex => !trackedLifts.find(l => l.id === ex.id));
   }, [state.customRoutine, state.customDailyExercises, trackedLifts]);
 
-  // Compute overall stats
   const stats = useMemo(() => {
-    const sortedDates = Object.keys(state.workoutLogs);
-    let totalWorkouts = 0;
-    let totalSetsLogged = 0;
-    
-    sortedDates.forEach(date => {
-      const dayData = state.workoutLogs[date];
-      let hasLoggedSomething = false;
-      Object.keys(dayData).forEach(exId => {
-        const exLogs = dayData[exId];
-        const validSets = exLogs.filter(s => s.weight && s.reps).length;
-        if (validSets > 0) {
-          hasLoggedSomething = true;
-          totalSetsLogged += validSets;
-        }
-      });
-      if (hasLoggedSomething) totalWorkouts++;
-    });
-
+    const { totalWorkouts, totalSets: totalSetsLogged } = calculateTotalStats(state.workoutLogs);
     return { totalWorkouts, totalSetsLogged };
   }, [state.workoutLogs]);
 

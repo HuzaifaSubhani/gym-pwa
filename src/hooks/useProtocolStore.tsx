@@ -38,6 +38,7 @@ export type ProtocolState = {
   customRoutine?: Record<number, CustomDayRoutine>; // { dayNum: DayRoutine }
   customDailyExercises?: Record<string, Exercise[]>; // { dateStr: Exercise[] }
   ignoredDailyExercises?: Record<string, string[]>; // { dateStr: exerciseId[] }
+  swappedDailyExercises?: Record<string, Record<string, Exercise>>; // { dateStr: { oldId: newExercise } }
   compoundGroups?: Record<string, CompoundGroup[]>;   // { dateStr: CompoundGroup[] }
   supersetLinks?: Record<string, string>;              // { exerciseId: partnerExerciseId }
   timer: { isActive: boolean; endTime: number; isPaused: boolean; duration: number };
@@ -54,6 +55,7 @@ type ProtocolContextType = {
   setWeightLog: (week: number, weight: string) => void;
   setActiveWeekDay: (week: number, day: number) => void;
   addCustomExercise: (exercise: Exercise, scope: "today" | "every_week", dayNum: number, dateStr: string) => void;
+  swapExercise: (dayNum: number, dateStr: string, oldExerciseId: string, newExercise: Exercise, scope: "today" | "every_week") => void;
   removeExercise: (dayNum: number, dateStr: string, exerciseId: string) => void;
   setCustomDayRoutine: (dayNum: number, name: string, focus: string) => void;
   syncWithUser: (userId: string) => void;
@@ -292,10 +294,43 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
                 dayName: "",
                 focus: "",
                 exercises: [exercise],
-                isPartial: true // Flag to indicate we need to merge with ROUTINE_SCHEMA
+                isPartial: true
               }
             }
           };
+        }
+      }
+    });
+  }, []);
+
+  const swapExercise = useCallback((dayNum: number, dateStr: string, oldExerciseId: string, newExercise: Exercise, scope: "today" | "every_week") => {
+    setState((prev) => {
+      if (scope === "today") {
+        return {
+          ...prev,
+          swappedDailyExercises: {
+            ...prev.swappedDailyExercises,
+            [dateStr]: {
+              ...(prev.swappedDailyExercises?.[dateStr] || {}),
+              [oldExerciseId]: newExercise
+            }
+          }
+        };
+      } else {
+        const existingRoutine = prev.customRoutine?.[dayNum];
+        if (existingRoutine) {
+          return {
+            ...prev,
+            customRoutine: {
+              ...prev.customRoutine,
+              [dayNum]: {
+                ...existingRoutine,
+                exercises: existingRoutine.exercises.map(ex => ex.id === oldExerciseId ? newExercise : ex)
+              }
+            }
+          };
+        } else {
+          return prev; // Should not happen since we can only swap existing exercises
         }
       }
     });

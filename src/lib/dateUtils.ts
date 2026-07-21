@@ -51,21 +51,23 @@ export function calculateVolume(logs: Array<{ weight: string; reps: string; drop
 /**
  * Calculate total volume and workouts from the entire workoutLogs state object.
  */
-export function calculateTotalStats(workoutLogs: Record<string, Record<string, any[]>>) {
-  let totalVolume = 0;
-  let totalWorkouts = 0;
-  
-  Object.keys(workoutLogs || {}).forEach(date => {
-    let dayHasVolume = false;
-    Object.values(workoutLogs[date]).forEach((logs) => {
-      const exVol = calculateVolume(logs);
-      if (exVol > 0) {
-        dayHasVolume = true;
-        totalVolume += exVol;
-      }
-    });
+  export function calculateTotalStats(workoutLogs: Record<string, Record<string, any[]>>) {
+    let totalVolume = 0;
+    let totalWorkouts = 0;
+    let totalSets = 0;
+    
+    Object.keys(workoutLogs || {}).forEach(date => {
+      let dayHasVolume = false;
+      Object.values(workoutLogs[date]).forEach((logs) => {
+        const exVol = calculateVolume(logs);
+        if (exVol > 0) {
+          dayHasVolume = true;
+          totalVolume += exVol;
+        }
+        totalSets += logs.filter(l => l && l.weight && l.reps).length;
+      });
     if (dayHasVolume) totalWorkouts++;
   });
 
-  return { totalVolume, totalWorkouts };
+  return { totalVolume, totalWorkouts, totalSets };
 }

@@ -4,7 +4,7 @@ import { useProtocol } from "@/hooks/useProtocolStore";
 import Image from "next/image";
 import { Play, Activity, Flame } from "lucide-react";
 import PersonalRecords from "@/components/social/PersonalRecords";
-import { getProtocolDateString, calculateVolume } from "@/lib/dateUtils";
+import { getProtocolDateString, calculateTotalStats } from "@/lib/dateUtils";
 
 export default function Dashboard({ 
   avatarUrl, 
@@ -26,18 +26,7 @@ export default function Dashboard({
   }
 
   // Calculate overall stats — now includes drop set volume via shared utility
-  let totalWorkouts = 0;
-  let totalVolume = 0;
-  Object.keys(state.workoutLogs).forEach(date => {
-    const dayLogs = state.workoutLogs[date];
-    let hasValid = false;
-    Object.values(dayLogs).forEach((logs) => {
-      const vol = calculateVolume(logs);
-      if (vol > 0) hasValid = true;
-      totalVolume += vol;
-    });
-    if (hasValid) totalWorkouts++;
-  });
+  const { totalWorkouts, totalVolume } = calculateTotalStats(state.workoutLogs);
   const xp = Math.round(totalVolume / 10);
   const level = Math.floor(Math.sqrt(xp / 100)) + 1;
   const currentLevelXP = 100 * Math.pow(level - 1, 2);

@@ -73,7 +73,7 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
   const handleAdd = () => {
     if (!selectedExercise) return;
     const exercise: Exercise = {
-      id: `custom_${Date.now()}`,
+      id: `custom_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       name: selectedExercise.name,
       sets: parseInt(sets, 10) || 3,
       reps,
@@ -91,7 +91,7 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
   const handleCustomExerciseSubmit = () => {
     if (!searchTerm.trim()) return;
     setSelectedExercise({
-      id: `custom_db_${Date.now()}`,
+      id: `custom_db_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       name: searchTerm,
       t: "custom",
       b: "custom",
@@ -208,6 +208,7 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
                         alt={ex.name}
                         fill
                         sizes="48px"
+                        unoptimized={true}
                         className="object-cover"
                       />
                     </div>
