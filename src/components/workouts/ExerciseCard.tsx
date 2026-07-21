@@ -3,7 +3,7 @@
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { Exercise, getIntensityDirectives } from "@/data/protocol";
 import { Check, ChevronLeft, Trash2, History, Play, Info, Link, Unlink, Plus, Minus, Replace } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import ExerciseVideoModal from "@/components/modals/ExerciseVideoModal";
 import PlateCalculatorModal from "@/components/modals/PlateCalculatorModal";
 import { getProtocolDateString } from "@/lib/dateUtils";

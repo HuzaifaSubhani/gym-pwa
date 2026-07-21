@@ -503,8 +503,8 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const contextValue = useMemo(() => ({
-    state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift, saveProgram, setActiveProgram, linkSuperset, unlinkSuperset, addCompoundGroup, removeCompoundGroup
-  }), [state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift, saveProgram, setActiveProgram, linkSuperset, unlinkSuperset, addCompoundGroup, removeCompoundGroup]);
+    state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, swapExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift, saveProgram, setActiveProgram, linkSuperset, unlinkSuperset, addCompoundGroup, removeCompoundGroup
+  }), [state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, swapExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift, saveProgram, setActiveProgram, linkSuperset, unlinkSuperset, addCompoundGroup, removeCompoundGroup]);
 
   return (
     <ProtocolContext.Provider value={contextValue}>
