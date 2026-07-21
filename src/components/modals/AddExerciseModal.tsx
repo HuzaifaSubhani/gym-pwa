@@ -16,8 +16,8 @@ const CATEGORIES = [
   { id: "legs", name: "Legs", parts: ["quads", "glutes", "hamstrings", "calves", "adductors", "abductors"], iconUrl: "/legs.png", IconFallback: GiLeg },
   { id: "core", name: "Core", parts: ["abs", "spine"], iconUrl: "/core.png", IconFallback: GiAbdominalArmor },
   { id: "cardio", name: "Cardio", parts: ["cardiovascular system"], IconFallback: GiHeartBeats },
-  { id: "stretching", name: "Stretching", parts: ["stretching", "flexibility"], IconFallback: Activity },
-  { id: "warmup", name: "Warmup", parts: ["warmup", "mobility"], IconFallback: Flame },
+  { id: "stretching", name: "Stretching", parts: ["stretch", "flexibility"], IconFallback: Activity },
+  { id: "warmup", name: "Warmup", parts: ["warmup", "warm up", "warm-up", "mobility"], IconFallback: Flame },
 ];
 
 type ExerciseDBEntry = {
@@ -114,7 +114,14 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
   if (deferredSearchTerm.trim().length > 0) {
     displayedExercises = dbExercises.filter(ex => ex.name.toLowerCase().includes(deferredSearchTerm.toLowerCase()));
   } else if (selectedCategory) {
-    displayedExercises = dbExercises.filter(ex => selectedCategory.parts.includes(ex.t));
+    displayedExercises = dbExercises.filter(ex => {
+      if (selectedCategory.parts.includes(ex.t)) return true;
+      if (selectedCategory.id === "stretching" || selectedCategory.id === "warmup") {
+        const nameLower = ex.name.toLowerCase();
+        return selectedCategory.parts.some(p => nameLower.includes(p));
+      }
+      return false;
+    });
   }
 
   return (
