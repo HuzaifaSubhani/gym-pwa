@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --color-noir-bg: #000000;
-  --color-noir-surface: #121212;
-  --color-noir-surface-light: #1E1E1E;
-  --color-noir-border: #2A2A2A;
-  --color-noir-accent: #A78BFA;
-  --color-noir-text: #FFFFFF;
-  --color-noir-text-muted: #A0A0A0;
+  --color-noir-bg: #09090b;
+  --color-noir-surface: rgba(20, 20, 21, 0.7); /* Slightly transparent for glassmorphism */
+  --color-noir-surface-light: #1c1c1e;
+  --color-noir-border: rgba(255, 255, 255, 0.08); /* Soft faint borders */
+  --color-noir-accent: #CCFF00; /* Volt/Acid Green */
+  --color-noir-text: #F4F4F5;
+  --color-noir-text-muted: #A1A1AA;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
@@ -15,8 +15,8 @@
   --animate-float: float 5s ease-in-out infinite;
 
   @keyframes glow-pulse {
-    0% { opacity: 0.2; transform: scale(1); filter: blur(120px); }
-    100% { opacity: 0.5; transform: scale(1.05); filter: blur(150px); }
+    0% { opacity: 0.1; transform: scale(1); filter: blur(120px); }
+    100% { opacity: 0.3; transform: scale(1.05); filter: blur(150px); }
   }
 
   @keyframes float {
@@ -41,6 +41,10 @@
 }
 
 @layer utilities {
+  [class*="bg-noir-surface"] {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }

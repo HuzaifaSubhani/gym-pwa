@@ -2,22 +2,49 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { getCurrentProtocolDateInfo } from "@/data/protocol";
+import { getCurrentProtocolDateInfo, Program, DEFAULT_IRONCORE_PROGRAM, Exercise, DayRoutine, DayRoutineItem, CompoundGroup } from "@/data/protocol";
 
-export type SetLog = { weight: string; reps: string; drops?: { weight: string; reps: string }[]; rating?: string; };
+// ── Data version for localStorage migration ──
+const DATA_VERSION = 2;
+
+// ── Types ──
+
+export type DropLog = { weight: string; reps: string };
+
+export type SetLog = {
+  weight: string;
+  reps: string;
+  drops?: DropLog[];
+  rating?: string;
+  isPulled?: boolean;    // true if this data came from "Pull Last Week"
+  isCompleted?: boolean; // true when user explicitly confirms this set
+  hasDrops?: boolean;    // true if user toggled drop-set on this individual set
+};
 
 export type TrackedLift = { id: string; name: string; muscle: string; color: string };
 
+/** Custom routine for a day-of-week, extending or replacing the program's schema. */
+export type CustomDayRoutine = DayRoutine & {
+  isPartial?: boolean;
+};
+
 export type ProtocolState = {
+  dataVersion?: number;
   activeWeek: number;
   activeDayOfWeek: number;
   workoutLogs: Record<string, Record<string, SetLog[]>>; // { dateStr: { exerciseId: [SetLog] } }
   weightLogs: Record<number, string>; // { weekNumber: weightStr }
   habits: Record<string, { morning: boolean; evening: boolean }>; // { dateStr: { ... } }
-  customRoutine?: Record<number, any>; // { dayNum: DayRoutine }
-  customDailyExercises?: Record<string, any[]>; // { dateStr: Exercise[] }
+  customRoutine?: Record<number, CustomDayRoutine>; // { dayNum: DayRoutine }
+  customDailyExercises?: Record<string, Exercise[]>; // { dateStr: Exercise[] }
+  ignoredDailyExercises?: Record<string, string[]>; // { dateStr: exerciseId[] }
+  swappedDailyExercises?: Record<string, Record<string, Exercise>>; // { dateStr: { oldId: newExercise } }
+  compoundGroups?: Record<string, CompoundGroup[]>;   // { dateStr: CompoundGroup[] }
+  supersetLinks?: Record<string, string>;              // { exerciseId: partnerExerciseId }
   timer: { isActive: boolean; endTime: number; isPaused: boolean; duration: number };
   trackedLifts: TrackedLift[];
+  programs: Record<string, Program>;
+  activeProgramId: string;
 };
 
 type ProtocolContextType = {
@@ -27,7 +54,8 @@ type ProtocolContextType = {
   setFullExerciseLogs: (dateStr: string, exerciseId: string, logs: SetLog[]) => void;
   setWeightLog: (week: number, weight: string) => void;
   setActiveWeekDay: (week: number, day: number) => void;
-  addCustomExercise: (exercise: any, scope: "today" | "every_week", dayNum: number, dateStr: string) => void;
+  addCustomExercise: (exercise: Exercise, scope: "today" | "every_week", dayNum: number, dateStr: string) => void;
+  swapExercise: (dayNum: number, dateStr: string, oldExerciseId: string, newExercise: Exercise, scope: "today" | "every_week") => void;
   removeExercise: (dayNum: number, dateStr: string, exerciseId: string) => void;
   setCustomDayRoutine: (dayNum: number, name: string, focus: string) => void;
   syncWithUser: (userId: string) => void;
@@ -35,11 +63,18 @@ type ProtocolContextType = {
   startTimer: (seconds: number) => void;
   addTrackedLift: (lift: TrackedLift) => void;
   removeTrackedLift: (id: string) => void;
+  saveProgram: (program: Program) => void;
+  setActiveProgram: (id: string) => void;
+  linkSuperset: (exerciseAId: string, exerciseBId: string) => void;
+  unlinkSuperset: (exerciseId: string) => void;
+  addCompoundGroup: (dateStr: string, group: CompoundGroup) => void;
+  removeCompoundGroup: (dateStr: string, groupId: string) => void;
 };
 
 const { currentWeek, currentDayOfWeek } = getCurrentProtocolDateInfo();
 
 const initialState: ProtocolState = {
+  dataVersion: DATA_VERSION,
   activeWeek: currentWeek,
   activeDayOfWeek: currentDayOfWeek,
   workoutLogs: {},
@@ -53,7 +88,26 @@ const initialState: ProtocolState = {
     { id: "th1", name: "Smith Machine Press", muscle: "Shoulders", color: "#ffff00" },
     { id: "f1", name: "Split Squats", muscle: "Legs", color: "#ff3333" },
   ],
+  programs: {
+    [DEFAULT_IRONCORE_PROGRAM.id]: DEFAULT_IRONCORE_PROGRAM
+  },
+  activeProgramId: DEFAULT_IRONCORE_PROGRAM.id,
 };
+
+// ── Migration helper ──
+function migrateState(parsed: Record<string, unknown>): ProtocolState {
+  const version = (parsed.dataVersion as number) || 1;
+  const state = parsed as unknown as ProtocolState;
+
+  if (version < 2) {
+    // v1 → v2: Ensure new fields exist
+    state.supersetLinks = state.supersetLinks || {};
+    state.compoundGroups = state.compoundGroups || {};
+    state.dataVersion = DATA_VERSION;
+  }
+
+  return state;
+}
 
 // Module-level guard: survives component remounts, only resets on full page reload
 let _hasSynced = false;
@@ -71,11 +125,16 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
+          const migrated = migrateState(parsed);
           // Always ensure the app starts on today's date when they open it, 
           // overriding whatever week/day was saved previously.
           const { currentWeek, currentDayOfWeek } = getCurrentProtocolDateInfo();
           setState({
-            ...parsed,
+            ...migrated,
+            programs: {
+              ...migrated.programs,
+              [DEFAULT_IRONCORE_PROGRAM.id]: DEFAULT_IRONCORE_PROGRAM
+            },
             activeWeek: currentWeek,
             activeDayOfWeek: currentDayOfWeek,
           });
@@ -89,7 +148,11 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isLoaded && userId) {
-      localStorage.setItem(`gym_pwa_${userId}`, JSON.stringify(state));
+      try {
+        localStorage.setItem(`gym_pwa_${userId}`, JSON.stringify(state));
+      } catch (e) {
+        console.error("Failed to save state to localStorage", e);
+      }
     }
   }, [state, isLoaded, userId]);
 
@@ -198,7 +261,7 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const addCustomExercise = useCallback((exercise: any, scope: "today" | "every_week", dayNum: number, dateStr: string) => {
+  const addCustomExercise = useCallback((exercise: Exercise, scope: "today" | "every_week", dayNum: number, dateStr: string) => {
     setState((prev) => {
       if (scope === "today") {
         const existing = prev.customDailyExercises?.[dateStr] || [];
@@ -223,18 +286,51 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
             },
           };
         } else {
-          // If the day hasn't been customized yet, we shouldn't overwrite the base schema directly here.
-          // The component should pass the base routine so we can append to it.
           return {
             ...prev,
             customRoutine: {
               ...prev.customRoutine,
               [dayNum]: {
+                dayName: "",
+                focus: "",
                 exercises: [exercise],
-                isPartial: true // Flag to indicate we need to merge with ROUTINE_SCHEMA
+                isPartial: true
               }
             }
+          };
+        }
+      }
+    });
+  }, []);
+
+  const swapExercise = useCallback((dayNum: number, dateStr: string, oldExerciseId: string, newExercise: Exercise, scope: "today" | "every_week") => {
+    setState((prev) => {
+      if (scope === "today") {
+        return {
+          ...prev,
+          swappedDailyExercises: {
+            ...prev.swappedDailyExercises,
+            [dateStr]: {
+              ...(prev.swappedDailyExercises?.[dateStr] || {}),
+              [oldExerciseId]: newExercise
+            }
           }
+        };
+      } else {
+        const existingRoutine = prev.customRoutine?.[dayNum];
+        if (existingRoutine) {
+          return {
+            ...prev,
+            customRoutine: {
+              ...prev.customRoutine,
+              [dayNum]: {
+                ...existingRoutine,
+                exercises: existingRoutine.exercises.map(ex => ex.id === oldExerciseId ? newExercise : ex)
+              }
+            }
+          };
+        } else {
+          return prev; // Should not happen since we can only swap existing exercises
         }
       }
     });
@@ -247,15 +343,33 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         newCustomDaily[dateStr] = newCustomDaily[dateStr].filter(ex => ex.id !== exerciseId);
       }
 
+      // Add to ignored list so base program exercises are hidden
+      const newIgnored = { ...prev.ignoredDailyExercises };
+      const currentIgnored = newIgnored[dateStr] || [];
+      if (!currentIgnored.includes(exerciseId)) {
+        newIgnored[dateStr] = [...currentIgnored, exerciseId];
+      }
+
       const newCustomRoutine = { ...prev.customRoutine };
+
+      // Also clean up superset links if this exercise was in one
+      const newSupersetLinks = { ...prev.supersetLinks };
+      const partnerId = newSupersetLinks[exerciseId];
+      if (partnerId) {
+        delete newSupersetLinks[exerciseId];
+        delete newSupersetLinks[partnerId];
+      }
+
       return {
         ...prev,
         customDailyExercises: newCustomDaily,
+        ignoredDailyExercises: newIgnored,
+        supersetLinks: newSupersetLinks,
         customRoutine: newCustomRoutine[dayNum] ? {
           ...newCustomRoutine,
           [dayNum]: {
             ...newCustomRoutine[dayNum],
-            exercises: newCustomRoutine[dayNum].exercises.filter((ex: any) => ex.id !== exerciseId)
+            exercises: newCustomRoutine[dayNum].exercises.filter((ex: Exercise) => ex.id !== exerciseId)
           }
         } : newCustomRoutine
       };
@@ -317,9 +431,80 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const saveProgram = useCallback((program: Program) => {
+    setState(prev => ({
+      ...prev,
+      programs: {
+        ...prev.programs,
+        [program.id]: program
+      }
+    }));
+  }, []);
+
+  const setActiveProgram = useCallback((id: string) => {
+    setState(prev => ({
+      ...prev,
+      activeProgramId: id,
+      activeWeek: 1, // Reset to week 1 when changing programs
+    }));
+  }, []);
+
+  // ── Superset linking ──
+
+  const linkSuperset = useCallback((exerciseAId: string, exerciseBId: string) => {
+    setState(prev => ({
+      ...prev,
+      supersetLinks: {
+        ...prev.supersetLinks,
+        [exerciseAId]: exerciseBId,
+        [exerciseBId]: exerciseAId,
+      }
+    }));
+  }, []);
+
+  const unlinkSuperset = useCallback((exerciseId: string) => {
+    setState(prev => {
+      const links = { ...prev.supersetLinks };
+      const partnerId = links[exerciseId];
+      if (partnerId) {
+        delete links[partnerId];
+      }
+      delete links[exerciseId];
+      return { ...prev, supersetLinks: links };
+    });
+  }, []);
+
+  // ── Compound groups ──
+
+  const addCompoundGroup = useCallback((dateStr: string, group: CompoundGroup) => {
+    setState(prev => {
+      const existing = prev.compoundGroups?.[dateStr] || [];
+      return {
+        ...prev,
+        compoundGroups: {
+          ...prev.compoundGroups,
+          [dateStr]: [...existing, group],
+        }
+      };
+    });
+  }, []);
+
+  const removeCompoundGroup = useCallback((dateStr: string, groupId: string) => {
+    setState(prev => {
+      const existing = prev.compoundGroups?.[dateStr] || [];
+      return {
+        ...prev,
+        compoundGroups: {
+          ...prev.compoundGroups,
+          [dateStr]: existing.filter(g => g.id !== groupId),
+        }
+      };
+    });
+  }, []);
+
   const contextValue = useMemo(() => ({
-    state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift
-  }), [state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift]);
+    state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, swapExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift, saveProgram, setActiveProgram, linkSuperset, unlinkSuperset, addCompoundGroup, removeCompoundGroup
+  }), [state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, swapExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift, saveProgram, setActiveProgram, linkSuperset, unlinkSuperset, addCompoundGroup, removeCompoundGroup]);
 
   return (
     <ProtocolContext.Provider value={contextValue}>

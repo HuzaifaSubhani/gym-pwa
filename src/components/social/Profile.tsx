@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
-import { Loader2, Camera, LogOut, Trash2, CheckCircle2, Save, ChevronDown, ChevronUp, User, Activity, Flame, Medal, Calendar, Settings } from "lucide-react";
+import { Loader2, Camera, LogOut, Trash2, CheckCircle2, Save, ChevronDown, ChevronUp, User, Activity, Flame, Medal, Calendar, Settings, Trophy } from "lucide-react";
 import { useProtocol } from "@/hooks/useProtocolStore";
+import { getShortDateLabel, calculateTotalStats } from "@/lib/dateUtils";
+import { useRouter } from "next/navigation";
+import PersonalRecords from "@/components/social/PersonalRecords";
 
 type ProfileData = {
   id: string;
@@ -16,6 +20,7 @@ type ProfileData = {
   weight_kg?: number;
   activity_level?: string;
   nutrition_goal?: string;
+  physique_tag?: string;
 };
 
 let cachedProfileData: any = null;
@@ -33,8 +38,9 @@ export default function Profile() {
   const [gender, setGender] = useState("male");
   const [heightCm, setHeightCm] = useState<number | "">("");
   const [weightKg, setWeightKg] = useState<number | "">("");
-  const [activityLevel, setActivityLevel] = useState("1.55");
-  const [nutritionGoal, setNutritionGoal] = useState("maintain");
+  const [activityLevel, setActivityLevel] = useState("moderate");
+  const [nutritionGoal, setNutritionGoal] = useState("maintenance");
+  const [physiqueTag, setPhysiqueTag] = useState("overall");
   
   const [heightUnit, setHeightUnit] = useState<"cm" | "ft">("cm");
   const [heightFt, setHeightFt] = useState<number | "">("");
@@ -49,7 +55,6 @@ export default function Profile() {
 
   const [openSection, setOpenSection] = useState<string>("account");
   const { state } = useProtocol();
-  const totalWorkouts = Object.keys(state.workoutLogs).length;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -70,6 +75,7 @@ export default function Profile() {
         if (data.weight_kg) setWeightKg(data.weight_kg);
         if (data.activity_level) setActivityLevel(data.activity_level);
         if (data.nutrition_goal) setNutritionGoal(data.nutrition_goal);
+        if (data.physique_tag) setPhysiqueTag(data.physique_tag);
         setLoading(false);
         return;
       }
@@ -95,6 +101,7 @@ export default function Profile() {
           if (data.weight_kg) setWeightKg(data.weight_kg);
           if (data.activity_level) setActivityLevel(data.activity_level);
           if (data.nutrition_goal) setNutritionGoal(data.nutrition_goal);
+          if (data.physique_tag) setPhysiqueTag(data.physique_tag);
           
           cachedProfileData = {
             user,
@@ -150,7 +157,8 @@ export default function Profile() {
       height_cm: heightCm || null,
       weight_kg: weightKg || null,
       activity_level: activityLevel,
-      nutrition_goal: nutritionGoal
+      nutrition_goal: nutritionGoal,
+      physique_tag: physiqueTag
     };
     const { error } = await supabase.from("profiles").update(updates).eq("id", user.id);
     
@@ -282,16 +290,7 @@ export default function Profile() {
     );
   }
 
-  let totalVolume = 0;
-  Object.values(state.workoutLogs).forEach((dayLogs: any) => {
-    Object.values(dayLogs).forEach((exLogs: any) => {
-      exLogs.forEach((log: any) => {
-        if (log && log.weight && log.reps) {
-          totalVolume += (Number(log.weight) * Number(log.reps));
-        }
-      });
-    });
-  });
+  const { totalVolume, totalWorkouts } = calculateTotalStats(state.workoutLogs);
 
   const xp = Math.round(totalVolume / 10);
   const level = Math.floor(Math.sqrt(xp / 100)) + 1;
@@ -318,21 +317,20 @@ export default function Profile() {
 
       {/* Hero Section */}
       <div className="bg-noir-surface border border-noir-border rounded-2xl shadow-lg relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-noir-accent/20 via-transparent to-transparent opacity-50"></div>
-        <div className="absolute -top-32 -left-32 w-64 h-64 bg-noir-accent/30 blur-[100px] rounded-full"></div>
-        
         <div className="p-8 text-center relative z-10 flex flex-col items-center">
           
           <div className="relative group cursor-pointer inline-block mb-4">
             {myProfile.avatar_url ? (
-              <img 
+              <Image 
                 src={myProfile.avatar_url} 
                 alt="DP" 
-                className="w-32 h-32 rounded-full border-4 border-noir-bg object-cover shadow-[0_0_25px_rgba(167,139,250,0.5)] ring-2 ring-noir-accent" 
+                width={128}
+                height={128}
+                className="w-32 h-32 rounded-full border-4 border-noir-bg object-cover shadow-lg " 
                 style={{ objectPosition: `50% ${myProfile.avatar_position}%` }}
               />
             ) : (
-              <div className="w-32 h-32 rounded-full bg-noir-bg border-4 border-noir-surface flex items-center justify-center text-5xl font-black shadow-[0_0_25px_rgba(167,139,250,0.5)] ring-2 ring-noir-accent">
+              <div className="w-32 h-32 rounded-full bg-noir-bg border-4 border-noir-surface flex items-center justify-center text-5xl font-black shadow-lg ">
                 {myProfile.username.substring(0, 2).toUpperCase()}
               </div>
             )}
@@ -351,31 +349,36 @@ export default function Profile() {
           {uploadingAvatar && <p className="text-xs text-noir-accent animate-pulse font-bold tracking-widest uppercase mb-2">Uploading...</p>}
 
           <h2 className="text-3xl font-black mb-1">{myProfile.username}</h2>
+          
+          {myProfile.pinned_pr && (
+            <div className="mb-4 inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 text-zinc-300 px-3.5 py-1.5 rounded-full shadow-lg">
+              <Trophy size={14} className="text-yellow-500" />
+              <span className="text-xs font-bold tracking-wide">
+                {myProfile.pinned_pr.name} • <span className="text-white font-black">{myProfile.pinned_pr.weight}kg × {myProfile.pinned_pr.reps}</span>
+              </span>
+            </div>
+          )}
+
           <div className="flex flex-col items-center gap-1 mb-4">
             <span className="text-noir-accent font-bold tracking-widest uppercase text-xs">Level {level} Elite</span>
             <div className="w-48 bg-noir-bg rounded-full h-1.5 shadow-inner overflow-hidden border border-noir-border/50">
-              <div className="h-full bg-noir-accent shadow-[0_0_10px_rgba(167,139,250,0.8)] rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
+              <div className="h-full bg-noir-accent shadow-lg rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
             </div>
             <span className="text-[10px] text-noir-text-muted">{xp.toLocaleString()} XP / {nextLevelXP.toLocaleString()} XP</span>
           </div>
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-3 gap-1 relative z-10 bg-noir-bg/50 border-t border-noir-border backdrop-blur-md p-4">
+        <div className="grid grid-cols-2 gap-1 relative z-10 bg-noir-bg/50 border-t border-noir-border backdrop-blur-md p-4">
           <div className="flex flex-col items-center text-center">
-            <Activity className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]" size={20} />
+            <Activity className="text-noir-accent mb-1 drop-shadow-lg" size={20} />
             <span className="text-xl font-bold text-white">{totalWorkouts}</span>
             <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Workouts</span>
           </div>
-          <div className="flex flex-col items-center text-center border-l border-r border-noir-border/50">
-            <Flame className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]" size={20} />
+          <div className="flex flex-col items-center text-center border-l border-noir-border/50">
+            <Flame className="text-noir-accent mb-1 drop-shadow-lg" size={20} />
             <span className="text-xl font-bold text-white">{(totalVolume / 1000).toFixed(1)}k</span>
             <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Volume (kg)</span>
-          </div>
-          <div className="flex flex-col items-center text-center">
-            <Medal className="text-noir-accent mb-1 drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]" size={20} />
-            <span className="text-xl font-bold text-white">{totalWorkouts >= 50 ? '3' : totalWorkouts >= 10 ? '2' : '1'}</span>
-            <span className="text-[9px] uppercase font-bold text-noir-text-muted tracking-widest">Tier</span>
           </div>
         </div>
       </div>
@@ -391,7 +394,7 @@ export default function Profile() {
             className="w-full flex items-center justify-between p-5 hover:bg-noir-surface-light transition-colors"
           >
             <div className="flex items-center gap-3">
-              <User size={20} className="text-noir-accent drop-shadow-[0_0_5px_rgba(167,139,250,0.3)]" />
+              <User size={20} className="text-noir-accent drop-shadow-lg" />
               <span className="font-bold uppercase tracking-wider text-sm">Account Settings</span>
             </div>
             {openSection === "account" ? <ChevronUp size={20} className="text-noir-accent" /> : <ChevronDown size={20} className="text-noir-text-muted" />}
@@ -408,6 +411,49 @@ export default function Profile() {
                 className="w-full bg-noir-bg border border-noir-border rounded-lg p-3 text-lg font-bold text-noir-text focus:outline-none focus:border-noir-accent transition-colors" 
               />
             </div>
+            <div>
+              <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 ml-1 mt-4">Physique Class</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'classic', label: 'Classic' },
+                  { id: 'aesthetic', label: 'Aesthetic' },
+                  { id: 'powerlifting', label: 'Powerlifting' }
+                ].map(tag => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => setPhysiqueTag(tag.id)}
+                    className={`p-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border ${
+                      physiqueTag === tag.id 
+                        ? 'bg-noir-accent/20 border-noir-accent text-noir-accent' 
+                        : 'bg-noir-bg border-noir-border text-noir-text-muted hover:border-noir-border/80 hover:text-white'
+                    }`}
+                  >
+                    {tag.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-noir-text-muted mt-1 ml-1">Compete in a specific Leaderboard bracket. You're always ranked in Overall too.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Section: Trophy Room (PRs) */}
+        <div className="bg-noir-surface/60 backdrop-blur-sm border border-noir-border rounded-xl overflow-hidden shadow-lg">
+          <button 
+            type="button"
+            onClick={() => setOpenSection(openSection === "trophies" ? "" : "trophies")}
+            className="w-full flex items-center justify-between p-5 hover:bg-noir-surface-light transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Trophy size={20} className="text-yellow-500 drop-shadow-lg" />
+              <span className="font-bold uppercase tracking-wider text-sm">Trophy Room (PRs)</span>
+            </div>
+            {openSection === "trophies" ? <ChevronUp size={20} className="text-noir-accent" /> : <ChevronDown size={20} className="text-noir-text-muted" />}
+          </button>
+          
+          <div className={`p-4 transition-all border-t border-noir-border/50 ${openSection === "trophies" ? "block" : "hidden"}`}>
+             <PersonalRecords />
           </div>
         </div>
 
@@ -533,10 +579,11 @@ export default function Profile() {
                 heightCm === (myProfile.height_cm || "") &&
                 weightKg === (myProfile.weight_kg || "") &&
                 activityLevel === (myProfile.activity_level || "1.55") &&
-                nutritionGoal === (myProfile.nutrition_goal || "maintain")
+                nutritionGoal === (myProfile.nutrition_goal || "maintain") &&
+                physiqueTag === (myProfile.physique_tag || "overall")
               )
             }
-            className="w-full px-4 py-4 rounded-xl bg-noir-accent text-noir-bg hover:opacity-90 font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-[0_0_15px_rgba(167,139,250,0.2)] flex justify-center items-center gap-2"
+            className="w-full px-4 py-4 rounded-xl bg-noir-accent text-noir-bg hover:opacity-90 font-black tracking-wider uppercase disabled:opacity-50 transition-colors shadow-lg flex justify-center items-center gap-2"
           >
             {saveStatus === "saving" ? <><Loader2 className="animate-spin" size={20} /> Saving...</> : <><Save size={20} /> Save Changes</>}
           </button>

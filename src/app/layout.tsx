@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ProtocolProvider } from "@/hooks/useProtocolStore";
-import RestTimer from "@/components/RestTimer";
+import RestTimer from "@/components/workouts/RestTimer";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -10,7 +10,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "IronCore",
-  description: "IronCore 7-Week Protocol Tracker",
+  description: "IronCore Protocol Tracker",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -27,6 +27,8 @@ export const viewport: Viewport = {
   userScalable: false, // Prevents zooming on inputs for native feel
 };
 
+import ErrorBoundary from "@/components/shared/ErrorBoundary";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,10 +37,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-noir-bg text-noir-text overscroll-none pb-safe">
-        <ProtocolProvider>
-          {children}
-          <RestTimer />
-        </ProtocolProvider>
+        <ErrorBoundary>
+          <ProtocolProvider>
+            {children}
+            <RestTimer />
+          </ProtocolProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

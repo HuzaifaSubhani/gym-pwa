@@ -1,9 +1,10 @@
 "use client";
 
 import { useProtocol } from "@/hooks/useProtocolStore";
-import { ROUTINE_SCHEMA } from "@/data/protocol";
+import { DEFAULT_IRONCORE_PROGRAM } from "@/data/protocol";
 import { Dumbbell, CalendarCheck, Plus, Trash2, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
+import { getProtocolDateString, calculateTotalStats } from "@/lib/dateUtils";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function ProgressAnalytics() {
@@ -13,18 +14,19 @@ export default function ProgressAnalytics() {
   
   // Fallback to default if trackedLifts somehow isn't initialized yet
   const trackedLifts = state.trackedLifts || [
-    { id: "m1", name: "Incline DB Press", muscle: "Upper Chest", color: "#A78BFA" },
-    { id: "t1", name: "Pull-ups / Pulldown", muscle: "Lats", color: "#A78BFA" },
-    { id: "w1", name: "Hack Squat", muscle: "Quads", color: "#A78BFA" },
-    { id: "th1", name: "Smith Machine Press", muscle: "Shoulders", color: "#A78BFA" },
-    { id: "f1", name: "Split Squats", muscle: "Legs", color: "#A78BFA" },
+    { id: "m1", name: "Incline DB Press", muscle: "Upper Chest", color: "#CCFF00" },
+    { id: "t1", name: "Pull-ups / Pulldown", muscle: "Lats", color: "#CCFF00" },
+    { id: "w1", name: "Hack Squat", muscle: "Quads", color: "#CCFF00" },
+    { id: "th1", name: "Smith Machine Press", muscle: "Shoulders", color: "#CCFF00" },
+    { id: "f1", name: "Split Squats", muscle: "Legs", color: "#CCFF00" },
   ];
 
   const availableExercisesToTrack = useMemo(() => {
     const exMap = new Map<string, { id: string, name: string }>();
     
-    // Map all known exercises from ROUTINE_SCHEMA
-    Object.values(ROUTINE_SCHEMA).forEach(day => {
+    // Map all known exercises from active program
+    const activeProgram = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
+    Object.values(activeProgram.routine_schema).forEach(day => {
       day.exercises.forEach(ex => exMap.set(ex.id, { id: ex.id, name: ex.name }));
     });
     
@@ -46,26 +48,8 @@ export default function ProgressAnalytics() {
     return Array.from(exMap.values()).filter(ex => !trackedLifts.find(l => l.id === ex.id));
   }, [state.customRoutine, state.customDailyExercises, trackedLifts]);
 
-  // Compute overall stats
   const stats = useMemo(() => {
-    const sortedDates = Object.keys(state.workoutLogs);
-    let totalWorkouts = 0;
-    let totalSetsLogged = 0;
-    
-    sortedDates.forEach(date => {
-      const dayData = state.workoutLogs[date];
-      let hasLoggedSomething = false;
-      Object.keys(dayData).forEach(exId => {
-        const exLogs = dayData[exId];
-        const validSets = exLogs.filter(s => s.weight && s.reps).length;
-        if (validSets > 0) {
-          hasLoggedSomething = true;
-          totalSetsLogged += validSets;
-        }
-      });
-      if (hasLoggedSomething) totalWorkouts++;
-    });
-
+    const { totalWorkouts, totalSets: totalSetsLogged } = calculateTotalStats(state.workoutLogs);
     return { totalWorkouts, totalSetsLogged };
   }, [state.workoutLogs]);
 
@@ -73,9 +57,8 @@ export default function ProgressAnalytics() {
   const personalRecords = useMemo(() => {
     const prs: Record<string, { weight: number, reps: number, date: string, name: string }> = {};
     const exMap = new Map<string, string>();
-    
-    // Build name map
-    Object.values(ROUTINE_SCHEMA).forEach(day => day.exercises.forEach(ex => exMap.set(ex.id, ex.name)));
+    const activeProgram = state.programs?.[state.activeProgramId] || DEFAULT_IRONCORE_PROGRAM;
+    Object.values(activeProgram.routine_schema).forEach(day => day.exercises.forEach(ex => exMap.set(ex.id, ex.name)));
     if (state.customRoutine) Object.values(state.customRoutine).forEach((day: any) => day.exercises?.forEach((ex: any) => exMap.set(ex.id, ex.name)));
     if (state.customDailyExercises) Object.values(state.customDailyExercises).forEach((dayExs: any[]) => dayExs.forEach(ex => exMap.set(ex.id, ex.name)));
 
@@ -98,7 +81,14 @@ export default function ProgressAnalytics() {
 
   // Generate chart data series
   const chartData = useMemo(() => {
-    const sortedDates = Object.keys(state.workoutLogs).sort();
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const todayMs = today.getTime();
+
+    const sortedDates = Object.keys(state.workoutLogs).sort().filter(dateStr => {
+      const d = new Date(dateStr);
+      return d.getTime() <= todayMs;
+    });
     
     // Group by week (using the state.activeWeek is not historical, we need to map dateStr to week/day)
     // For simplicity, we will just use dateStr as the X-axis for each lift, 
@@ -145,12 +135,10 @@ export default function ProgressAnalytics() {
 
       {/* Personal Records Section */}
       {personalRecords.length > 0 && (
-        <div className="mb-8 relative p-6 bg-noir-surface border border-[#A78BFA]/40 rounded-2xl shadow-[0_0_25px_rgba(208,56,243,0.15)] overflow-hidden">
-          <div className="absolute top-[-50%] right-[-10%] w-64 h-64 bg-[#A78BFA]/10 blur-[80px] rounded-full pointer-events-none"></div>
-          <div className="absolute bottom-[-50%] left-[-10%] w-64 h-64 bg-[#A78BFA]/10 blur-[80px] rounded-full pointer-events-none"></div>
+        <div className="mb-8 relative p-6 bg-noir-surface border border-[#CCFF00]/40 rounded-2xl shadow-lg overflow-hidden">
           
           <div className="flex items-center gap-2 mb-6 relative z-10">
-            <Trophy className="text-[#A78BFA]" size={24} />
+            <Trophy className="text-[#CCFF00]" size={24} />
             <h3 className="text-xl font-black uppercase tracking-wider text-white">All-Time PRs</h3>
           </div>
           
@@ -159,8 +147,8 @@ export default function ProgressAnalytics() {
               const d = new Date(pr.date);
               const shortDate = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
               return (
-                <div key={idx} className="bg-noir-bg/60 backdrop-blur-sm border border-[#A78BFA]/20 rounded-xl p-4 flex flex-col items-center text-center shadow-inner">
-                  <span className="text-[#A78BFA] font-bold text-[10px] uppercase tracking-widest mb-2 line-clamp-1">{pr.name}</span>
+                <div key={idx} className="bg-noir-bg/60 backdrop-blur-sm border border-[#CCFF00]/20 rounded-xl p-4 flex flex-col items-center text-center shadow-inner">
+                  <span className="text-[#CCFF00] font-bold text-[10px] uppercase tracking-widest mb-2 line-clamp-1">{pr.name}</span>
                   <span className="text-4xl font-black text-white leading-none">{pr.weight}<span className="text-sm font-bold text-noir-text-muted ml-1">kg</span></span>
                   <span className="text-xs font-bold text-noir-text-muted mt-2 tracking-wider">× {pr.reps} REPS</span>
                   <span className="text-[9px] text-noir-text-muted mt-3 opacity-60 uppercase tracking-widest">{shortDate}</span>
@@ -222,7 +210,7 @@ export default function ProgressAnalytics() {
           const currentMax = series.data[series.data.length - 1].weight;
           const initialMax = series.data[0].weight;
           const diff = currentMax - initialMax;
-          const progressColor = diff > 0 ? "text-[#A78BFA]" : diff < 0 ? "text-red-500" : "text-noir-text-muted";
+          const progressColor = diff > 0 ? "text-[#CCFF00]" : diff < 0 ? "text-red-500" : "text-noir-text-muted";
 
           return (
             <div key={series.id} className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg hover:scale-[1.01] transition-transform">
@@ -270,17 +258,17 @@ export default function ProgressAnalytics() {
                     />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#121212', border: '1px solid #333', borderRadius: '8px' }}
-                      itemStyle={{ color: '#A78BFA', fontWeight: 'bold' }}
+                      itemStyle={{ color: '#CCFF00', fontWeight: 'bold' }}
                       formatter={(value: any) => [`${value} kg`, 'Max Weight']}
                       labelStyle={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="weight" 
-                      stroke="#A78BFA" 
+                      stroke="#CCFF00" 
                       strokeWidth={3} 
-                      dot={{ r: 4, strokeWidth: 2, fill: '#121212', stroke: '#A78BFA' }} 
-                      activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2, fill: '#A78BFA' }}
+                      dot={{ r: 4, strokeWidth: 2, fill: '#121212', stroke: '#CCFF00' }} 
+                      activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2, fill: '#CCFF00' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -309,7 +297,7 @@ export default function ProgressAnalytics() {
                         id: ex.id,
                         name: ex.name,
                         muscle: "Custom",
-                        color: "#A78BFA"
+                        color: "#CCFF00"
                       });
                       setIsAddTrackerOpen(false);
                     }}

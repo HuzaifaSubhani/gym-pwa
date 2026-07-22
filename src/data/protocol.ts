@@ -1,3 +1,5 @@
+export type SetType = 'normal' | 'drop' | 'superset' | 'compound';
+
 export type Exercise = {
   id: string;
   name: string;
@@ -7,18 +9,56 @@ export type Exercise = {
   notes?: string;
   isSpecialization?: boolean;
   gif_url?: string;
+  targetMuscle?: string;
+  secondaryMuscles?: string[];
+  setType?: SetType;              // Type of set (default: 'normal')
+  supersetPartner?: string;       // Exercise ID this is paired with for supersets
+  dropConfig?: { drops: number }; // Number of drops per set (1-3, default 2)
 };
+
+/** A group of exercises performed as a circuit (giant set). */
+export type CompoundGroup = {
+  id: string;
+  type: 'compound_group';
+  name: string;         // e.g. "Chest & Tri Combo"
+  exercises: Exercise[];
+  rest: number;         // rest BETWEEN rounds (seconds)
+  rounds: number;       // how many rounds of the circuit
+};
+
+export type DayRoutineItem = Exercise | CompoundGroup;
+
+export function isCompoundGroup(item: DayRoutineItem): item is CompoundGroup {
+  return 'type' in item && item.type === 'compound_group';
+}
 
 export type DayRoutine = {
   dayName: string;
   focus: string;
-  exercises: Exercise[];
+  exercises: Exercise[];  // kept for backward compat — flat exercise list
+  items?: DayRoutineItem[]; // NEW: supports both exercises and compound groups
+};
+
+export type Program = {
+  id: string;
+  name: string;
+  description: string;
+  duration_weeks: number;
+  routine_schema: Record<number, DayRoutine>;
+  is_community?: boolean;
+  creator_id?: string;
+  created_at?: string;
 };
 
 export const PROTOCOL_START_DATE = new Date(2026, 6, 6); // Year, Month (0-indexed, 6=July), Day
 export const PROTOCOL_WEEKS = 7;
 
-export const ROUTINE_SCHEMA: Record<number, DayRoutine> = {
+export const DEFAULT_IRONCORE_PROGRAM: Program = {
+  id: "default-ironcore",
+  name: "IronCore Protocol",
+  description: "The classic IronCore training protocol.",
+  duration_weeks: 7,
+  routine_schema: {
   1: {
     dayName: "Monday",
     focus: "Push Day - Upper Chest Focus",
@@ -69,7 +109,10 @@ export const ROUTINE_SCHEMA: Record<number, DayRoutine> = {
       { id: "f4", name: "Weighted Hanging Leg Raises", sets: 3, reps: "12-15", rest: 60, isSpecialization: true, gif_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0472-I3tsCnC.gif" },
     ],
   },
+  }
 };
+
+export const ROUTINE_SCHEMA = DEFAULT_IRONCORE_PROGRAM.routine_schema;
 
 export function getIntensityDirectives(week: number, day: number, isIsolation: boolean, isFinal: boolean): { note: string; restMod?: number } {
   if (week >= 1 && week <= 3) {
