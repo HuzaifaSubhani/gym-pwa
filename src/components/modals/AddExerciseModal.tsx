@@ -127,6 +127,9 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
         return selectedCategory.parts.some(p => nameLower.includes(p));
       }
       return false;
+    });
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex justify-center md:items-center md:p-4 pb-[80px] md:pb-4 bg-noir-bg animate-in fade-in">
       <div className="bg-noir-surface border-0 md:border md:border-noir-border md:rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col h-full md:h-auto md:max-h-[90vh]">
