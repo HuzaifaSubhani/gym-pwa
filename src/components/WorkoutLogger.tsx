@@ -5,6 +5,7 @@ import { ROUTINE_SCHEMA, getIntensityDirectives, Exercise, PROTOCOL_WEEKS, PROTO
 import { Check, ChevronLeft, ChevronRight, Trash2, History, Loader2, Play, Search, ArrowRight, X, Activity, Dumbbell, Shield, Mountain, Crosshair, Footprints, Target, HeartPulse } from "lucide-react";
 import { GiMuscularTorso, GiBiceps, GiArm, GiLeg, GiHeartBeats, GiShoulderArmor, GiAbdominalArmor, GiSpineArrow } from "react-icons/gi";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import TourGuide from "./TourGuide";
 import ExerciseVideoModal from "./ExerciseVideoModal";
 
@@ -445,6 +446,12 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
   
   const [dbExercises, setDbExercises] = useState<any[]>([]);
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (isOpen && dbExercises.length === 0) {
       fetch('/data/exercises.json')
@@ -461,7 +468,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
     }
   }, [isOpen, dbExercises.length]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleAdd = () => {
     onAdd({
@@ -483,7 +490,7 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
     displayedExercises = dbExercises.filter(ex => selectedCategory.parts.includes(ex.t));
   }
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-[100] flex justify-center md:items-center md:p-4 bg-noir-bg animate-in fade-in">
       <div className="bg-noir-surface border-0 md:border md:border-noir-border md:rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col h-[100dvh] md:h-auto md:max-h-[90vh]">
         
@@ -655,6 +662,8 @@ function AddExerciseModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 export default function WorkoutLogger() {
@@ -663,6 +672,11 @@ export default function WorkoutLogger() {
   const [isEditRoutineModalOpen, setIsEditRoutineModalOpen] = useState(false);
   const [routineNameEdit, setRoutineNameEdit] = useState("");
   const [routineFocusEdit, setRoutineFocusEdit] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   const baseRoutine = ROUTINE_SCHEMA[state.activeDayOfWeek];
   const dateStr = getProtocolDateString(state.activeWeek, state.activeDayOfWeek);
@@ -736,7 +750,6 @@ export default function WorkoutLogger() {
             </button>
           </div>
         </>
-        </>
       )}
       </div>
       
@@ -749,7 +762,7 @@ export default function WorkoutLogger() {
       <TourGuide />
 
       {/* Edit Routine Modal */}
-      {isEditRoutineModalOpen && (
+      {isEditRoutineModalOpen && mounted && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg/80 backdrop-blur-sm">
           <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
             <h2 className="text-xl font-bold mb-4 text-noir-accent">Build Custom Routine</h2>
@@ -777,7 +790,7 @@ export default function WorkoutLogger() {
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
     </>
   );
 }
