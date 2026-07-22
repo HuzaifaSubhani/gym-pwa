@@ -312,8 +312,8 @@ export default function WorkoutLogger() {
       <TourGuide />
 
       {/* Edit Routine Modal */}
-      {isEditRoutineModalOpen && mounted && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg/80 backdrop-blur-sm">
+      {isEditRoutineModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pb-[80px] bg-noir-bg/80 backdrop-blur-sm">
           <div className="bg-noir-surface border border-noir-border rounded-xl p-6 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
             <h2 className="text-xl font-bold mb-4 text-noir-accent">Build Custom Routine</h2>
             <p className="text-sm text-noir-text-muted mb-4">{(mergedRoutine as any)?.isPartial === false ? "Update the name and focus of your custom day." : "This will clear the current day's protocol exercises and let you build a completely custom day."}</p>
@@ -340,7 +340,7 @@ export default function WorkoutLogger() {
             </form>
           </div>
         </div>
-      , document.body)}
+      )}
     </>
   );
 }

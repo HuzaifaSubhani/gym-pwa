@@ -47,7 +47,7 @@ export default function CreateGiantSetModal({ isOpen, onClose, onAdd }: {
     }
   }, [isOpen, dbExercises.length]);
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen) return null;
 
   const handleAddExercise = (dbEx: ExerciseDBEntry) => {
     const ex: Exercise = {
@@ -85,9 +85,9 @@ export default function CreateGiantSetModal({ isOpen, onClose, onAdd }: {
     ? dbExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 30)
     : [];
 
-  const modalContent = (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-noir-bg/90 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-noir-surface border border-noir-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pb-[80px] bg-noir-bg/90 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-noir-surface border border-noir-border rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col h-full max-h-[90vh]">
         
         {/* Header */}
         <div className="p-4 border-b border-noir-border flex items-center gap-3 shrink-0">
@@ -218,6 +218,4 @@ export default function CreateGiantSetModal({ isOpen, onClose, onAdd }: {
       </div>
     </div>
   );
-
-  return createPortal(modalContent, document.body);
 }

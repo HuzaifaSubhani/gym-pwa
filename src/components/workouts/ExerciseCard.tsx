@@ -35,6 +35,7 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
   // Local state for inputs
   const [localLogs, setLocalLogs] = useState<SetLog[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   
   // Auto-save status
@@ -207,10 +208,12 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
   };
 
   const handleDeleteExercise = () => {
-    if (confirm(`Are you sure you want to remove ${exercise.name}?`)) {
-      if (onRemove) onRemove();
-      else removeExercise(activeDayOfWeek, dateStr, exercise.id);
-    }
+    setShowRemoveConfirm(true);
+  };
+
+  const confirmRemoveExercise = () => {
+    if (onRemove) onRemove();
+    else removeExercise(activeDayOfWeek, dateStr, exercise.id);
   };
 
   const handleCompare = (e: React.MouseEvent) => {
@@ -274,6 +277,19 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
             <div className="flex gap-2 justify-center">
               <button onClick={(e) => { e.stopPropagation(); setShowClearConfirm(false); }} className="px-4 py-2 rounded-lg border border-noir-border hover:bg-noir-surface-light min-h-[44px]">Cancel</button>
               <button onClick={(e) => { e.stopPropagation(); handleClear(); }} className="px-4 py-2 rounded-lg bg-red-600/20 text-red-500 border border-red-900 font-bold hover:bg-red-600/30 min-h-[44px]">Yes, Clear</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRemoveConfirm && (
+        <div className="absolute inset-0 bg-noir-bg/95 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in zoom-in-95 duration-200">
+          <div className="text-center">
+            <h3 className="text-lg font-bold mb-2">Remove {exercise.name}?</h3>
+            <p className="text-sm text-noir-text-muted mb-4">Are you sure you want to remove this exercise from today's workout?</p>
+            <div className="flex gap-2 justify-center">
+              <button onClick={(e) => { e.stopPropagation(); setShowRemoveConfirm(false); }} className="px-4 py-2 rounded-lg border border-noir-border hover:bg-noir-surface-light min-h-[44px] font-bold">Cancel</button>
+              <button onClick={(e) => { e.stopPropagation(); confirmRemoveExercise(); }} className="px-4 py-2 rounded-lg bg-red-600/20 text-red-500 border border-red-900 font-bold hover:bg-red-600/30 min-h-[44px]">Yes, Remove</button>
             </div>
           </div>
         </div>
