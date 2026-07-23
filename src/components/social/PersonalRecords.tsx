@@ -63,10 +63,14 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
     Object.values(state.workoutLogs).forEach(dayLogs => {
       Object.keys(dayLogs).forEach(exId => {
         if (!loggedExercises.has(exId)) {
-          const exFullData = exercisesData.find(e => e.id === exId);
+          const exName = nameLookup.get(exId) || "Unknown Lift";
+          let exFullData = exercisesData.find(e => e.id === exId);
+          if (!exFullData && exName !== "Unknown Lift") {
+            exFullData = exercisesData.find(e => e.name.toLowerCase() === exName.toLowerCase());
+          }
           loggedExercises.set(exId, { 
             id: exId, 
-            name: nameLookup.get(exId) || "Unknown Lift",
+            name: exName,
             t: exFullData?.t || "Unknown",
             b: exFullData?.b || "Unknown"
           });
@@ -102,18 +106,24 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
         if (!isTracked) return;
 
         logs.forEach(log => {
-          const w = parseFloat(log.weight);
-          const r = parseInt(log.reps, 10);
-          if (!isNaN(w) && !isNaN(r)) {
-            if (!prs[exId] || w > prs[exId].weight || (w === prs[exId].weight && r > prs[exId].reps)) {
-              prs[exId] = { 
-                id: exId,
-                weight: w, 
-                reps: r, 
-                date: dateStr, 
-                name: exMap.get(exId) || "Unknown Lift" 
-              };
+          const checkPr = (weightStr: string, repsStr: string) => {
+            const w = parseFloat(weightStr);
+            const r = parseInt(repsStr, 10);
+            if (!isNaN(w) && !isNaN(r)) {
+              if (!prs[exId] || w > prs[exId].weight || (w === prs[exId].weight && r > prs[exId].reps)) {
+                prs[exId] = { 
+                  id: exId,
+                  weight: w, 
+                  reps: r, 
+                  date: dateStr, 
+                  name: exMap.get(exId) || "Unknown Lift" 
+                };
+              }
             }
+          };
+          checkPr(log.weight, log.reps);
+          if (log.drops) {
+            log.drops.forEach(drop => checkPr(drop.weight, drop.reps));
           }
         });
       });
@@ -370,8 +380,10 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
                   className="w-full text-left px-4 py-3 rounded-xl border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-600 transition-colors group flex justify-between items-center"
                 >
                   <div>
-                    <p className="font-bold text-sm text-zinc-300 group-hover:text-white">{ex.name}</p>
-                    <span className="text-[9px] font-bold text-noir-accent bg-noir-accent/10 px-2 py-0.5 rounded-full uppercase tracking-widest mt-1 inline-block">{(ex as any).t}</span>
+                    <p className="font-bold text-sm text-zinc-300 group-hover:text-white">{ex.name?.trim() ? ex.name : "Unknown Lift"}</p>
+                    {(ex as any).t !== "Unknown" && (
+                      <span className="text-[9px] font-bold text-noir-accent bg-noir-accent/10 px-2 py-0.5 rounded-full uppercase tracking-widest mt-1 inline-block">{(ex as any).t}</span>
+                    )}
                   </div>
                   <Plus size={16} className="text-zinc-600 group-hover:text-noir-accent" />
                 </button>

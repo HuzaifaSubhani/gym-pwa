@@ -126,17 +126,15 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         try {
           const parsed = JSON.parse(saved);
           const migrated = migrateState(parsed);
-          // Always ensure the app starts on today's date when they open it, 
-          // overriding whatever week/day was saved previously.
-          const { currentWeek, currentDayOfWeek } = getCurrentProtocolDateInfo();
+          // Allow users to resume where they left off by not overriding the week/day
           setState({
             ...migrated,
             programs: {
               ...migrated.programs,
               [DEFAULT_IRONCORE_PROGRAM.id]: DEFAULT_IRONCORE_PROGRAM
             },
-            activeWeek: currentWeek,
-            activeDayOfWeek: currentDayOfWeek,
+            activeWeek: migrated.activeWeek || 1,
+            activeDayOfWeek: migrated.activeDayOfWeek || 1,
           });
         } catch (e) {
           console.error("Failed to parse save", e);

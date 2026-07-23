@@ -49,15 +49,7 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    // Sync current actual date on load to ensure active week/day are accurate based on the timeline
-    const { currentWeek, currentDayOfWeek } = getCurrentProtocolDateInfo();
-    // Only update if they differ to avoid unnecessary renders
-    if (state.activeWeek !== currentWeek || state.activeDayOfWeek !== currentDayOfWeek) {
-      setActiveWeekDay(currentWeek, currentDayOfWeek);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // Syncing to real-time date was removed so users can progress manually without missing days.
 
   if (isLoadingAuth) {
     return (

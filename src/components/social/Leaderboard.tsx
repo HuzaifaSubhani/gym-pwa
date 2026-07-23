@@ -500,7 +500,18 @@ export default function Leaderboard() {
             const total = myVol + theirVol || 1; // Prevent div by 0
             const myPercent = (myVol / total) * 100;
             
-            const daysLeft = c.end_date ? Math.ceil((new Date(c.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 7;
+            const timeLeftMs = c.end_date ? new Date(c.end_date).getTime() - new Date().getTime() : 7 * 24 * 60 * 60 * 1000;
+            const daysLeft = Math.floor(timeLeftMs / (1000 * 60 * 60 * 24));
+            const hoursLeft = Math.floor((timeLeftMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutesLeft = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            const timeRemainingText = daysLeft > 0 
+              ? `${daysLeft} Days Left` 
+              : hoursLeft > 0 
+                ? `${hoursLeft}h ${minutesLeft}m Left` 
+                : minutesLeft > 0 
+                  ? `${minutesLeft}m Left` 
+                  : 'Ended';
 
             const isStartingTomorrow = c.start_date ? new Date().getTime() < new Date(c.start_date).getTime() : false;
 
@@ -514,7 +525,7 @@ export default function Leaderboard() {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-noir-text-muted bg-noir-bg px-2 py-1 rounded-md border border-noir-border">
-                      {isStartingTomorrow ? 'Starting Tomorrow' : daysLeft > 0 ? `${daysLeft} Days Left` : 'Ending Soon'}
+                      {isStartingTomorrow ? 'Starting Tomorrow' : timeRemainingText}
                     </div>
                     <button 
                       onClick={() => setForfeitPrompt({id: c.id, opponentName: opponent?.username || "Opponent", opponentId: opponent?.id || ""})}

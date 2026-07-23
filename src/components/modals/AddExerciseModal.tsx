@@ -117,17 +117,21 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
 
   // Filter exercises based on view
   let displayedExercises: ExerciseDBEntry[] = [];
-  if (deferredSearchTerm.trim().length > 0) {
-    displayedExercises = dbExercises.filter(ex => ex.name.toLowerCase().includes(deferredSearchTerm.toLowerCase()));
-  } else if (selectedCategory) {
+  if (selectedCategory) {
     displayedExercises = dbExercises.filter(ex => {
-      if (selectedCategory.parts.includes(ex.t)) return true;
+      let matches = false;
+      if (selectedCategory.parts.includes(ex.t)) matches = true;
       if (selectedCategory.id === "stretching" || selectedCategory.id === "warmup") {
         const nameLower = ex.name.toLowerCase();
-        return selectedCategory.parts.some(p => nameLower.includes(p));
+        if (selectedCategory.parts.some(p => nameLower.includes(p))) matches = true;
       }
-      return false;
+      return matches;
     });
+    if (deferredSearchTerm.trim().length > 0) {
+      displayedExercises = displayedExercises.filter(ex => ex.name.toLowerCase().includes(deferredSearchTerm.toLowerCase()));
+    }
+  } else if (deferredSearchTerm.trim().length > 0) {
+    displayedExercises = dbExercises.filter(ex => ex.name.toLowerCase().includes(deferredSearchTerm.toLowerCase()));
   }
 
   return (
