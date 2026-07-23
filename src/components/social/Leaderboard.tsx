@@ -82,7 +82,7 @@ export default function Leaderboard() {
   const [challengePrompt, setChallengePrompt] = useState<{opponentId: string, opponentName: string} | null>(null);
   const [isWarsExpanded, setIsWarsExpanded] = useState(false);
   const [activeFilter, setActiveFilter] = useState("overall");
-  const { state } = useProtocol();
+  const state = useProtocol(s => s.state);
 
   useEffect(() => {
     fetchLeaderboardData();

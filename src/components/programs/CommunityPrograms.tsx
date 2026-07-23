@@ -15,7 +15,9 @@ export default function CommunityPrograms() {
   const [programs, setPrograms] = useState<(Program & { profiles: { username: string, avatar_url: string } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const { state, saveProgram, setActiveProgram } = useProtocol();
+  const state = useProtocol(s => s.state);
+  const saveProgram = useProtocol(s => s.saveProgram);
+  const setActiveProgram = useProtocol(s => s.setActiveProgram);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [showBuilder, setShowBuilder] = useState(false);
 

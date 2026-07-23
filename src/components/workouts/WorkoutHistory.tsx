@@ -5,7 +5,7 @@ import exercisesData from "@/data/exercises.json";
 import { Dumbbell, Activity, CalendarDays, ChevronRight } from "lucide-react";
 
 export default function WorkoutHistory() {
-  const { state } = useProtocol();
+  const state = useProtocol(s => s.state);
 
   const getLogSummary = (dateStr: string) => {
     const logs = state.workoutLogs[dateStr];

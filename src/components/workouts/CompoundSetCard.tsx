@@ -10,7 +10,10 @@ export default function CompoundSetCard({ group, dateStr, isFuture }: {
   dateStr: string;
   isFuture: boolean;
 }) {
-  const { state, setFullExerciseLogs, removeCompoundGroup, startTimer } = useProtocol();
+  const state = useProtocol(s => s.state);
+  const setFullExerciseLogs = useProtocol(s => s.setFullExerciseLogs);
+  const removeCompoundGroup = useProtocol(s => s.removeCompoundGroup);
+  const startTimer = useProtocol(s => s.startTimer);
 
   // Each exercise in the group has its own logs, keyed by exerciseId
   // For each round, we use setIndex = roundIndex within each exercise's logs

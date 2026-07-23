@@ -13,7 +13,8 @@ import CreateGiantSetModal from "@/components/modals/CreateGiantSetModal";
 import { getProtocolDateString, getShortDateLabel, getTodayDateString } from "@/lib/dateUtils";
 
 function DaySelector() {
-  const { state, setActiveWeekDay } = useProtocol();
+  const state = useProtocol(s => s.state);
+  const setActiveWeekDay = useProtocol(s => s.setActiveWeekDay);
   const days = [
     { num: 1, label: "Mon" }, { num: 2, label: "Tue" }, { num: 3, label: "Wed" }, 
     { num: 4, label: "Thu" }, { num: 5, label: "Fri" }, { num: 6, label: "Sat" }, { num: 7, label: "Sun" }
@@ -99,15 +100,13 @@ function DaySelector() {
 }
 
 export default function WorkoutLogger() {
-  const { 
-    state, 
-    addCustomExercise, 
-    setCustomDayRoutine, 
-    addCompoundGroup, 
-    removeExercise, 
-    linkSuperset,
-    swapExercise 
-  } = useProtocol();
+  const state = useProtocol(s => s.state);
+  const addCustomExercise = useProtocol(s => s.addCustomExercise);
+  const setCustomDayRoutine = useProtocol(s => s.setCustomDayRoutine);
+  const addCompoundGroup = useProtocol(s => s.addCompoundGroup);
+  const removeExercise = useProtocol(s => s.removeExercise);
+  const linkSuperset = useProtocol(s => s.linkSuperset);
+  const swapExercise = useProtocol(s => s.swapExercise);
   const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
   const [swapTargetId, setSwapTargetId] = useState<string | null>(null);
   const [isGiantSetModalOpen, setIsGiantSetModalOpen] = useState(false);

@@ -15,7 +15,9 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"dashboard" | "workout" | "leaderboard" | "explore" | "profile">("dashboard");
-  const { state, setActiveWeekDay, syncWithUser } = useProtocol();
+  const state = useProtocol(s => s.state);
+  const setActiveWeekDay = useProtocol(s => s.setActiveWeekDay);
+  const syncWithUser = useProtocol(s => s.syncWithUser);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [username, setUsername] = useState("Athlete");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);

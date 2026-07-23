@@ -54,7 +54,7 @@ export default function Profile() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const [openSection, setOpenSection] = useState<string>("account");
-  const { state } = useProtocol();
+  const state = useProtocol(s => s.state);
 
   useEffect(() => {
     const fetchProfile = async () => {

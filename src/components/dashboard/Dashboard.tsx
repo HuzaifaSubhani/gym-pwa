@@ -15,7 +15,7 @@ export default function Dashboard({
   username?: string,
   onStartWorkout?: () => void
 }) {
-  const { state } = useProtocol();
+  const state = useProtocol(s => s.state);
   
   let completedDays = 0;
   for (let i = 1; i <= 7; i++) {

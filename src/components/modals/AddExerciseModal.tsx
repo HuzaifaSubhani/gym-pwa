@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useDeferredValue } from "react";
+import { useState, useEffect, useDeferredValue, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { createPortal } from "react-dom";
 import { Check, ChevronRight, ArrowRight, X, Search, Dumbbell, Plus, Flame, Activity } from "lucide-react";
 import Image from "next/image";
@@ -51,6 +52,7 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
   
   const [dbExercises, setDbExercises] = useState<ExerciseDBEntry[]>([]);
   const [mounted, setMounted] = useState(false);
+  const scrollParentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -134,6 +136,13 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
     displayedExercises = dbExercises.filter(ex => ex.name.toLowerCase().includes(deferredSearchTerm.toLowerCase()));
   }
 
+  const rowVirtualizer = useVirtualizer({
+    count: displayedExercises.length,
+    getScrollElement: () => scrollParentRef.current,
+    estimateSize: () => 84, // 76px item + 8px gap
+    overscan: 10,
+  });
+
   return (
     <div className="fixed inset-0 z-[100] flex justify-center md:items-center md:p-4 pb-[80px] md:pb-4 bg-noir-bg animate-in fade-in">
       <div className="bg-noir-surface border-0 md:border md:border-noir-border md:rounded-2xl shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col h-full md:h-auto md:max-h-[90vh]">
@@ -165,7 +174,7 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div ref={scrollParentRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           
           {/* Always visible Search Bar (except setup) */}
           {view !== "setup" && (
@@ -208,44 +217,59 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
 
           {/* Exercise List */}
           {view === "list" && (
-            <div className="flex flex-col gap-2 mt-2 pb-10">
-              {displayedExercises.slice(0, 50).map(ex => (
-                <div 
-                  key={ex.id}
-                  onClick={() => {
-                    setSelectedExercise(ex);
-                    setView("setup");
-                  }}
-                  className="flex items-center gap-4 p-3 bg-noir-bg border border-noir-border rounded-xl cursor-pointer hover:border-noir-accent hover:shadow-lg transition-all group"
-                >
-                  {ex.g ? (
-                    <div className="w-12 h-12 rounded-lg bg-noir-surface flex-shrink-0 relative overflow-hidden opacity-80 group-hover:opacity-100 transition-opacity">
-                      <Image 
-                        src={ex.g} 
-                        alt={ex.name}
-                        fill
-                        sizes="48px"
-                        unoptimized={true}
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg bg-noir-surface border border-noir-border/50 flex items-center justify-center flex-shrink-0 text-noir-text-muted group-hover:text-noir-accent group-hover:border-noir-accent/50 transition-colors">
-                      <Dumbbell size={16} />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm truncate group-hover:text-noir-accent transition-colors capitalize">{ex.name}</h3>
-                    <p className="text-[10px] text-noir-text-muted uppercase tracking-wider mt-1">
-                      {ex.b} • <span className="text-white">{ex.t}</span>
-                      {ex.s && ex.s.length > 0 && (
-                        <span className="opacity-60 lowercase"> (+ {ex.s.join(', ')})</span>
+            <div className="mt-2 pb-10" style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+              {rowVirtualizer.getVirtualItems().map(virtualItem => {
+                const ex = displayedExercises[virtualItem.index];
+                return (
+                  <div
+                    key={ex.id}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: `${virtualItem.size}px`,
+                      transform: `translateY(${virtualItem.start}px)`,
+                      paddingBottom: '8px' // replaces the flex gap
+                    }}
+                  >
+                    <div 
+                      onClick={() => {
+                        setSelectedExercise(ex);
+                        setView("setup");
+                      }}
+                      className="flex items-center h-full gap-4 p-3 bg-noir-bg border border-noir-border rounded-xl cursor-pointer hover:border-noir-accent hover:shadow-lg transition-all group"
+                    >
+                      {ex.g ? (
+                        <div className="w-12 h-12 rounded-lg bg-noir-surface flex-shrink-0 relative overflow-hidden opacity-80 group-hover:opacity-100 transition-opacity">
+                          <Image 
+                            src={ex.g} 
+                            alt={ex.name}
+                            fill
+                            sizes="48px"
+                            unoptimized={true}
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-noir-surface border border-noir-border/50 flex items-center justify-center flex-shrink-0 text-noir-text-muted group-hover:text-noir-accent group-hover:border-noir-accent/50 transition-colors">
+                          <Dumbbell size={16} />
+                        </div>
                       )}
-                    </p>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-sm truncate group-hover:text-noir-accent transition-colors capitalize">{ex.name}</h3>
+                        <p className="text-[10px] text-noir-text-muted uppercase tracking-wider mt-1">
+                          {ex.b} • <span className="text-white">{ex.t}</span>
+                          {ex.s && ex.s.length > 0 && (
+                            <span className="opacity-60 lowercase"> (+ {ex.s.join(', ')})</span>
+                          )}
+                        </p>
+                      </div>
+                      <ChevronRight size={16} className="text-noir-text-muted group-hover:text-noir-accent flex-shrink-0" />
+                    </div>
                   </div>
-                  <ChevronRight size={16} className="text-noir-text-muted group-hover:text-noir-accent flex-shrink-0" />
-                </div>
-              ))}
+                );
+              })}
               
               {/* Create Custom fallback */}
               {searchTerm.trim().length > 0 && (

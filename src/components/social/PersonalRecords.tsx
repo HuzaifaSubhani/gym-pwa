@@ -10,7 +10,9 @@ import exercisesData from "@/data/exercises.json";
 const MUSCLE_GROUPS = ["chest", "back", "legs", "shoulders", "arms", "core", "cardio"];
 
 export default function PersonalRecords({ limit, horizontal = false }: { limit?: number, horizontal?: boolean }) {
-  const { state, addTrackedLift, removeTrackedLift } = useProtocol();
+  const state = useProtocol(s => s.state);
+  const addTrackedLift = useProtocol(s => s.addTrackedLift);
+  const removeTrackedLift = useProtocol(s => s.removeTrackedLift);
   const [pinnedPrName, setPinnedPrName] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);

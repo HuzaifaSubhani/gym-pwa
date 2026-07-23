@@ -8,7 +8,9 @@ import { getProtocolDateString, calculateTotalStats } from "@/lib/dateUtils";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function ProgressAnalytics() {
-  const { state, addTrackedLift, removeTrackedLift } = useProtocol();
+  const state = useProtocol(s => s.state);
+  const addTrackedLift = useProtocol(s => s.addTrackedLift);
+  const removeTrackedLift = useProtocol(s => s.removeTrackedLift);
   const [activeTab, setActiveTab] = useState<"summary" | "charts">("charts");
   const [isAddTrackerOpen, setIsAddTrackerOpen] = useState(false);
   

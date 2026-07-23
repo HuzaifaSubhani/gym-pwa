@@ -10,7 +10,8 @@ import { supabase } from "@/lib/supabaseClient";
 const MUSCLE_GROUPS = ["chest", "back", "legs", "shoulders", "arms", "core", "cardio"];
 
 export default function ProgramBuilder({ onClose }: { onClose: () => void }) {
-  const { saveProgram, setActiveProgram } = useProtocol();
+  const saveProgram = useProtocol(s => s.saveProgram);
+  const setActiveProgram = useProtocol(s => s.setActiveProgram);
   const [name, setName] = useState("My Custom Protocol");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState(4);

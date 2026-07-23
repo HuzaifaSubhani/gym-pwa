@@ -109,78 +109,25 @@ function migrateState(parsed: Record<string, unknown>): ProtocolState {
   return state;
 }
 
-// Module-level guard: survives component remounts, only resets on full page reload
+import { create } from 'zustand';
+
 let _hasSynced = false;
 
-const ProtocolContext = createContext<ProtocolContextType | undefined>(undefined);
+type ProtocolStoreType = ProtocolContextType & {
+  setState: (state: Partial<ProtocolState> | ((prev: ProtocolState) => ProtocolState)) => void;
+};
 
-export function ProtocolProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<ProtocolState>(initialState);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (userId) {
-      const saved = localStorage.getItem(`gym_pwa_${userId}`);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          const migrated = migrateState(parsed);
-          // Allow users to resume where they left off by not overriding the week/day
-          setState({
-            ...migrated,
-            programs: {
-              ...migrated.programs,
-              [DEFAULT_IRONCORE_PROGRAM.id]: DEFAULT_IRONCORE_PROGRAM
-            },
-            activeWeek: migrated.activeWeek || 1,
-            activeDayOfWeek: migrated.activeDayOfWeek || 1,
-          });
-        } catch (e) {
-          console.error("Failed to parse save", e);
-        }
-      }
-      setIsLoaded(true);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    if (isLoaded && userId) {
-      try {
-        localStorage.setItem(`gym_pwa_${userId}`, JSON.stringify(state));
-      } catch (e) {
-        console.error("Failed to save state to localStorage", e);
-      }
-    }
-  }, [state, isLoaded, userId]);
-
-  const syncWithUser = useCallback(async (id: string) => {
-    // Module-level guard: only sync once per browser tab session
-    if (_hasSynced) return;
-    _hasSynced = true;
-    
-    setUserId(id);
-    
-    // Attempt to pull from Supabase to merge/override local
-    try {
-      const { data: logs } = await supabase.from("workout_logs").select("*").eq("user_id", id);
-      if (logs && logs.length > 0) {
-        setState(prev => {
-          const mergedLogs = { ...prev.workoutLogs };
-          logs.forEach(log => {
-            if (!mergedLogs[log.date_str]) mergedLogs[log.date_str] = {};
-            mergedLogs[log.date_str][log.exercise_id] = log.logs;
-          });
-          return { ...prev, workoutLogs: mergedLogs };
-        });
-      }
-    } catch (e) {
-      console.error("Error syncing workout logs:", e);
-    }
-  }, []);
-
-  const setHabit = useCallback((dateStr: string, type: "morning" | "evening", value: boolean) => {
-    setState((prev) => ({
+export const useProtocol = create<ProtocolStoreType>((set, get) => ({
+  state: initialState,
+  setState: (newState) => {
+     if (typeof newState === 'function') {
+        set((prev) => ({ state: { ...prev.state, ...newState(prev.state) } }));
+     } else {
+        set((prev) => ({ state: { ...prev.state, ...newState } }));
+     }
+  },
+  setHabit: (dateStr, type, value) => {
+    get().setState(prev => ({
       ...prev,
       habits: {
         ...prev.habits,
@@ -190,43 +137,26 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         },
       },
     }));
-  }, []);
-
-  const setWorkoutLog = useCallback((dateStr: string, exerciseId: string, setIndex: number, log: SetLog) => {
-    setState((prev) => {
+  },
+  setWorkoutLog: (dateStr, exerciseId, setIndex, log) => {
+    get().setState(prev => {
       const dayLogs = prev.workoutLogs[dateStr] || {};
       const exLogs = [...(dayLogs[exerciseId] || [])];
       exLogs[setIndex] = log;
-
       return {
         ...prev,
-        workoutLogs: {
-          ...prev.workoutLogs,
-          [dateStr]: {
-            ...dayLogs,
-            [exerciseId]: exLogs,
-          },
-        },
+        workoutLogs: { ...prev.workoutLogs, [dateStr]: { ...dayLogs, [exerciseId]: exLogs } },
       };
     });
-  }, []);
-
-  const setFullExerciseLogs = useCallback((dateStr: string, exerciseId: string, logs: SetLog[]) => {
-    setState((prev) => {
+  },
+  setFullExerciseLogs: (dateStr, exerciseId, logs) => {
+    get().setState(prev => {
       const dayLogs = prev.workoutLogs[dateStr] || {};
       return {
         ...prev,
-        workoutLogs: {
-          ...prev.workoutLogs,
-          [dateStr]: {
-            ...dayLogs,
-            [exerciseId]: logs,
-          },
-        },
+        workoutLogs: { ...prev.workoutLogs, [dateStr]: { ...dayLogs, [exerciseId]: logs } },
       };
     });
-    
-    // Async sync to Supabase OUTSIDE of setState (fire and forget)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         supabase.from("workout_logs").upsert({
@@ -239,79 +169,52 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         });
       }
     });
-  }, []);
-
-  const setWeightLog = useCallback((week: number, weight: string) => {
-    setState((prev) => ({
+  },
+  setWeightLog: (week, weight) => {
+    get().setState(prev => ({
       ...prev,
-      weightLogs: {
-        ...prev.weightLogs,
-        [week]: weight,
-      },
+      weightLogs: { ...prev.weightLogs, [week]: weight },
     }));
-  }, []);
-
-  const setActiveWeekDay = useCallback((week: number, day: number) => {
-    setState((prev) => ({
+  },
+  setActiveWeekDay: (week, day) => {
+    get().setState(prev => ({
       ...prev,
       activeWeek: week,
       activeDayOfWeek: day,
     }));
-  }, []);
-
-  const addCustomExercise = useCallback((exercise: Exercise, scope: "today" | "every_week", dayNum: number, dateStr: string) => {
-    setState((prev) => {
+  },
+  addCustomExercise: (exercise, scope, dayNum, dateStr) => {
+    get().setState(prev => {
       if (scope === "today") {
         const existing = prev.customDailyExercises?.[dateStr] || [];
         return {
           ...prev,
-          customDailyExercises: {
-            ...prev.customDailyExercises,
-            [dateStr]: [...existing, exercise],
-          },
+          customDailyExercises: { ...prev.customDailyExercises, [dateStr]: [...existing, exercise] },
         };
       } else {
         const existingRoutine = prev.customRoutine?.[dayNum];
         if (existingRoutine) {
           return {
             ...prev,
-            customRoutine: {
-              ...prev.customRoutine,
-              [dayNum]: {
-                ...existingRoutine,
-                exercises: [...existingRoutine.exercises, exercise],
-              },
-            },
+            customRoutine: { ...prev.customRoutine, [dayNum]: { ...existingRoutine, exercises: [...existingRoutine.exercises, exercise] } },
           };
         } else {
           return {
             ...prev,
-            customRoutine: {
-              ...prev.customRoutine,
-              [dayNum]: {
-                dayName: "",
-                focus: "",
-                exercises: [exercise],
-                isPartial: true
-              }
-            }
+            customRoutine: { ...prev.customRoutine, [dayNum]: { dayName: "", focus: "", exercises: [exercise], isPartial: true } }
           };
         }
       }
     });
-  }, []);
-
-  const swapExercise = useCallback((dayNum: number, dateStr: string, oldExerciseId: string, newExercise: Exercise, scope: "today" | "every_week") => {
-    setState((prev) => {
+  },
+  swapExercise: (dayNum, dateStr, oldExerciseId, newExercise, scope) => {
+    get().setState(prev => {
       if (scope === "today") {
         return {
           ...prev,
           swappedDailyExercises: {
             ...prev.swappedDailyExercises,
-            [dateStr]: {
-              ...(prev.swappedDailyExercises?.[dateStr] || {}),
-              [oldExerciseId]: newExercise
-            }
+            [dateStr]: { ...(prev.swappedDailyExercises?.[dateStr] || {}), [oldExerciseId]: newExercise }
           }
         };
       } else {
@@ -319,202 +222,158 @@ export function ProtocolProvider({ children }: { children: ReactNode }) {
         if (existingRoutine) {
           return {
             ...prev,
-            customRoutine: {
-              ...prev.customRoutine,
-              [dayNum]: {
-                ...existingRoutine,
-                exercises: existingRoutine.exercises.map(ex => ex.id === oldExerciseId ? newExercise : ex)
-              }
-            }
+            customRoutine: { ...prev.customRoutine, [dayNum]: { ...existingRoutine, exercises: existingRoutine.exercises.map(ex => ex.id === oldExerciseId ? newExercise : ex) } }
           };
         } else {
-          return prev; // Should not happen since we can only swap existing exercises
+          return prev;
         }
       }
     });
-  }, []);
-
-  const removeExercise = useCallback((dayNum: number, dateStr: string, exerciseId: string) => {
-    setState((prev) => {
+  },
+  removeExercise: (dayNum, dateStr, exerciseId) => {
+    get().setState(prev => {
       const newCustomDaily = { ...prev.customDailyExercises };
-      if (newCustomDaily[dateStr]) {
-        newCustomDaily[dateStr] = newCustomDaily[dateStr].filter(ex => ex.id !== exerciseId);
-      }
-
-      // Add to ignored list so base program exercises are hidden
+      if (newCustomDaily[dateStr]) newCustomDaily[dateStr] = newCustomDaily[dateStr].filter(ex => ex.id !== exerciseId);
       const newIgnored = { ...prev.ignoredDailyExercises };
       const currentIgnored = newIgnored[dateStr] || [];
-      if (!currentIgnored.includes(exerciseId)) {
-        newIgnored[dateStr] = [...currentIgnored, exerciseId];
-      }
-
+      if (!currentIgnored.includes(exerciseId)) newIgnored[dateStr] = [...currentIgnored, exerciseId];
       const newCustomRoutine = { ...prev.customRoutine };
-
-      // Also clean up superset links if this exercise was in one
       const newSupersetLinks = { ...prev.supersetLinks };
       const partnerId = newSupersetLinks[exerciseId];
-      if (partnerId) {
-        delete newSupersetLinks[exerciseId];
-        delete newSupersetLinks[partnerId];
-      }
-
+      if (partnerId) { delete newSupersetLinks[exerciseId]; delete newSupersetLinks[partnerId]; }
       return {
         ...prev,
         customDailyExercises: newCustomDaily,
         ignoredDailyExercises: newIgnored,
         supersetLinks: newSupersetLinks,
-        customRoutine: newCustomRoutine[dayNum] ? {
-          ...newCustomRoutine,
-          [dayNum]: {
-            ...newCustomRoutine[dayNum],
-            exercises: newCustomRoutine[dayNum].exercises.filter((ex: Exercise) => ex.id !== exerciseId)
-          }
-        } : newCustomRoutine
+        customRoutine: newCustomRoutine[dayNum] ? { ...newCustomRoutine, [dayNum]: { ...newCustomRoutine[dayNum], exercises: newCustomRoutine[dayNum].exercises.filter((ex: Exercise) => ex.id !== exerciseId) } } : newCustomRoutine
       };
     });
-  }, []);
-
-  const setCustomDayRoutine = useCallback((dayNum: number, name: string, focus: string) => {
-    setState((prev) => {
+  },
+  setCustomDayRoutine: (dayNum, name, focus) => {
+    get().setState(prev => {
       const existing = prev.customRoutine?.[dayNum];
       return {
         ...prev,
-        customRoutine: {
-          ...prev.customRoutine,
-          [dayNum]: {
-            dayName: name,
-            focus: focus,
-            exercises: existing?.isPartial === false ? existing.exercises : [],
-            isPartial: false // completely overrides base schema
-          }
-        }
+        customRoutine: { ...prev.customRoutine, [dayNum]: { dayName: name, focus: focus, exercises: existing?.isPartial === false ? existing.exercises : [], isPartial: false } }
       };
     });
-  }, []);
-
-  const updateTimer = useCallback((updates: Partial<ProtocolState["timer"]>) => {
-    setState(prev => ({
-      ...prev,
-      timer: { ...prev.timer, ...updates }
-    }));
-  }, []);
-
-  const startTimer = useCallback((seconds: number) => {
-    setState(prev => ({
-      ...prev,
-      timer: {
-        isActive: true,
-        isPaused: false,
-        duration: seconds,
-        endTime: Date.now() + seconds * 1000
+  },
+  syncWithUser: async (id) => {
+    if (_hasSynced) return;
+    _hasSynced = true;
+    try {
+      const { data: logs } = await supabase.from("workout_logs").select("*").eq("user_id", id);
+      if (logs && logs.length > 0) {
+        get().setState(prev => {
+          const mergedLogs = { ...prev.workoutLogs };
+          logs.forEach(log => {
+            if (!mergedLogs[log.date_str]) mergedLogs[log.date_str] = {};
+            mergedLogs[log.date_str][log.exercise_id] = log.logs;
+          });
+          return { ...prev, workoutLogs: mergedLogs };
+        });
       }
-    }));
-  }, []);
-
-  const addTrackedLift = useCallback((lift: TrackedLift) => {
-    setState(prev => {
-      // Ensure no duplicates
+    } catch (e) {
+      console.error("Error syncing workout logs:", e);
+    }
+  },
+  updateTimer: (updates) => {
+    get().setState(prev => ({ ...prev, timer: { ...prev.timer, ...updates } }));
+  },
+  startTimer: (seconds) => {
+    get().setState(prev => ({ ...prev, timer: { isActive: true, isPaused: false, duration: seconds, endTime: Date.now() + seconds * 1000 } }));
+  },
+  addTrackedLift: (lift) => {
+    get().setState(prev => {
       if (prev.trackedLifts?.find(l => l.id === lift.id)) return prev;
-      return {
-        ...prev,
-        trackedLifts: [...(prev.trackedLifts || []), lift]
-      };
+      return { ...prev, trackedLifts: [...(prev.trackedLifts || []), lift] };
     });
-  }, []);
-
-  const removeTrackedLift = useCallback((id: string) => {
-    setState(prev => ({
-      ...prev,
-      trackedLifts: (prev.trackedLifts || []).filter(l => l.id !== id)
-    }));
-  }, []);
-
-  const saveProgram = useCallback((program: Program) => {
-    setState(prev => ({
-      ...prev,
-      programs: {
-        ...prev.programs,
-        [program.id]: program
-      }
-    }));
-  }, []);
-
-  const setActiveProgram = useCallback((id: string) => {
-    setState(prev => ({
-      ...prev,
-      activeProgramId: id,
-      activeWeek: 1, // Reset to week 1 when changing programs
-    }));
-  }, []);
-
-  // ── Superset linking ──
-
-  const linkSuperset = useCallback((exerciseAId: string, exerciseBId: string) => {
-    setState(prev => ({
-      ...prev,
-      supersetLinks: {
-        ...prev.supersetLinks,
-        [exerciseAId]: exerciseBId,
-        [exerciseBId]: exerciseAId,
-      }
-    }));
-  }, []);
-
-  const unlinkSuperset = useCallback((exerciseId: string) => {
-    setState(prev => {
+  },
+  removeTrackedLift: (id) => {
+    get().setState(prev => ({ ...prev, trackedLifts: (prev.trackedLifts || []).filter(l => l.id !== id) }));
+  },
+  saveProgram: (program) => {
+    get().setState(prev => ({ ...prev, programs: { ...prev.programs, [program.id]: program } }));
+  },
+  setActiveProgram: (id) => {
+    get().setState(prev => ({ ...prev, activeProgramId: id, activeWeek: 1 }));
+  },
+  linkSuperset: (exerciseAId, exerciseBId) => {
+    get().setState(prev => ({ ...prev, supersetLinks: { ...prev.supersetLinks, [exerciseAId]: exerciseBId, [exerciseBId]: exerciseAId } }));
+  },
+  unlinkSuperset: (exerciseId) => {
+    get().setState(prev => {
       const links = { ...prev.supersetLinks };
       const partnerId = links[exerciseId];
-      if (partnerId) {
-        delete links[partnerId];
-      }
+      if (partnerId) delete links[partnerId];
       delete links[exerciseId];
       return { ...prev, supersetLinks: links };
     });
-  }, []);
-
-  // ── Compound groups ──
-
-  const addCompoundGroup = useCallback((dateStr: string, group: CompoundGroup) => {
-    setState(prev => {
+  },
+  addCompoundGroup: (dateStr, group) => {
+    get().setState(prev => {
       const existing = prev.compoundGroups?.[dateStr] || [];
-      return {
-        ...prev,
-        compoundGroups: {
-          ...prev.compoundGroups,
-          [dateStr]: [...existing, group],
-        }
-      };
+      return { ...prev, compoundGroups: { ...prev.compoundGroups, [dateStr]: [...existing, group] } };
     });
-  }, []);
-
-  const removeCompoundGroup = useCallback((dateStr: string, groupId: string) => {
-    setState(prev => {
+  },
+  removeCompoundGroup: (dateStr, groupId) => {
+    get().setState(prev => {
       const existing = prev.compoundGroups?.[dateStr] || [];
-      return {
-        ...prev,
-        compoundGroups: {
-          ...prev.compoundGroups,
-          [dateStr]: existing.filter(g => g.id !== groupId),
-        }
-      };
+      return { ...prev, compoundGroups: { ...prev.compoundGroups, [dateStr]: existing.filter(g => g.id !== groupId) } };
     });
-  }, []);
-
-  const contextValue = useMemo(() => ({
-    state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, swapExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift, saveProgram, setActiveProgram, linkSuperset, unlinkSuperset, addCompoundGroup, removeCompoundGroup
-  }), [state, setHabit, setWorkoutLog, setFullExerciseLogs, setWeightLog, setActiveWeekDay, addCustomExercise, swapExercise, removeExercise, setCustomDayRoutine, syncWithUser, updateTimer, startTimer, addTrackedLift, removeTrackedLift, saveProgram, setActiveProgram, linkSuperset, unlinkSuperset, addCompoundGroup, removeCompoundGroup]);
-
-  return (
-    <ProtocolContext.Provider value={contextValue}>
-      {children}
-    </ProtocolContext.Provider>
-  );
-}
-
-export function useProtocol() {
-  const context = useContext(ProtocolContext);
-  if (context === undefined) {
-    throw new Error("useProtocol must be used within a ProtocolProvider");
   }
-  return context;
+}));
+
+// We keep ProtocolProvider to handle localStorage hydration so we don't have to rewrite layout.tsx
+export function ProtocolProvider({ children }: { children: ReactNode }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Hydrate from localStorage
+  useEffect(() => {
+    // Only attempt to read localStorage if we have a user session, 
+    // but in layout it's wrapping the whole app. We just try to read gym_pwa_null or user.
+    // Wait, the original code listened to `userId` changing.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+       const uId = session?.user?.id || null;
+       setUserId(uId);
+       if (uId) {
+          const saved = localStorage.getItem(`gym_pwa_${uId}`);
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              const migrated = migrateState(parsed);
+              useProtocol.setState({ state: {
+                ...migrated,
+                programs: { ...migrated.programs, [DEFAULT_IRONCORE_PROGRAM.id]: DEFAULT_IRONCORE_PROGRAM },
+                activeWeek: migrated.activeWeek || 1,
+                activeDayOfWeek: migrated.activeDayOfWeek || 1,
+              }});
+            } catch (e) {
+              console.error("Failed to parse save", e);
+            }
+          }
+       }
+       setIsLoaded(true);
+    });
+  }, []);
+
+  // Sync back to localStorage
+  useEffect(() => {
+    const unsub = useProtocol.subscribe((state) => {
+       if (isLoaded && userId) {
+          try {
+            localStorage.setItem(`gym_pwa_${userId}`, JSON.stringify(state.state));
+          } catch (e) {
+            console.error("Failed to save state to localStorage", e);
+          }
+       }
+    });
+    return unsub;
+  }, [isLoaded, userId]);
+
+  if (!isLoaded) return null; // Prevent hydration mismatch
+
+  return <>{children}</>;
 }

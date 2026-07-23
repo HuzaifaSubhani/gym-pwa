@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { createPortal } from "react-dom";
 import { Check, Plus, Trash2, X, Search, Dumbbell } from "lucide-react";
 import { Exercise, CompoundGroup } from "@/data/protocol";
@@ -26,6 +27,7 @@ export default function CreateGiantSetModal({ isOpen, onClose, onAdd }: {
   const [dbExercises, setDbExercises] = useState<ExerciseDBEntry[]>([]);
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const scrollParentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -82,8 +84,15 @@ export default function CreateGiantSetModal({ isOpen, onClose, onAdd }: {
   };
 
   const displayedExercises = searchTerm.length >= 2
-    ? dbExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 30)
+    ? dbExercises.filter(ex => ex.name.toLowerCase().includes(searchTerm.toLowerCase()))
     : [];
+
+  const rowVirtualizer = useVirtualizer({
+    count: displayedExercises.length,
+    getScrollElement: () => scrollParentRef.current,
+    estimateSize: () => 72, // ~64px + 8px gap
+    overscan: 10,
+  });
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pb-[80px] bg-noir-bg/90 backdrop-blur-sm animate-in fade-in">
@@ -97,7 +106,7 @@ export default function CreateGiantSetModal({ isOpen, onClose, onAdd }: {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div ref={scrollParentRef} className="flex-1 overflow-y-auto p-4 space-y-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* Name */}
           <div>
             <label className="block text-[10px] font-bold text-noir-text-muted uppercase mb-2 tracking-widest">Circuit Name</label>
@@ -171,26 +180,57 @@ export default function CreateGiantSetModal({ isOpen, onClose, onAdd }: {
                         autoFocus
                       />
                     </div>
-                    {displayedExercises.length > 0 && (
-                      <div className="max-h-40 overflow-y-auto space-y-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                        {displayedExercises.map(ex => (
-                          <button
-                            key={ex.id}
-                            onClick={() => handleAddExercise(ex)}
-                            className="w-full text-left px-3 py-2 rounded-lg border border-noir-border hover:border-purple-400 hover:bg-purple-400/5 transition-colors flex items-center gap-2"
-                          >
-                            <span className="text-sm font-bold capitalize flex-1 truncate">{ex.name}</span>
-                            <span className="text-[9px] text-purple-400 uppercase tracking-widest">{ex.t}</span>
-                          </button>
-                        ))}
+                    {searchTerm.length >= 2 ? (
+                      <div className="mt-2 pb-10" style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+                        {rowVirtualizer.getVirtualItems().map(virtualItem => {
+                          const ex = displayedExercises[virtualItem.index];
+                          return (
+                            <div
+                              key={ex.id}
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: `${virtualItem.size}px`,
+                                transform: `translateY(${virtualItem.start}px)`,
+                                paddingBottom: '8px'
+                              }}
+                            >
+                              <div 
+                                onClick={() => handleAddExercise(ex)}
+                                className="flex items-center h-full gap-3 p-3 bg-noir-bg border border-noir-border rounded-xl cursor-pointer hover:border-purple-400 transition-colors"
+                              >
+                                {ex.g ? (
+                                  <div className="w-10 h-10 rounded-lg bg-noir-surface relative overflow-hidden shrink-0">
+                                    <img src={ex.g} alt={ex.name} className="object-cover w-full h-full" />
+                                  </div>
+                                ) : (
+                                  <div className="w-10 h-10 rounded-lg bg-noir-surface flex items-center justify-center shrink-0">
+                                    <Dumbbell size={16} className="text-noir-text-muted" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-bold text-sm truncate">{ex.name}</h3>
+                                  <p className="text-[10px] text-noir-text-muted uppercase tracking-wider">{ex.t}</p>
+                                </div>
+                                <Plus size={16} className="text-purple-400" />
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {displayedExercises.length === 0 && (
+                          <div className="text-center py-8 text-noir-text-muted text-sm">No exercises found</div>
+                        )}
                       </div>
+                    ) : (
+                      <button
+                        onClick={() => { setShowExercisePicker(false); setSearchTerm(""); }}
+                        className="w-full py-2 text-xs font-bold text-noir-text-muted uppercase tracking-widest border border-noir-border rounded-lg hover:bg-noir-surface-light transition-colors text-center"
+                      >
+                        Cancel
+                      </button>
                     )}
-                    <button
-                      onClick={() => { setShowExercisePicker(false); setSearchTerm(""); }}
-                      className="w-full py-2 text-xs font-bold text-noir-text-muted uppercase tracking-widest border border-noir-border rounded-lg hover:bg-noir-surface-light transition-colors text-center"
-                    >
-                      Cancel
-                    </button>
                   </div>
                 ) : (
                   <button

@@ -20,7 +20,12 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
   onSwap?: () => void;
   onSuperset?: (id: string) => void;
 }) {
-  const { state, setFullExerciseLogs, removeExercise, startTimer, linkSuperset, unlinkSuperset } = useProtocol();
+  const state = useProtocol(s => s.state);
+  const setFullExerciseLogs = useProtocol(s => s.setFullExerciseLogs);
+  const removeExercise = useProtocol(s => s.removeExercise);
+  const startTimer = useProtocol(s => s.startTimer);
+  const linkSuperset = useProtocol(s => s.linkSuperset);
+  const unlinkSuperset = useProtocol(s => s.unlinkSuperset);
   const dayLogs = state.workoutLogs[dateStr] || {};
   const globalExLogs = dayLogs[exercise.id] || [];
 
