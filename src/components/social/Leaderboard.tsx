@@ -49,6 +49,7 @@ type Challenge = {
   challenged_profile?: Profile;
   myVolume?: number;
   theirVolume?: number;
+  duration_days?: number;
 };
 
 function getLevelInfo(volume: number) {
@@ -78,6 +79,7 @@ export default function Leaderboard() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<LeaderboardEntry | null>(null);
   const [forfeitPrompt, setForfeitPrompt] = useState<{id: string, opponentName: string, opponentId: string} | null>(null);
+  const [challengePrompt, setChallengePrompt] = useState<{opponentId: string, opponentName: string} | null>(null);
   const [isWarsExpanded, setIsWarsExpanded] = useState(false);
   const [activeFilter, setActiveFilter] = useState("overall");
   const { state } = useProtocol();
@@ -209,6 +211,32 @@ export default function Leaderboard() {
             theirVolume
           };
         });
+
+        // Auto-complete expired active challenges
+        const now = Date.now();
+        const toComplete: any[] = [];
+        enhancedChallenges.forEach(c => {
+          if (c.status === 'active' && c.end_date && new Date(c.end_date).getTime() < now) {
+            c.status = 'completed';
+            const opponentId = c.challenger_id === currentUser.id ? c.challenged_id : c.challenger_id;
+            // Determine winner: higher volume wins. If tie, no winner (null)
+            if ((c.myVolume || 0) > (c.theirVolume || 0)) {
+              c.winner_id = currentUser.id;
+            } else if ((c.theirVolume || 0) > (c.myVolume || 0)) {
+              c.winner_id = opponentId;
+            } else {
+              c.winner_id = null; // Tie
+            }
+            toComplete.push(c);
+          }
+        });
+
+        if (toComplete.length > 0) {
+          toComplete.forEach(c => {
+            supabase.from('challenges').update({ status: 'completed', winner_id: c.winner_id }).eq('id', c.id).then();
+          });
+        }
+
         setChallenges(enhancedChallenges);
       }
 
@@ -268,7 +296,7 @@ export default function Leaderboard() {
     return vol;
   };
 
-  const sendChallenge = async (opponentId: string) => {
+  const sendChallenge = async (opponentId: string, durationDays: number) => {
     if (!user) return;
     setActionLoading(`challenge-${opponentId}`);
     
@@ -276,7 +304,8 @@ export default function Leaderboard() {
     const { error } = await supabase.from('challenges').insert({
       challenger_id: user.id,
       challenged_id: opponentId,
-      status: 'pending'
+      status: 'pending',
+      duration_days: durationDays
     });
     
     if (error) {
@@ -294,7 +323,10 @@ export default function Leaderboard() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
 
-    const endDate = new Date(tomorrow.getTime() + (7 * 24 * 60 * 60 * 1000) - 1);
+    const challenge = challenges.find(c => c.id === challengeId);
+    const duration = challenge?.duration_days || 7;
+
+    const endDate = new Date(tomorrow.getTime() + (duration * 24 * 60 * 60 * 1000) - 1);
     
     await supabase.from('challenges').update({
       status: 'active',
@@ -708,7 +740,7 @@ export default function Leaderboard() {
                       </div>
                     ) : (
                       <button 
-                        onClick={() => sendChallenge(entry.id)}
+                        onClick={(e) => { e.stopPropagation(); setChallengePrompt({opponentId: entry.id, opponentName: entry.username}); }}
                         disabled={actionLoading !== null}
                         className="w-8 h-8 rounded-full bg-noir-bg border border-red-500/30 text-red-500 flex items-center justify-center hover:bg-red-500/10 transition-colors"
                         title="Challenge to a Volume War"
@@ -804,6 +836,44 @@ export default function Leaderboard() {
                 {actionLoading ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />} Surrender
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Challenge Duration Modal */}
+      {challengePrompt && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in" onClick={() => setChallengePrompt(null)}>
+          <div className="bg-noir-surface border border-noir-accent/50 rounded-2xl p-6 shadow-2xl w-full max-w-sm relative" onClick={e => e.stopPropagation()}>
+            <h2 className="text-2xl font-black text-white mb-2">Configure Duel</h2>
+            <p className="text-noir-text-muted mb-6 text-sm">
+              Challenge <span className="font-bold text-white">{challengePrompt.opponentName}</span> to a Volume War. How many days should it last?
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {[
+                { days: 1, label: '1 Day', sub: 'Sprint' },
+                { days: 3, label: '3 Days', sub: 'Battle' },
+                { days: 5, label: '5 Days', sub: 'War' },
+                { days: 7, label: '7 Days', sub: 'Marathon' }
+              ].map(opt => (
+                <button
+                  key={opt.days}
+                  onClick={() => {
+                    sendChallenge(challengePrompt.opponentId, opt.days);
+                    setChallengePrompt(null);
+                  }}
+                  className="bg-noir-bg border border-noir-border hover:border-noir-accent hover:bg-noir-accent/10 rounded-xl p-3 flex flex-col items-center justify-center transition-all group"
+                >
+                  <span className="font-black text-white text-lg group-hover:text-noir-accent transition-colors">{opt.label}</span>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-noir-text-muted">{opt.sub}</span>
+                </button>
+              ))}
+            </div>
+            <button 
+              onClick={() => setChallengePrompt(null)}
+              className="w-full bg-noir-bg border border-noir-border text-white font-bold py-3 rounded-lg hover:bg-noir-surface-light transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
