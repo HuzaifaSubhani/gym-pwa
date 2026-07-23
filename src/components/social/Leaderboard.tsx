@@ -660,7 +660,8 @@ export default function Leaderboard() {
               <div 
                 key={entry.id} 
                 onClick={() => setSelectedUser(entry)}
-                className={`relative flex items-center p-4 rounded-2xl border transition-all cursor-pointer hover:scale-[1.02] shadow-lg ${rankStyle} ${isTop3 ? 'bg-gradient-to-br' : ''}`}
+                className={`relative flex items-center p-4 rounded-2xl border transition-all cursor-pointer hover:scale-[1.02] shadow-lg animate-in slide-in-from-bottom-2 fade-in fill-mode-both duration-500 ${rankStyle} ${isTop3 ? 'bg-gradient-to-br' : ''}`}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex-shrink-0 w-12 text-center flex justify-center">
                   {index === 0 ? (

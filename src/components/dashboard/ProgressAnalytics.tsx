@@ -5,7 +5,8 @@ import { DEFAULT_IRONCORE_PROGRAM } from "@/data/protocol";
 import { Dumbbell, CalendarCheck, Plus, Trash2, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 import { getProtocolDateString, calculateTotalStats } from "@/lib/dateUtils";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
+import exercisesData from "@/data/exercises.json";
 
 export default function ProgressAnalytics() {
   const state = useProtocol(s => s.state);
@@ -81,6 +82,35 @@ export default function ProgressAnalytics() {
     return Object.values(prs).sort((a, b) => b.weight - a.weight).slice(0, 3);
   }, [state.workoutLogs, state.customRoutine, state.customDailyExercises]);
 
+  const volumeByMuscle = useMemo(() => {
+    const volume: Record<string, number> = {};
+    const exToMuscle = new Map<string, string>();
+    exercisesData.forEach((ex: any) => exToMuscle.set(ex.id, ex.t));
+
+    Object.values(state.workoutLogs).forEach(dayLogs => {
+      Object.entries(dayLogs).forEach(([exId, logs]) => {
+        let muscle = exToMuscle.get(exId) || "Other";
+        muscle = muscle.charAt(0).toUpperCase() + muscle.slice(1);
+        
+        let totalVol = 0;
+        logs.forEach(s => {
+          const w = parseFloat(s.weight) || 0;
+          const r = parseInt(s.reps, 10) || 0;
+          totalVol += w * r;
+        });
+        
+        if (totalVol > 0) {
+          volume[muscle] = (volume[muscle] || 0) + totalVol;
+        }
+      });
+    });
+
+    const COLORS = ['#CCFF00', '#A3E600', '#7ACC00', '#52B300', '#2E9900', '#1A8000', '#006600'];
+    return Object.entries(volume)
+      .map(([name, value], idx) => ({ name, value: Math.round(value), color: COLORS[idx % COLORS.length] }))
+      .sort((a, b) => b.value - a.value);
+  }, [state.workoutLogs]);
+
   // Generate chart data series
   const chartData = useMemo(() => {
     const today = new Date();
@@ -102,9 +132,13 @@ export default function ProgressAnalytics() {
       sortedDates.forEach((dateStr, index) => {
         const logs = state.workoutLogs[dateStr]?.[lift.id];
         if (logs && logs.some(s => s.weight && s.reps)) {
-          // Calculate Estimated 1RM or simply max weight or total volume
-          // Let's plot Max Weight for simplicity and clarity
-          const maxWeight = Math.max(...logs.map(s => parseFloat(s.weight) || 0));
+          // Calculate Estimated 1RM using Epley Formula: W * (1 + R/30)
+          const estimated1RM = Math.max(...logs.map(s => {
+            const w = parseFloat(s.weight) || 0;
+            const r = parseInt(s.reps, 10) || 0;
+            return w * (1 + r / 30);
+          }));
+          const maxWeight = Math.round(estimated1RM * 10) / 10;
           
           // Formatter for date: 'Jul 6'
           const d = new Date(dateStr);
@@ -176,8 +210,52 @@ export default function ProgressAnalytics() {
       </div>
 
       <div className="space-y-6 mt-8">
+        {/* Volume Breakdown Pie Chart */}
+        {volumeByMuscle.length > 0 && (
+          <div className="bg-noir-surface border border-noir-border rounded-xl p-5 shadow-lg mb-8">
+            <h3 className="text-xl font-bold mb-4">Volume Distribution</h3>
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="h-48 w-48 relative shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={volumeByMuscle}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {volumeByMuscle.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#111', borderColor: '#333', borderRadius: '8px' }}
+                      itemStyle={{ color: '#CCFF00' }}
+                      formatter={(value: number) => [`${value.toLocaleString()} kg`, 'Volume']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex-1 w-full">
+                <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                  {volumeByMuscle.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-xs font-bold text-noir-text-muted capitalize truncate">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-between items-end border-b border-noir-border pb-2 px-2">
-          <h3 className="text-xl font-bold">Tracked Lifts (Max Weight)</h3>
+          <h3 className="text-xl font-bold">Tracked Lifts (Est. 1RM)</h3>
           <button 
             onClick={() => setIsAddTrackerOpen(true)}
             className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-noir-accent hover:text-[#2cff05] transition-colors"

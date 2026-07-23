@@ -73,9 +73,15 @@ export default function RestTimer() {
     setTimeLeft(0);
   };
 
+  const isUrgent = timer.isActive && timeLeft <= 5 && timeLeft > 0;
+
   return (
     <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-      <div className="bg-noir-surface/95 backdrop-blur-md border border-noir-border rounded-2xl shadow-2xl p-4 flex items-center gap-4">
+      <div className={`backdrop-blur-md border rounded-2xl shadow-2xl p-4 flex items-center gap-4 transition-all duration-300 ${
+        isUrgent 
+          ? 'bg-red-950/90 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.4)] animate-pulse' 
+          : 'bg-noir-surface/95 border-noir-border'
+      }`}>
         
         <div className="flex-1 flex items-center gap-4">
           <div className="w-12 h-12 rounded-full border-2 border-noir-accent flex items-center justify-center bg-noir-accent/10">

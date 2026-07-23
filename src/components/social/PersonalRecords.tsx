@@ -230,14 +230,14 @@ export default function PersonalRecords({ limit, horizontal = false }: { limit?:
           return (
             <div 
               key={`${pr.name}-${idx}`} 
-              className={`relative overflow-hidden bg-zinc-900 border rounded-2xl p-5 shadow-lg snap-center transition-all duration-300 ${horizontal ? 'min-w-[240px] flex-shrink-0' : ''} ${
+              className={`relative overflow-hidden bg-zinc-900 border rounded-2xl p-5 shadow-lg snap-center transition-all duration-500 group ${horizontal ? 'min-w-[240px] flex-shrink-0' : ''} ${
                 isPinned 
-                  ? 'border-noir-accent/60 shadow-[0_0_20px_rgba(204,255,0,0.1)]' 
-                  : 'border-zinc-800 hover:border-zinc-700'
+                  ? 'border-noir-accent/60 shadow-[0_0_20px_rgba(204,255,0,0.2)] hover:shadow-[0_0_30px_rgba(204,255,0,0.4)]' 
+                  : 'border-zinc-800 hover:border-noir-accent/40 hover:shadow-[0_0_15px_rgba(204,255,0,0.1)]'
               }`}
             >
               {/* Accent gradient behind the medal */}
-              <div className="absolute -top-10 -right-10 w-24 h-24 bg-yellow-500/10 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="absolute -top-10 -right-10 w-24 h-24 bg-yellow-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#CCFF00]/20 transition-colors duration-500"></div>
               
               <div className="flex justify-between items-start mb-3 relative z-10">
                 <div className="bg-zinc-800 p-2 rounded-xl relative">

@@ -15,7 +15,8 @@ export type SetLog = {
   weight: string;
   reps: string;
   drops?: DropLog[];
-  rating?: string;
+  rating?: 'easy' | 'hard' | 'extreme' | string;
+  form?: 'poor' | 'avg' | 'good' | 'perfect';
   isPulled?: boolean;    // true if this data came from "Pull Last Week"
   isCompleted?: boolean; // true when user explicitly confirms this set
   hasDrops?: boolean;    // true if user toggled drop-set on this individual set

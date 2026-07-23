@@ -2,7 +2,7 @@
 
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { Exercise, getIntensityDirectives } from "@/data/protocol";
-import { Check, ChevronLeft, Trash2, History, Play, Info, Link, Unlink, Plus, Minus, Replace, Calculator } from "lucide-react";
+import { Play, Calculator, Dumbbell, History, Replace, Trash2, Link, Unlink, Plus, Minus, Info, Film, Star, Sparkles, CheckCircle2, ChevronDown, SlidersHorizontal, Target, Flame } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ExerciseVideoModal from "@/components/modals/ExerciseVideoModal";
 import PlateCalculatorModal from "@/components/modals/PlateCalculatorModal";
@@ -50,7 +50,8 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
 
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [calculatorSetIndex, setCalculatorSetIndex] = useState<number | null>(null);
-
+  const [detailsOpenForSet, setDetailsOpenForSet] = useState<number | null>(null);
+  
   // Find active set index (first incomplete set)
   const activeSetIndex = localLogs.findIndex(l => !l.isCompleted && !l.isPulled);
   
@@ -122,16 +123,16 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
 
   const effectiveRest = exercise.rest + (restMod || 0);
 
-  const handleUpdateLocalLog = (setIndex: number, field: "weight" | "reps" | "rating", value: string) => {
+  const handleUpdateLocalLog = (setIndex: number, field: "weight" | "reps" | "rating" | "form", value: string) => {
     const newLogs = [...localLogs];
     newLogs[setIndex] = { 
       ...newLogs[setIndex], 
       [field]: value,
       isPulled: false,
-      isCompleted: (field !== "rating") ? (newLogs[setIndex].weight !== "" && newLogs[setIndex].reps !== "") || value !== "" : newLogs[setIndex].isCompleted,
+      isCompleted: (field !== "rating" && field !== "form") ? (newLogs[setIndex].weight !== "" && newLogs[setIndex].reps !== "") || value !== "" : newLogs[setIndex].isCompleted,
     };
 
-    if (field !== "rating") {
+    if (field !== "rating" && field !== "form") {
       const w = field === "weight" ? value : newLogs[setIndex].weight;
       const r = field === "reps" ? value : newLogs[setIndex].reps;
       newLogs[setIndex].isCompleted = w !== "" && r !== "";
@@ -140,7 +141,7 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
     setLocalLogs(newLogs);
     setIsDirty(true);
 
-    if (field !== "rating" && value !== "") {
+    if (field !== "rating" && field !== "form" && value !== "") {
       const isCompleteNow = newLogs[setIndex].weight !== "" && newLogs[setIndex].reps !== "";
       const wasComplete = localLogs[setIndex].weight !== "" && localLogs[setIndex].reps !== "";
       if (isCompleteNow && !wasComplete) {
@@ -483,43 +484,74 @@ export default function ExerciseCard({ exercise, activeWeek, activeDayOfWeek, is
                     <Calculator size={14} />
                   </button>
 
-                  <div className="flex gap-1 ml-auto items-center">
+                  <div className="flex gap-2 ml-auto items-center">
                     {/* Per-set drop toggle */}
                     {!isDropSetExercise && (
                       <button
                         onClick={() => handleToggleDropSet(i)}
                         disabled={isFuture}
                         title={log.hasDrops ? "Remove drops" : "Add drops"}
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${
                           log.hasDrops 
                             ? 'bg-orange-500/20 text-orange-400 border border-orange-500' 
-                            : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-orange-400'
+                            : 'bg-zinc-800 border border-zinc-700 text-noir-text-muted hover:text-orange-400'
                         }`}
                       >
                         ⬇
                       </button>
                     )}
                     <button 
-                      onClick={() => handleUpdateLocalLog(i, "rating", "easy")} 
+                      onClick={() => setDetailsOpenForSet(detailsOpenForSet === i ? null : i)}
                       disabled={isFuture}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${log.rating === 'easy' ? 'bg-green-500/20 text-green-500 border border-green-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-green-500'}`}
-                    >E</button>
-                    <button 
-                      onClick={() => handleUpdateLocalLog(i, "rating", "hard")} 
-                      disabled={isFuture}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${log.rating === 'hard' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-yellow-500'}`}
-                    >M</button>
-                    <button 
-                      onClick={() => handleUpdateLocalLog(i, "rating", "extreme")} 
-                      disabled={isFuture}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors disabled:opacity-50 ${log.rating === 'extreme' ? 'bg-red-500/20 text-red-500 border border-red-500' : 'bg-noir-surface border border-noir-border text-noir-text-muted hover:text-red-500'}`}
-                    >H</button>
+                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 ${
+                        detailsOpenForSet === i || log.rating || log.form
+                          ? 'bg-noir-accent text-black border border-noir-accent' 
+                          : 'bg-zinc-800 border border-zinc-700 text-noir-text-muted hover:text-white'
+                      }`}
+                      title="Set Details"
+                    >
+                      <SlidersHorizontal size={12} />
+                    </button>
                   </div>
                 </div>
 
                 {prevLogs[i] && prevLogs[i].weight && !isPulled && (
-                  <div className="text-[10px] text-noir-text-muted ml-8 truncate">
+                  <div className="text-[10px] text-noir-text-muted ml-8 truncate mt-1">
                     Prev: {prevLogs[i].weight}kg × {prevLogs[i].reps} 
+                  </div>
+                )}
+
+                {/* Set Details Drawer */}
+                {detailsOpenForSet === i && (
+                  <div className="mt-3 ml-1 sm:ml-2 pl-3 border-l-2 border-noir-accent/30 space-y-4 relative animate-in fade-in slide-in-from-top-2 pb-2">
+                    <div className="absolute -left-[14px] top-[-10px] w-3 h-4 border-b-2 border-l-2 border-noir-accent/30 rounded-bl-md"></div>
+                    
+                    {/* Difficulty (RPE) */}
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Flame size={12} className="text-orange-500" />
+                        <span className="text-[10px] uppercase font-bold text-noir-text-muted tracking-widest">Difficulty</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleUpdateLocalLog(i, "rating", "easy")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${log.rating === 'easy' ? 'bg-green-500/20 text-green-500 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.2)]' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}>Easy</button>
+                        <button onClick={() => handleUpdateLocalLog(i, "rating", "hard")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${log.rating === 'hard' ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.2)]' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}>Medium</button>
+                        <button onClick={() => handleUpdateLocalLog(i, "rating", "extreme")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${log.rating === 'extreme' ? 'bg-red-500/20 text-red-500 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}>Hard</button>
+                      </div>
+                    </div>
+
+                    {/* Form Quality */}
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Target size={12} className="text-blue-500" />
+                        <span className="text-[10px] uppercase font-bold text-noir-text-muted tracking-widest">Form Level</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleUpdateLocalLog(i, "form", "poor")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${log.form === 'poor' ? 'bg-red-500/20 text-red-500 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}>Poor</button>
+                        <button onClick={() => handleUpdateLocalLog(i, "form", "avg")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${log.form === 'avg' ? 'bg-blue-500/20 text-blue-500 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.2)]' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}>Avg</button>
+                        <button onClick={() => handleUpdateLocalLog(i, "form", "good")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${log.form === 'good' ? 'bg-[#CCFF00]/20 text-[#CCFF00] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.2)]' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}>Good</button>
+                        <button onClick={() => handleUpdateLocalLog(i, "form", "perfect")} className={`flex-1 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all border ${log.form === 'perfect' ? 'bg-purple-500 text-white border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}>Perfect</button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
