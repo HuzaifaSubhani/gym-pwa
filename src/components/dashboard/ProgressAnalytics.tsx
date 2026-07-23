@@ -135,7 +135,15 @@ export default function ProgressAnalytics() {
           // Calculate Estimated 1RM using Epley Formula: W * (1 + R/30)
           const estimated1RM = Math.max(...logs.map(s => {
             const w = parseFloat(s.weight) || 0;
-            const r = parseInt(s.reps, 10) || 0;
+            let r = parseInt(s.reps, 10) || 0;
+            
+            // Adjust effective reps based on RPE/Difficulty
+            // Easy = ~2 Reps In Reserve (RIR)
+            // Medium (hard in code) = ~1 RIR
+            // Extreme (extreme in code) = 0 RIR
+            if (s.rating === 'easy') r += 2;
+            else if (s.rating === 'hard') r += 1;
+            
             return w * (1 + r / 30);
           }));
           const maxWeight = Math.round(estimated1RM * 10) / 10;

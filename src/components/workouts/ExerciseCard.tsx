@@ -2,7 +2,7 @@
 
 import { useProtocol, SetLog } from "@/hooks/useProtocolStore";
 import { Exercise, getIntensityDirectives } from "@/data/protocol";
-import { Play, Calculator, Dumbbell, History, Replace, Trash2, Link, Unlink, Plus, Minus, Info, Film, Star, Sparkles, CheckCircle2, ChevronDown, SlidersHorizontal, Target, Flame } from "lucide-react";
+import { Play, Calculator, Dumbbell, History, Replace, Trash2, Link, Unlink, Plus, Minus, Info, Film, Star, Sparkles, CheckCircle2, ChevronDown, SlidersHorizontal, Target, Flame, ChevronLeft, Check } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import ExerciseVideoModal from "@/components/modals/ExerciseVideoModal";
 import PlateCalculatorModal from "@/components/modals/PlateCalculatorModal";
