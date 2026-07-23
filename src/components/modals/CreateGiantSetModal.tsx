@@ -49,7 +49,7 @@ export default function CreateGiantSetModal({ isOpen, onClose, onAdd }: {
     }
   }, [isOpen, dbExercises.length]);
 
-  if (!isOpen) return null;
+  // Removed early return for React hook rules
 
   const handleAddExercise = (dbEx: ExerciseDBEntry) => {
     const ex: Exercise = {
@@ -93,6 +93,8 @@ export default function CreateGiantSetModal({ isOpen, onClose, onAdd }: {
     estimateSize: () => 72, // ~64px + 8px gap
     overscan: 10,
   });
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pb-[80px] bg-noir-bg/90 backdrop-blur-sm animate-in fade-in">

@@ -86,7 +86,7 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
     }
   }, [deferredSearchTerm, view, selectedCategory]);
 
-  if (!isOpen) return null;
+  // Removed early return for React hook rules
 
   const handleAdd = () => {
     if (!selectedExercise) return;
@@ -142,6 +142,8 @@ export default function AddExerciseModal({ isOpen, onClose, onAdd }: {
     estimateSize: () => 84, // 76px item + 8px gap
     overscan: 10,
   });
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-center md:items-center md:p-4 pb-[80px] md:pb-4 bg-noir-bg animate-in fade-in">
